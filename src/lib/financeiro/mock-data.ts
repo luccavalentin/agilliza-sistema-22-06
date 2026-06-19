@@ -59,10 +59,12 @@ export const contasReceber: Lancamento[] = propostas.slice(0, 30).map((p, i) => 
   if (i % 7 === 0) status = "Recebido parcialmente";
   if (isVencido && status === "Em aberto") status = "Vencido";
   const valor = 4_500 + (i % 8) * 1_350;
+  const natureza = i % 6 === 0 ? "Parcelado" : i % 4 === 0 ? "Recorrente" : "Esporádico";
   return {
     id: `rec-${i + 1}`,
     descricao: `Comissão Banco — Proposta ${p.numero}`,
     tipo: "receber",
+    natureza,
     clienteId: p.clienteId,
     propostaId: p.id,
     corretorId: p.corretorId,
@@ -77,9 +79,13 @@ export const contasReceber: Lancamento[] = propostas.slice(0, 30).map((p, i) => 
     status,
     forma: pick(formas, i),
     contaId: pick(contas, i).id,
+    parcelamento: natureza === "Parcelado" ? {
+      totalParcelas: 6, parcelaAtual: (i % 6) + 1, valorTotal: valor * 6, valorParcela: valor,
+      primeiroVencimento: dAgo(60), frequencia: "Mensal", diaVencimento: 10, grupoId: `grp-rec-${i}`,
+    } : undefined,
     criadoPor: "u-corr-1",
     criadoEm: dAgo(20 + i),
-  };
+  } as Lancamento;
 });
 
 // --- Contas a Pagar ---
