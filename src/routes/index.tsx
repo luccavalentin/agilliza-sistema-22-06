@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Building2, Users, User, ShieldCheck, Lock, ArrowRight, IdCard, Calendar } from "lucide-react";
 import { findCrmClientByLogin, formatCpf, isValidCpfFormat, onlyDigits } from "@/lib/crm-clients";
+import { MaskedInput } from "@/components/ui/masked-input";
 
 type Profile = "correspondente" | "corretor" | "cliente";
 
@@ -246,12 +247,13 @@ function LoginPage() {
                     <label htmlFor="email" className="text-xs font-medium text-graphite">
                       E-mail corporativo
                     </label>
-                    <input
+                    <MaskedInput
                       id="email"
                       type="email"
+                      validate="email"
                       autoComplete="email"
                       placeholder="nome@empresa.com.br"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand focus:ring-2 focus:ring-brand/15"
+                      className="px-3 py-2.5"
                     />
                   </div>
 
