@@ -32,6 +32,37 @@ export function PainelOperacional({
   escopo: Escopo;
   usuarioAtualId?: string;
 }) {
+  return (
+    <DashboardDetailProvider>
+      <PainelOperacionalInner escopo={escopo} usuarioAtualId={usuarioAtualId} />
+    </DashboardDetailProvider>
+  );
+}
+
+function PainelOperacionalInner({
+  escopo,
+  usuarioAtualId = "u-cor-1",
+}: {
+  escopo: Escopo;
+  usuarioAtualId?: string;
+}) {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string, count = 16, hint?: { banco?: string; status?: string }) =>
+    open({
+      title,
+      subtitle: `Painel Operacional · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+      period: "Últimos 30 dias",
+      kpis: [
+        { label: title, value },
+        { label: "Período", value: "30 dias" },
+        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
+        { label: "Registros", value: String(count) },
+      ],
+      rows: buildMockRows(count, hint),
+    });
+  const [visao, setVisao] = useState<"geral" | "individual">(
+    escopo === "corretor" ? "individual" : "geral",
+  );
   const [visao, setVisao] = useState<"geral" | "individual">(
     escopo === "corretor" ? "individual" : "geral",
   );
