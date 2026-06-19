@@ -124,41 +124,23 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
 
       {/* KPI cards */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <KpiCard label={isCorr ? "Total de clientes" : "Meus clientes"} value={totalClientes} accent={COLOR.brand} icon={Users2} caption="Base ativa cadastrada" />
-        <KpiCard label="Cadastrados no mês" value={novosMes} accent={COLOR.info} icon={UserPlus} caption="+18% vs. mês anterior" />
-        <KpiCard label="Clientes ativos" value={ativos} accent={COLOR.success} icon={Activity} caption="Em alguma etapa em curso" />
-        <KpiCard label="Com simulação" value={simulacao} accent={COLOR.brand} icon={Calculator} caption="Taxa de conversão 47.6%" />
-        <KpiCard label="Em aprovação" value={proposta} accent={COLOR.warning} icon={Layers} caption="Proposta enviada ao banco" />
-        <KpiCard label="Aprovados" value={aprovados} accent={COLOR.success} icon={CheckCircle2} caption="14.1% da base" />
-        <KpiCard label="Reprovados" value={reprovados} accent={COLOR.direction} icon={XCircle} caption="6.7% da base" />
-        <KpiCard label="Sem movimentação" value={semMov} accent="#6b7280" icon={Clock} caption="> 15 dias sem atualização" />
-        <KpiCard label="Documentação pendente" value={pendDoc} accent={COLOR.warning} icon={FileWarning} caption="Distribuídos por categoria" />
-        <KpiCard
-          label="Conversão Cadastro→Simulação"
-          value="47.6%"
-          accent={COLOR.brand}
-          icon={TrendingUp}
-          footer={{ label: "Meta", value: "55%" }}
-        />
-        <KpiCard
-          label="Conversão Cadastro→Aprovação"
-          value="14.1%"
-          accent={COLOR.success}
-          icon={TrendingUp}
-          footer={{ label: "Meta", value: "20%" }}
-        />
-        <KpiCard
-          label="Ticket médio aprovado"
-          value="R$ 692 mil"
-          accent={COLOR.info}
-          icon={Building2}
-          footer={{ label: "Volume aprovado", value: isCorr ? "R$ 125M" : "R$ 18M" }}
-        />
+        <KpiCard label={isCorr ? "Total de clientes" : "Meus clientes"} value={totalClientes} accent={COLOR.brand} icon={Users2} caption="Base ativa cadastrada" onClick={() => drill(isCorr ? "Total de clientes" : "Meus clientes", totalClientes, 24)} />
+        <KpiCard label="Cadastrados no mês" value={novosMes} accent={COLOR.info} icon={UserPlus} caption="+18% vs. mês anterior" onClick={() => drill("Cadastrados no mês", novosMes, 18)} />
+        <KpiCard label="Clientes ativos" value={ativos} accent={COLOR.success} icon={Activity} caption="Em alguma etapa em curso" onClick={() => drill("Clientes ativos", ativos, 20)} />
+        <KpiCard label="Com simulação" value={simulacao} accent={COLOR.brand} icon={Calculator} caption="Taxa de conversão 47.6%" onClick={() => drill("Clientes com simulação", simulacao, 20)} />
+        <KpiCard label="Em aprovação" value={proposta} accent={COLOR.warning} icon={Layers} caption="Proposta enviada ao banco" onClick={() => drill("Em aprovação", proposta, 16, { status: "Em análise" })} />
+        <KpiCard label="Aprovados" value={aprovados} accent={COLOR.success} icon={CheckCircle2} caption="14.1% da base" onClick={() => drill("Aprovados", aprovados, 16, { status: "Aprovada" })} />
+        <KpiCard label="Reprovados" value={reprovados} accent={COLOR.direction} icon={XCircle} caption="6.7% da base" onClick={() => drill("Reprovados", reprovados, 14, { status: "Reprovada" })} />
+        <KpiCard label="Sem movimentação" value={semMov} accent="#6b7280" icon={Clock} caption="> 15 dias sem atualização" onClick={() => drill("Sem movimentação", semMov, 12)} />
+        <KpiCard label="Documentação pendente" value={pendDoc} accent={COLOR.warning} icon={FileWarning} caption="Distribuídos por categoria" onClick={() => drill("Documentação pendente", pendDoc, 18, { status: "Pendência docs" })} />
+        <KpiCard label="Conversão Cadastro→Simulação" value="47.6%" accent={COLOR.brand} icon={TrendingUp} footer={{ label: "Meta", value: "55%" }} onClick={() => drill("Conversão Cadastro→Simulação", "47.6%", 14)} />
+        <KpiCard label="Conversão Cadastro→Aprovação" value="14.1%" accent={COLOR.success} icon={TrendingUp} footer={{ label: "Meta", value: "20%" }} onClick={() => drill("Conversão Cadastro→Aprovação", "14.1%", 14)} />
+        <KpiCard label="Ticket médio aprovado" value="R$ 692 mil" accent={COLOR.info} icon={Building2} footer={{ label: "Volume aprovado", value: isCorr ? "R$ 125M" : "R$ 18M" }} onClick={() => drill("Ticket médio aprovado", "R$ 692 mil", 16, { status: "Aprovada" })} />
       </section>
 
       {/* Charts row */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Evolução de clientes cadastrados" icon={TrendingUp} className="lg:col-span-2">
+        <Panel title="Evolução de clientes cadastrados" icon={TrendingUp} className="lg:col-span-2" onClick={() => drill("Evolução de clientes cadastrados", "7 meses", 24)}>
           <MultiBarChart
             data={[
               { label: "Jan", values: [78, 41, 12] },
@@ -174,9 +156,10 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { color: COLOR.info, label: "Com simulação" },
               { color: COLOR.success, label: "Aprovados" },
             ]}
+            onBarClick={(period, serieLabel, value) => drill(`${serieLabel} · ${period}`, String(value), 14)}
           />
         </Panel>
-        <Panel title="Clientes por status" icon={PieChart}>
+        <Panel title="Clientes por status" icon={PieChart} onClick={() => drill("Clientes por status", totalClientes, 18)}>
           <Donut
             centerLabel="Total"
             centerValue={totalClientes}
@@ -187,13 +170,14 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { value: 146, color: "#6b7280", label: "Sem mov." },
               { value: 203, color: COLOR.warning, label: "Pend. doc." },
             ]}
+            onSegmentClick={(label, value) => drill(`Status · ${label}`, String(value), 14)}
           />
         </Panel>
       </div>
 
       {/* Funnel */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Funil do cliente" icon={Layers} className="lg:col-span-2">
+        <Panel title="Funil do cliente" icon={Layers} className="lg:col-span-2" onClick={() => drill("Funil do cliente", totalClientes, 20)}>
           <Funnel
             steps={[
               { label: "Cadastrado", value: isCorr ? 1284 : 186, color: COLOR.brand },
@@ -204,15 +188,17 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { label: "Aprovado", value: isCorr ? 181 : 26, color: COLOR.success },
               { label: "Reprovado", value: isCorr ? 87 : 12, color: COLOR.direction },
             ]}
+            onStepClick={(label, value) => drill(`Funil · ${label}`, String(value), 16)}
           />
         </Panel>
-        <Panel title="Produto de interesse" icon={Building2}>
+        <Panel title="Produto de interesse" icon={Building2} onClick={() => drill("Produto de interesse", "1.284", 16)}>
           <HBarList
             accent={COLOR.brand}
             rows={[
               { label: "Financiamento Imobiliário", value: 824, sub: isCorr ? "824" : "118" },
               { label: "Home Equity", value: 460, sub: isCorr ? "460" : "68" },
             ]}
+            onRowClick={(label, value) => drill(`Produto · ${label}`, String(value), 14)}
           />
           <div className="mt-4 grid grid-cols-2 gap-2 text-[11px]">
             <div className="rounded-md border border-border bg-background px-3 py-2">
