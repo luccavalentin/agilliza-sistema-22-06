@@ -423,7 +423,7 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
       {/* Métricas operacionais integradas */}
       <Panel title="Métricas Operacionais Integradas ao Financeiro" icon={TrendingUp}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard label="Valor em andamento por banco (top)" value={aggBanco[0]?.name ?? "—"} sub={formatBRL(aggBanco[0]?.valor ?? 0)} icon={Building2} accent={TOKENS.info} />
+          <KpiCard label="Valor em andamento por banco (top)" value={aggBanco[0]?.name ?? "—"} caption={formatBRL(aggBanco[0]?.valor ?? 0)} icon={Building2} accent={TOKENS.info} />
           <KpiCard label="Valor aprovado (escopo)" value={formatBRL(sum(aprovadasAll))} icon={CheckCircle2} accent={TOKENS.success} />
           <KpiCard label="Valor contratado (escopo)" value={formatBRL(sum(contratosAll))} icon={FileSignature} accent={TOKENS.brand} />
           <KpiCard label="Tempo médio até aprovação" value="18 dias" icon={TrendingUp} accent={TOKENS.warning} />
