@@ -37,6 +37,7 @@ import { Route as CorretorOperacionalMinhasSimulacoesRouteImport } from './route
 import { Route as CorretorOperacionalDemandasRouteImport } from './routes/corretor.operacional.demandas'
 import { Route as CorretorOperacionalConsultasRouteImport } from './routes/corretor.operacional.consultas'
 import { Route as CorretorOperacionalAtualizacaoRouteImport } from './routes/corretor.operacional.atualizacao'
+import { Route as CorretorFinanceiroRecorrenciasRouteImport } from './routes/corretor.financeiro.recorrencias'
 import { Route as CorretorFinanceiroRecebiveisRouteImport } from './routes/corretor.financeiro.recebiveis'
 import { Route as CorretorFinanceiroFluxoRouteImport } from './routes/corretor.financeiro.fluxo'
 import { Route as CorretorFinanceiroDespesasRouteImport } from './routes/corretor.financeiro.despesas'
@@ -215,6 +216,12 @@ const CorretorOperacionalAtualizacaoRoute =
     id: '/atualizacao',
     path: '/atualizacao',
     getParentRoute: () => CorretorOperacionalRoute,
+  } as any)
+const CorretorFinanceiroRecorrenciasRoute =
+  CorretorFinanceiroRecorrenciasRouteImport.update({
+    id: '/recorrencias',
+    path: '/recorrencias',
+    getParentRoute: () => CorretorFinanceiroRoute,
   } as any)
 const CorretorFinanceiroRecebiveisRoute =
   CorretorFinanceiroRecebiveisRouteImport.update({
@@ -403,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
   '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
   '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -449,6 +457,7 @@ export interface FileRoutesByTo {
   '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
   '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
   '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
   '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
   '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/corretor/financeiro/despesas'
     | '/corretor/financeiro/fluxo'
     | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -608,6 +619,7 @@ export interface FileRouteTypes {
     | '/corretor/financeiro/despesas'
     | '/corretor/financeiro/fluxo'
     | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -663,6 +675,7 @@ export interface FileRouteTypes {
     | '/corretor/financeiro/despesas'
     | '/corretor/financeiro/fluxo'
     | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -883,6 +896,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/corretor/operacional/atualizacao'
       preLoaderRoute: typeof CorretorOperacionalAtualizacaoRouteImport
       parentRoute: typeof CorretorOperacionalRoute
+    }
+    '/corretor/financeiro/recorrencias': {
+      id: '/corretor/financeiro/recorrencias'
+      path: '/recorrencias'
+      fullPath: '/corretor/financeiro/recorrencias'
+      preLoaderRoute: typeof CorretorFinanceiroRecorrenciasRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
     }
     '/corretor/financeiro/recebiveis': {
       id: '/corretor/financeiro/recebiveis'
@@ -1203,6 +1223,7 @@ interface CorretorFinanceiroRouteChildren {
   CorretorFinanceiroDespesasRoute: typeof CorretorFinanceiroDespesasRoute
   CorretorFinanceiroFluxoRoute: typeof CorretorFinanceiroFluxoRoute
   CorretorFinanceiroRecebiveisRoute: typeof CorretorFinanceiroRecebiveisRoute
+  CorretorFinanceiroRecorrenciasRoute: typeof CorretorFinanceiroRecorrenciasRoute
   CorretorFinanceiroIndexRoute: typeof CorretorFinanceiroIndexRoute
 }
 
@@ -1211,6 +1232,7 @@ const CorretorFinanceiroRouteChildren: CorretorFinanceiroRouteChildren = {
   CorretorFinanceiroDespesasRoute: CorretorFinanceiroDespesasRoute,
   CorretorFinanceiroFluxoRoute: CorretorFinanceiroFluxoRoute,
   CorretorFinanceiroRecebiveisRoute: CorretorFinanceiroRecebiveisRoute,
+  CorretorFinanceiroRecorrenciasRoute: CorretorFinanceiroRecorrenciasRoute,
   CorretorFinanceiroIndexRoute: CorretorFinanceiroIndexRoute,
 }
 
