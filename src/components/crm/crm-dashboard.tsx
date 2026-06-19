@@ -345,13 +345,16 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { l: "Aguardando aprovação", v: "34", c: COLOR.warning },
               { l: "Cadastro incompleto", v: "16", c: "#6b7280" },
             ].map((b) => (
-              <li
-                key={b.l}
-                className="rounded-md border border-border bg-background p-3"
-                style={{ borderLeftWidth: 3, borderLeftColor: b.c }}
-              >
-                <p className="font-semibold text-muted-foreground">{b.l}</p>
-                <p className="mt-1 text-lg font-bold text-graphite">{b.v}</p>
+              <li key={b.l}>
+                <button
+                  type="button"
+                  onClick={() => drill(b.l, b.v, 14)}
+                  className="w-full rounded-md border border-border bg-background p-3 text-left hover:border-brand/40"
+                  style={{ borderLeftWidth: 3, borderLeftColor: b.c }}
+                >
+                  <p className="font-semibold text-muted-foreground">{b.l}</p>
+                  <p className="mt-1 text-lg font-bold text-graphite">{b.v}</p>
+                </button>
               </li>
             ))}
           </ul>
@@ -367,6 +370,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { tone: "info", title: "48 clientes aguardando simulação", meta: "Pronto para análise" },
               { tone: "info", title: "16 cadastros incompletos", meta: "Concluir antes de simular" },
             ]}
+            onItemClick={(title) => drill(title, "Alerta", 12)}
           />
         </Panel>
       </div>
