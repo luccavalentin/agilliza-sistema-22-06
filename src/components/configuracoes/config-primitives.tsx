@@ -1,5 +1,7 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import { Check, ChevronRight, Search } from "lucide-react";
+import { MaskedInput } from "@/components/ui/masked-input";
+import type { MaskKind } from "@/lib/formatters";
 
 export type ConfigSection = {
   id: string;
@@ -18,6 +20,7 @@ export type ConfigGroup = {
 export type ConfigField =
   | { kind: "toggle"; label: string; description?: string; defaultValue?: boolean }
   | { kind: "text"; label: string; placeholder?: string; defaultValue?: string; type?: "text" | "email" | "tel" | "password" | "number" }
+  | { kind: "mask"; label: string; mask: MaskKind; placeholder?: string; defaultValue?: string; validate?: "cpf" | "cnpj" | "cpfcnpj" | "email" }
   | { kind: "textarea"; label: string; placeholder?: string; defaultValue?: string }
   | { kind: "select"; label: string; options: string[]; defaultValue?: string }
   | { kind: "chips"; label: string; options: string[]; defaultValues?: string[] }
