@@ -69,7 +69,9 @@ const groups: PortalNavGroup[] = [
   },
   {
     label: "Configurações",
-    items: [{ label: "Configurações", icon: Settings }],
+    items: [
+      { label: "Configurações", to: "/corretor/configuracoes", icon: Settings },
+    ],
   },
 ];
 
