@@ -12,6 +12,11 @@ import {
   KpiCard, MultiBarChart, Panel, PanelHeader,
 } from "@/components/dashboards/primitives";
 import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
+import {
   bancos, clientes, demandas, propostas, simulacoes,
   tarefas, usuarios, usuarioById, bancoById, clienteById,
 } from "@/lib/operacional/mock-data";
