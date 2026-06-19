@@ -17,13 +17,17 @@ import { Route as CorretorIndexRouteImport } from './routes/corretor.index'
 import { Route as CorrespondenteIndexRouteImport } from './routes/correspondente.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
 import { Route as CorretorOperacionalRouteImport } from './routes/corretor.operacional'
+import { Route as CorretorFinanceiroRouteImport } from './routes/corretor.financeiro'
 import { Route as CorretorCrmRouteImport } from './routes/corretor.crm'
 import { Route as CorrespondenteOperacionalRouteImport } from './routes/correspondente.operacional'
+import { Route as CorrespondenteFinanceiroRouteImport } from './routes/correspondente.financeiro'
 import { Route as CorrespondenteCrmRouteImport } from './routes/correspondente.crm'
 import { Route as ClientePropostaRouteImport } from './routes/cliente.proposta'
 import { Route as CorretorOperacionalIndexRouteImport } from './routes/corretor.operacional.index'
+import { Route as CorretorFinanceiroIndexRouteImport } from './routes/corretor.financeiro.index'
 import { Route as CorretorCrmIndexRouteImport } from './routes/corretor.crm.index'
 import { Route as CorrespondenteOperacionalIndexRouteImport } from './routes/correspondente.operacional.index'
+import { Route as CorrespondenteFinanceiroIndexRouteImport } from './routes/correspondente.financeiro.index'
 import { Route as CorrespondenteCrmIndexRouteImport } from './routes/correspondente.crm.index'
 import { Route as CorretorOperacionalTarefasRouteImport } from './routes/corretor.operacional.tarefas'
 import { Route as CorretorOperacionalSimulacoesRouteImport } from './routes/corretor.operacional.simulacoes'
@@ -33,6 +37,12 @@ import { Route as CorretorOperacionalMinhasSimulacoesRouteImport } from './route
 import { Route as CorretorOperacionalDemandasRouteImport } from './routes/corretor.operacional.demandas'
 import { Route as CorretorOperacionalConsultasRouteImport } from './routes/corretor.operacional.consultas'
 import { Route as CorretorOperacionalAtualizacaoRouteImport } from './routes/corretor.operacional.atualizacao'
+import { Route as CorretorFinanceiroRelatoriosRouteImport } from './routes/corretor.financeiro.relatorios'
+import { Route as CorretorFinanceiroRecorrenciasRouteImport } from './routes/corretor.financeiro.recorrencias'
+import { Route as CorretorFinanceiroRecebiveisRouteImport } from './routes/corretor.financeiro.recebiveis'
+import { Route as CorretorFinanceiroFluxoRouteImport } from './routes/corretor.financeiro.fluxo'
+import { Route as CorretorFinanceiroDespesasRouteImport } from './routes/corretor.financeiro.despesas'
+import { Route as CorretorFinanceiroComissoesRouteImport } from './routes/corretor.financeiro.comissoes'
 import { Route as CorretorCrmRelatoriosRouteImport } from './routes/corretor.crm.relatorios'
 import { Route as CorretorCrmConsultasRouteImport } from './routes/corretor.crm.consultas'
 import { Route as CorretorCrmCadastroRouteImport } from './routes/corretor.crm.cadastro'
@@ -43,6 +53,14 @@ import { Route as CorrespondenteOperacionalPropostasRouteImport } from './routes
 import { Route as CorrespondenteOperacionalMinhasSimulacoesRouteImport } from './routes/correspondente.operacional.minhas-simulacoes'
 import { Route as CorrespondenteOperacionalDemandasRouteImport } from './routes/correspondente.operacional.demandas'
 import { Route as CorrespondenteOperacionalConsultasRouteImport } from './routes/correspondente.operacional.consultas'
+import { Route as CorrespondenteFinanceiroRelatoriosRouteImport } from './routes/correspondente.financeiro.relatorios'
+import { Route as CorrespondenteFinanceiroRecorrenciasRouteImport } from './routes/correspondente.financeiro.recorrencias'
+import { Route as CorrespondenteFinanceiroReceberRouteImport } from './routes/correspondente.financeiro.receber'
+import { Route as CorrespondenteFinanceiroPagarRouteImport } from './routes/correspondente.financeiro.pagar'
+import { Route as CorrespondenteFinanceiroFluxoRouteImport } from './routes/correspondente.financeiro.fluxo'
+import { Route as CorrespondenteFinanceiroConciliacaoRouteImport } from './routes/correspondente.financeiro.conciliacao'
+import { Route as CorrespondenteFinanceiroComissoesRouteImport } from './routes/correspondente.financeiro.comissoes'
+import { Route as CorrespondenteFinanceiroCategoriasRouteImport } from './routes/correspondente.financeiro.categorias'
 import { Route as CorrespondenteCrmRelatoriosRouteImport } from './routes/correspondente.crm.relatorios'
 import { Route as CorrespondenteCrmConsultasRouteImport } from './routes/correspondente.crm.consultas'
 import { Route as CorrespondenteCrmCadastroRouteImport } from './routes/correspondente.crm.cadastro'
@@ -87,6 +105,11 @@ const CorretorOperacionalRoute = CorretorOperacionalRouteImport.update({
   path: '/operacional',
   getParentRoute: () => CorretorRoute,
 } as any)
+const CorretorFinanceiroRoute = CorretorFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => CorretorRoute,
+} as any)
 const CorretorCrmRoute = CorretorCrmRouteImport.update({
   id: '/crm',
   path: '/crm',
@@ -96,6 +119,12 @@ const CorrespondenteOperacionalRoute =
   CorrespondenteOperacionalRouteImport.update({
     id: '/operacional',
     path: '/operacional',
+    getParentRoute: () => CorrespondenteRoute,
+  } as any)
+const CorrespondenteFinanceiroRoute =
+  CorrespondenteFinanceiroRouteImport.update({
+    id: '/financeiro',
+    path: '/financeiro',
     getParentRoute: () => CorrespondenteRoute,
   } as any)
 const CorrespondenteCrmRoute = CorrespondenteCrmRouteImport.update({
@@ -114,6 +143,11 @@ const CorretorOperacionalIndexRoute =
     path: '/',
     getParentRoute: () => CorretorOperacionalRoute,
   } as any)
+const CorretorFinanceiroIndexRoute = CorretorFinanceiroIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CorretorFinanceiroRoute,
+} as any)
 const CorretorCrmIndexRoute = CorretorCrmIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -124,6 +158,12 @@ const CorrespondenteOperacionalIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => CorrespondenteOperacionalRoute,
+  } as any)
+const CorrespondenteFinanceiroIndexRoute =
+  CorrespondenteFinanceiroIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
   } as any)
 const CorrespondenteCrmIndexRoute = CorrespondenteCrmIndexRouteImport.update({
   id: '/',
@@ -177,6 +217,41 @@ const CorretorOperacionalAtualizacaoRoute =
     id: '/atualizacao',
     path: '/atualizacao',
     getParentRoute: () => CorretorOperacionalRoute,
+  } as any)
+const CorretorFinanceiroRelatoriosRoute =
+  CorretorFinanceiroRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => CorretorFinanceiroRoute,
+  } as any)
+const CorretorFinanceiroRecorrenciasRoute =
+  CorretorFinanceiroRecorrenciasRouteImport.update({
+    id: '/recorrencias',
+    path: '/recorrencias',
+    getParentRoute: () => CorretorFinanceiroRoute,
+  } as any)
+const CorretorFinanceiroRecebiveisRoute =
+  CorretorFinanceiroRecebiveisRouteImport.update({
+    id: '/recebiveis',
+    path: '/recebiveis',
+    getParentRoute: () => CorretorFinanceiroRoute,
+  } as any)
+const CorretorFinanceiroFluxoRoute = CorretorFinanceiroFluxoRouteImport.update({
+  id: '/fluxo',
+  path: '/fluxo',
+  getParentRoute: () => CorretorFinanceiroRoute,
+} as any)
+const CorretorFinanceiroDespesasRoute =
+  CorretorFinanceiroDespesasRouteImport.update({
+    id: '/despesas',
+    path: '/despesas',
+    getParentRoute: () => CorretorFinanceiroRoute,
+  } as any)
+const CorretorFinanceiroComissoesRoute =
+  CorretorFinanceiroComissoesRouteImport.update({
+    id: '/comissoes',
+    path: '/comissoes',
+    getParentRoute: () => CorretorFinanceiroRoute,
   } as any)
 const CorretorCrmRelatoriosRoute = CorretorCrmRelatoriosRouteImport.update({
   id: '/relatorios',
@@ -235,6 +310,54 @@ const CorrespondenteOperacionalConsultasRoute =
     path: '/consultas',
     getParentRoute: () => CorrespondenteOperacionalRoute,
   } as any)
+const CorrespondenteFinanceiroRelatoriosRoute =
+  CorrespondenteFinanceiroRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroRecorrenciasRoute =
+  CorrespondenteFinanceiroRecorrenciasRouteImport.update({
+    id: '/recorrencias',
+    path: '/recorrencias',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroReceberRoute =
+  CorrespondenteFinanceiroReceberRouteImport.update({
+    id: '/receber',
+    path: '/receber',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroPagarRoute =
+  CorrespondenteFinanceiroPagarRouteImport.update({
+    id: '/pagar',
+    path: '/pagar',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroFluxoRoute =
+  CorrespondenteFinanceiroFluxoRouteImport.update({
+    id: '/fluxo',
+    path: '/fluxo',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroConciliacaoRoute =
+  CorrespondenteFinanceiroConciliacaoRouteImport.update({
+    id: '/conciliacao',
+    path: '/conciliacao',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroComissoesRoute =
+  CorrespondenteFinanceiroComissoesRouteImport.update({
+    id: '/comissoes',
+    path: '/comissoes',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
+const CorrespondenteFinanceiroCategoriasRoute =
+  CorrespondenteFinanceiroCategoriasRouteImport.update({
+    id: '/categorias',
+    path: '/categorias',
+    getParentRoute: () => CorrespondenteFinanceiroRoute,
+  } as any)
 const CorrespondenteCrmRelatoriosRoute =
   CorrespondenteCrmRelatoriosRouteImport.update({
     id: '/relatorios',
@@ -261,8 +384,10 @@ export interface FileRoutesByFullPath {
   '/corretor': typeof CorretorRouteWithChildren
   '/cliente/proposta': typeof ClientePropostaRoute
   '/correspondente/crm': typeof CorrespondenteCrmRouteWithChildren
+  '/correspondente/financeiro': typeof CorrespondenteFinanceiroRouteWithChildren
   '/correspondente/operacional': typeof CorrespondenteOperacionalRouteWithChildren
   '/corretor/crm': typeof CorretorCrmRouteWithChildren
+  '/corretor/financeiro': typeof CorretorFinanceiroRouteWithChildren
   '/corretor/operacional': typeof CorretorOperacionalRouteWithChildren
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
@@ -270,6 +395,14 @@ export interface FileRoutesByFullPath {
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/relatorios': typeof CorrespondenteCrmRelatoriosRoute
+  '/correspondente/financeiro/categorias': typeof CorrespondenteFinanceiroCategoriasRoute
+  '/correspondente/financeiro/comissoes': typeof CorrespondenteFinanceiroComissoesRoute
+  '/correspondente/financeiro/conciliacao': typeof CorrespondenteFinanceiroConciliacaoRoute
+  '/correspondente/financeiro/fluxo': typeof CorrespondenteFinanceiroFluxoRoute
+  '/correspondente/financeiro/pagar': typeof CorrespondenteFinanceiroPagarRoute
+  '/correspondente/financeiro/receber': typeof CorrespondenteFinanceiroReceberRoute
+  '/correspondente/financeiro/recorrencias': typeof CorrespondenteFinanceiroRecorrenciasRoute
+  '/correspondente/financeiro/relatorios': typeof CorrespondenteFinanceiroRelatoriosRoute
   '/correspondente/operacional/consultas': typeof CorrespondenteOperacionalConsultasRoute
   '/correspondente/operacional/demandas': typeof CorrespondenteOperacionalDemandasRoute
   '/correspondente/operacional/minhas-simulacoes': typeof CorrespondenteOperacionalMinhasSimulacoesRoute
@@ -280,6 +413,12 @@ export interface FileRoutesByFullPath {
   '/corretor/crm/cadastro': typeof CorretorCrmCadastroRoute
   '/corretor/crm/consultas': typeof CorretorCrmConsultasRoute
   '/corretor/crm/relatorios': typeof CorretorCrmRelatoriosRoute
+  '/corretor/financeiro/comissoes': typeof CorretorFinanceiroComissoesRoute
+  '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
+  '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
+  '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
+  '/corretor/financeiro/relatorios': typeof CorretorFinanceiroRelatoriosRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -289,8 +428,10 @@ export interface FileRoutesByFullPath {
   '/corretor/operacional/simulacoes': typeof CorretorOperacionalSimulacoesRoute
   '/corretor/operacional/tarefas': typeof CorretorOperacionalTarefasRoute
   '/correspondente/crm/': typeof CorrespondenteCrmIndexRoute
+  '/correspondente/financeiro/': typeof CorrespondenteFinanceiroIndexRoute
   '/correspondente/operacional/': typeof CorrespondenteOperacionalIndexRoute
   '/corretor/crm/': typeof CorretorCrmIndexRoute
+  '/corretor/financeiro/': typeof CorretorFinanceiroIndexRoute
   '/corretor/operacional/': typeof CorretorOperacionalIndexRoute
 }
 export interface FileRoutesByTo {
@@ -302,6 +443,14 @@ export interface FileRoutesByTo {
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/relatorios': typeof CorrespondenteCrmRelatoriosRoute
+  '/correspondente/financeiro/categorias': typeof CorrespondenteFinanceiroCategoriasRoute
+  '/correspondente/financeiro/comissoes': typeof CorrespondenteFinanceiroComissoesRoute
+  '/correspondente/financeiro/conciliacao': typeof CorrespondenteFinanceiroConciliacaoRoute
+  '/correspondente/financeiro/fluxo': typeof CorrespondenteFinanceiroFluxoRoute
+  '/correspondente/financeiro/pagar': typeof CorrespondenteFinanceiroPagarRoute
+  '/correspondente/financeiro/receber': typeof CorrespondenteFinanceiroReceberRoute
+  '/correspondente/financeiro/recorrencias': typeof CorrespondenteFinanceiroRecorrenciasRoute
+  '/correspondente/financeiro/relatorios': typeof CorrespondenteFinanceiroRelatoriosRoute
   '/correspondente/operacional/consultas': typeof CorrespondenteOperacionalConsultasRoute
   '/correspondente/operacional/demandas': typeof CorrespondenteOperacionalDemandasRoute
   '/correspondente/operacional/minhas-simulacoes': typeof CorrespondenteOperacionalMinhasSimulacoesRoute
@@ -312,6 +461,12 @@ export interface FileRoutesByTo {
   '/corretor/crm/cadastro': typeof CorretorCrmCadastroRoute
   '/corretor/crm/consultas': typeof CorretorCrmConsultasRoute
   '/corretor/crm/relatorios': typeof CorretorCrmRelatoriosRoute
+  '/corretor/financeiro/comissoes': typeof CorretorFinanceiroComissoesRoute
+  '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
+  '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
+  '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
+  '/corretor/financeiro/relatorios': typeof CorretorFinanceiroRelatoriosRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -321,8 +476,10 @@ export interface FileRoutesByTo {
   '/corretor/operacional/simulacoes': typeof CorretorOperacionalSimulacoesRoute
   '/corretor/operacional/tarefas': typeof CorretorOperacionalTarefasRoute
   '/correspondente/crm': typeof CorrespondenteCrmIndexRoute
+  '/correspondente/financeiro': typeof CorrespondenteFinanceiroIndexRoute
   '/correspondente/operacional': typeof CorrespondenteOperacionalIndexRoute
   '/corretor/crm': typeof CorretorCrmIndexRoute
+  '/corretor/financeiro': typeof CorretorFinanceiroIndexRoute
   '/corretor/operacional': typeof CorretorOperacionalIndexRoute
 }
 export interface FileRoutesById {
@@ -333,8 +490,10 @@ export interface FileRoutesById {
   '/corretor': typeof CorretorRouteWithChildren
   '/cliente/proposta': typeof ClientePropostaRoute
   '/correspondente/crm': typeof CorrespondenteCrmRouteWithChildren
+  '/correspondente/financeiro': typeof CorrespondenteFinanceiroRouteWithChildren
   '/correspondente/operacional': typeof CorrespondenteOperacionalRouteWithChildren
   '/corretor/crm': typeof CorretorCrmRouteWithChildren
+  '/corretor/financeiro': typeof CorretorFinanceiroRouteWithChildren
   '/corretor/operacional': typeof CorretorOperacionalRouteWithChildren
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
@@ -342,6 +501,14 @@ export interface FileRoutesById {
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/relatorios': typeof CorrespondenteCrmRelatoriosRoute
+  '/correspondente/financeiro/categorias': typeof CorrespondenteFinanceiroCategoriasRoute
+  '/correspondente/financeiro/comissoes': typeof CorrespondenteFinanceiroComissoesRoute
+  '/correspondente/financeiro/conciliacao': typeof CorrespondenteFinanceiroConciliacaoRoute
+  '/correspondente/financeiro/fluxo': typeof CorrespondenteFinanceiroFluxoRoute
+  '/correspondente/financeiro/pagar': typeof CorrespondenteFinanceiroPagarRoute
+  '/correspondente/financeiro/receber': typeof CorrespondenteFinanceiroReceberRoute
+  '/correspondente/financeiro/recorrencias': typeof CorrespondenteFinanceiroRecorrenciasRoute
+  '/correspondente/financeiro/relatorios': typeof CorrespondenteFinanceiroRelatoriosRoute
   '/correspondente/operacional/consultas': typeof CorrespondenteOperacionalConsultasRoute
   '/correspondente/operacional/demandas': typeof CorrespondenteOperacionalDemandasRoute
   '/correspondente/operacional/minhas-simulacoes': typeof CorrespondenteOperacionalMinhasSimulacoesRoute
@@ -352,6 +519,12 @@ export interface FileRoutesById {
   '/corretor/crm/cadastro': typeof CorretorCrmCadastroRoute
   '/corretor/crm/consultas': typeof CorretorCrmConsultasRoute
   '/corretor/crm/relatorios': typeof CorretorCrmRelatoriosRoute
+  '/corretor/financeiro/comissoes': typeof CorretorFinanceiroComissoesRoute
+  '/corretor/financeiro/despesas': typeof CorretorFinanceiroDespesasRoute
+  '/corretor/financeiro/fluxo': typeof CorretorFinanceiroFluxoRoute
+  '/corretor/financeiro/recebiveis': typeof CorretorFinanceiroRecebiveisRoute
+  '/corretor/financeiro/recorrencias': typeof CorretorFinanceiroRecorrenciasRoute
+  '/corretor/financeiro/relatorios': typeof CorretorFinanceiroRelatoriosRoute
   '/corretor/operacional/atualizacao': typeof CorretorOperacionalAtualizacaoRoute
   '/corretor/operacional/consultas': typeof CorretorOperacionalConsultasRoute
   '/corretor/operacional/demandas': typeof CorretorOperacionalDemandasRoute
@@ -361,8 +534,10 @@ export interface FileRoutesById {
   '/corretor/operacional/simulacoes': typeof CorretorOperacionalSimulacoesRoute
   '/corretor/operacional/tarefas': typeof CorretorOperacionalTarefasRoute
   '/correspondente/crm/': typeof CorrespondenteCrmIndexRoute
+  '/correspondente/financeiro/': typeof CorrespondenteFinanceiroIndexRoute
   '/correspondente/operacional/': typeof CorrespondenteOperacionalIndexRoute
   '/corretor/crm/': typeof CorretorCrmIndexRoute
+  '/corretor/financeiro/': typeof CorretorFinanceiroIndexRoute
   '/corretor/operacional/': typeof CorretorOperacionalIndexRoute
 }
 export interface FileRouteTypes {
@@ -374,8 +549,10 @@ export interface FileRouteTypes {
     | '/corretor'
     | '/cliente/proposta'
     | '/correspondente/crm'
+    | '/correspondente/financeiro'
     | '/correspondente/operacional'
     | '/corretor/crm'
+    | '/corretor/financeiro'
     | '/corretor/operacional'
     | '/cliente/'
     | '/correspondente/'
@@ -383,6 +560,14 @@ export interface FileRouteTypes {
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/relatorios'
+    | '/correspondente/financeiro/categorias'
+    | '/correspondente/financeiro/comissoes'
+    | '/correspondente/financeiro/conciliacao'
+    | '/correspondente/financeiro/fluxo'
+    | '/correspondente/financeiro/pagar'
+    | '/correspondente/financeiro/receber'
+    | '/correspondente/financeiro/recorrencias'
+    | '/correspondente/financeiro/relatorios'
     | '/correspondente/operacional/consultas'
     | '/correspondente/operacional/demandas'
     | '/correspondente/operacional/minhas-simulacoes'
@@ -393,6 +578,12 @@ export interface FileRouteTypes {
     | '/corretor/crm/cadastro'
     | '/corretor/crm/consultas'
     | '/corretor/crm/relatorios'
+    | '/corretor/financeiro/comissoes'
+    | '/corretor/financeiro/despesas'
+    | '/corretor/financeiro/fluxo'
+    | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
+    | '/corretor/financeiro/relatorios'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -402,8 +593,10 @@ export interface FileRouteTypes {
     | '/corretor/operacional/simulacoes'
     | '/corretor/operacional/tarefas'
     | '/correspondente/crm/'
+    | '/correspondente/financeiro/'
     | '/correspondente/operacional/'
     | '/corretor/crm/'
+    | '/corretor/financeiro/'
     | '/corretor/operacional/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -415,6 +608,14 @@ export interface FileRouteTypes {
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/relatorios'
+    | '/correspondente/financeiro/categorias'
+    | '/correspondente/financeiro/comissoes'
+    | '/correspondente/financeiro/conciliacao'
+    | '/correspondente/financeiro/fluxo'
+    | '/correspondente/financeiro/pagar'
+    | '/correspondente/financeiro/receber'
+    | '/correspondente/financeiro/recorrencias'
+    | '/correspondente/financeiro/relatorios'
     | '/correspondente/operacional/consultas'
     | '/correspondente/operacional/demandas'
     | '/correspondente/operacional/minhas-simulacoes'
@@ -425,6 +626,12 @@ export interface FileRouteTypes {
     | '/corretor/crm/cadastro'
     | '/corretor/crm/consultas'
     | '/corretor/crm/relatorios'
+    | '/corretor/financeiro/comissoes'
+    | '/corretor/financeiro/despesas'
+    | '/corretor/financeiro/fluxo'
+    | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
+    | '/corretor/financeiro/relatorios'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -434,8 +641,10 @@ export interface FileRouteTypes {
     | '/corretor/operacional/simulacoes'
     | '/corretor/operacional/tarefas'
     | '/correspondente/crm'
+    | '/correspondente/financeiro'
     | '/correspondente/operacional'
     | '/corretor/crm'
+    | '/corretor/financeiro'
     | '/corretor/operacional'
   id:
     | '__root__'
@@ -445,8 +654,10 @@ export interface FileRouteTypes {
     | '/corretor'
     | '/cliente/proposta'
     | '/correspondente/crm'
+    | '/correspondente/financeiro'
     | '/correspondente/operacional'
     | '/corretor/crm'
+    | '/corretor/financeiro'
     | '/corretor/operacional'
     | '/cliente/'
     | '/correspondente/'
@@ -454,6 +665,14 @@ export interface FileRouteTypes {
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/relatorios'
+    | '/correspondente/financeiro/categorias'
+    | '/correspondente/financeiro/comissoes'
+    | '/correspondente/financeiro/conciliacao'
+    | '/correspondente/financeiro/fluxo'
+    | '/correspondente/financeiro/pagar'
+    | '/correspondente/financeiro/receber'
+    | '/correspondente/financeiro/recorrencias'
+    | '/correspondente/financeiro/relatorios'
     | '/correspondente/operacional/consultas'
     | '/correspondente/operacional/demandas'
     | '/correspondente/operacional/minhas-simulacoes'
@@ -464,6 +683,12 @@ export interface FileRouteTypes {
     | '/corretor/crm/cadastro'
     | '/corretor/crm/consultas'
     | '/corretor/crm/relatorios'
+    | '/corretor/financeiro/comissoes'
+    | '/corretor/financeiro/despesas'
+    | '/corretor/financeiro/fluxo'
+    | '/corretor/financeiro/recebiveis'
+    | '/corretor/financeiro/recorrencias'
+    | '/corretor/financeiro/relatorios'
     | '/corretor/operacional/atualizacao'
     | '/corretor/operacional/consultas'
     | '/corretor/operacional/demandas'
@@ -473,8 +698,10 @@ export interface FileRouteTypes {
     | '/corretor/operacional/simulacoes'
     | '/corretor/operacional/tarefas'
     | '/correspondente/crm/'
+    | '/correspondente/financeiro/'
     | '/correspondente/operacional/'
     | '/corretor/crm/'
+    | '/corretor/financeiro/'
     | '/corretor/operacional/'
   fileRoutesById: FileRoutesById
 }
@@ -543,6 +770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorretorOperacionalRouteImport
       parentRoute: typeof CorretorRoute
     }
+    '/corretor/financeiro': {
+      id: '/corretor/financeiro'
+      path: '/financeiro'
+      fullPath: '/corretor/financeiro'
+      preLoaderRoute: typeof CorretorFinanceiroRouteImport
+      parentRoute: typeof CorretorRoute
+    }
     '/corretor/crm': {
       id: '/corretor/crm'
       path: '/crm'
@@ -555,6 +789,13 @@ declare module '@tanstack/react-router' {
       path: '/operacional'
       fullPath: '/correspondente/operacional'
       preLoaderRoute: typeof CorrespondenteOperacionalRouteImport
+      parentRoute: typeof CorrespondenteRoute
+    }
+    '/correspondente/financeiro': {
+      id: '/correspondente/financeiro'
+      path: '/financeiro'
+      fullPath: '/correspondente/financeiro'
+      preLoaderRoute: typeof CorrespondenteFinanceiroRouteImport
       parentRoute: typeof CorrespondenteRoute
     }
     '/correspondente/crm': {
@@ -578,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorretorOperacionalIndexRouteImport
       parentRoute: typeof CorretorOperacionalRoute
     }
+    '/corretor/financeiro/': {
+      id: '/corretor/financeiro/'
+      path: '/'
+      fullPath: '/corretor/financeiro/'
+      preLoaderRoute: typeof CorretorFinanceiroIndexRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
     '/corretor/crm/': {
       id: '/corretor/crm/'
       path: '/'
@@ -591,6 +839,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/correspondente/operacional/'
       preLoaderRoute: typeof CorrespondenteOperacionalIndexRouteImport
       parentRoute: typeof CorrespondenteOperacionalRoute
+    }
+    '/correspondente/financeiro/': {
+      id: '/correspondente/financeiro/'
+      path: '/'
+      fullPath: '/correspondente/financeiro/'
+      preLoaderRoute: typeof CorrespondenteFinanceiroIndexRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
     }
     '/correspondente/crm/': {
       id: '/correspondente/crm/'
@@ -654,6 +909,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/corretor/operacional/atualizacao'
       preLoaderRoute: typeof CorretorOperacionalAtualizacaoRouteImport
       parentRoute: typeof CorretorOperacionalRoute
+    }
+    '/corretor/financeiro/relatorios': {
+      id: '/corretor/financeiro/relatorios'
+      path: '/relatorios'
+      fullPath: '/corretor/financeiro/relatorios'
+      preLoaderRoute: typeof CorretorFinanceiroRelatoriosRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
+    '/corretor/financeiro/recorrencias': {
+      id: '/corretor/financeiro/recorrencias'
+      path: '/recorrencias'
+      fullPath: '/corretor/financeiro/recorrencias'
+      preLoaderRoute: typeof CorretorFinanceiroRecorrenciasRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
+    '/corretor/financeiro/recebiveis': {
+      id: '/corretor/financeiro/recebiveis'
+      path: '/recebiveis'
+      fullPath: '/corretor/financeiro/recebiveis'
+      preLoaderRoute: typeof CorretorFinanceiroRecebiveisRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
+    '/corretor/financeiro/fluxo': {
+      id: '/corretor/financeiro/fluxo'
+      path: '/fluxo'
+      fullPath: '/corretor/financeiro/fluxo'
+      preLoaderRoute: typeof CorretorFinanceiroFluxoRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
+    '/corretor/financeiro/despesas': {
+      id: '/corretor/financeiro/despesas'
+      path: '/despesas'
+      fullPath: '/corretor/financeiro/despesas'
+      preLoaderRoute: typeof CorretorFinanceiroDespesasRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
+    }
+    '/corretor/financeiro/comissoes': {
+      id: '/corretor/financeiro/comissoes'
+      path: '/comissoes'
+      fullPath: '/corretor/financeiro/comissoes'
+      preLoaderRoute: typeof CorretorFinanceiroComissoesRouteImport
+      parentRoute: typeof CorretorFinanceiroRoute
     }
     '/corretor/crm/relatorios': {
       id: '/corretor/crm/relatorios'
@@ -725,6 +1022,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorrespondenteOperacionalConsultasRouteImport
       parentRoute: typeof CorrespondenteOperacionalRoute
     }
+    '/correspondente/financeiro/relatorios': {
+      id: '/correspondente/financeiro/relatorios'
+      path: '/relatorios'
+      fullPath: '/correspondente/financeiro/relatorios'
+      preLoaderRoute: typeof CorrespondenteFinanceiroRelatoriosRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/recorrencias': {
+      id: '/correspondente/financeiro/recorrencias'
+      path: '/recorrencias'
+      fullPath: '/correspondente/financeiro/recorrencias'
+      preLoaderRoute: typeof CorrespondenteFinanceiroRecorrenciasRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/receber': {
+      id: '/correspondente/financeiro/receber'
+      path: '/receber'
+      fullPath: '/correspondente/financeiro/receber'
+      preLoaderRoute: typeof CorrespondenteFinanceiroReceberRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/pagar': {
+      id: '/correspondente/financeiro/pagar'
+      path: '/pagar'
+      fullPath: '/correspondente/financeiro/pagar'
+      preLoaderRoute: typeof CorrespondenteFinanceiroPagarRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/fluxo': {
+      id: '/correspondente/financeiro/fluxo'
+      path: '/fluxo'
+      fullPath: '/correspondente/financeiro/fluxo'
+      preLoaderRoute: typeof CorrespondenteFinanceiroFluxoRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/conciliacao': {
+      id: '/correspondente/financeiro/conciliacao'
+      path: '/conciliacao'
+      fullPath: '/correspondente/financeiro/conciliacao'
+      preLoaderRoute: typeof CorrespondenteFinanceiroConciliacaoRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/comissoes': {
+      id: '/correspondente/financeiro/comissoes'
+      path: '/comissoes'
+      fullPath: '/correspondente/financeiro/comissoes'
+      preLoaderRoute: typeof CorrespondenteFinanceiroComissoesRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
+    '/correspondente/financeiro/categorias': {
+      id: '/correspondente/financeiro/categorias'
+      path: '/categorias'
+      fullPath: '/correspondente/financeiro/categorias'
+      preLoaderRoute: typeof CorrespondenteFinanceiroCategoriasRouteImport
+      parentRoute: typeof CorrespondenteFinanceiroRoute
+    }
     '/correspondente/crm/relatorios': {
       id: '/correspondente/crm/relatorios'
       path: '/relatorios'
@@ -779,6 +1132,41 @@ const CorrespondenteCrmRouteChildren: CorrespondenteCrmRouteChildren = {
 const CorrespondenteCrmRouteWithChildren =
   CorrespondenteCrmRoute._addFileChildren(CorrespondenteCrmRouteChildren)
 
+interface CorrespondenteFinanceiroRouteChildren {
+  CorrespondenteFinanceiroCategoriasRoute: typeof CorrespondenteFinanceiroCategoriasRoute
+  CorrespondenteFinanceiroComissoesRoute: typeof CorrespondenteFinanceiroComissoesRoute
+  CorrespondenteFinanceiroConciliacaoRoute: typeof CorrespondenteFinanceiroConciliacaoRoute
+  CorrespondenteFinanceiroFluxoRoute: typeof CorrespondenteFinanceiroFluxoRoute
+  CorrespondenteFinanceiroPagarRoute: typeof CorrespondenteFinanceiroPagarRoute
+  CorrespondenteFinanceiroReceberRoute: typeof CorrespondenteFinanceiroReceberRoute
+  CorrespondenteFinanceiroRecorrenciasRoute: typeof CorrespondenteFinanceiroRecorrenciasRoute
+  CorrespondenteFinanceiroRelatoriosRoute: typeof CorrespondenteFinanceiroRelatoriosRoute
+  CorrespondenteFinanceiroIndexRoute: typeof CorrespondenteFinanceiroIndexRoute
+}
+
+const CorrespondenteFinanceiroRouteChildren: CorrespondenteFinanceiroRouteChildren =
+  {
+    CorrespondenteFinanceiroCategoriasRoute:
+      CorrespondenteFinanceiroCategoriasRoute,
+    CorrespondenteFinanceiroComissoesRoute:
+      CorrespondenteFinanceiroComissoesRoute,
+    CorrespondenteFinanceiroConciliacaoRoute:
+      CorrespondenteFinanceiroConciliacaoRoute,
+    CorrespondenteFinanceiroFluxoRoute: CorrespondenteFinanceiroFluxoRoute,
+    CorrespondenteFinanceiroPagarRoute: CorrespondenteFinanceiroPagarRoute,
+    CorrespondenteFinanceiroReceberRoute: CorrespondenteFinanceiroReceberRoute,
+    CorrespondenteFinanceiroRecorrenciasRoute:
+      CorrespondenteFinanceiroRecorrenciasRoute,
+    CorrespondenteFinanceiroRelatoriosRoute:
+      CorrespondenteFinanceiroRelatoriosRoute,
+    CorrespondenteFinanceiroIndexRoute: CorrespondenteFinanceiroIndexRoute,
+  }
+
+const CorrespondenteFinanceiroRouteWithChildren =
+  CorrespondenteFinanceiroRoute._addFileChildren(
+    CorrespondenteFinanceiroRouteChildren,
+  )
+
 interface CorrespondenteOperacionalRouteChildren {
   CorrespondenteOperacionalConsultasRoute: typeof CorrespondenteOperacionalConsultasRoute
   CorrespondenteOperacionalDemandasRoute: typeof CorrespondenteOperacionalDemandasRoute
@@ -816,12 +1204,14 @@ const CorrespondenteOperacionalRouteWithChildren =
 
 interface CorrespondenteRouteChildren {
   CorrespondenteCrmRoute: typeof CorrespondenteCrmRouteWithChildren
+  CorrespondenteFinanceiroRoute: typeof CorrespondenteFinanceiroRouteWithChildren
   CorrespondenteOperacionalRoute: typeof CorrespondenteOperacionalRouteWithChildren
   CorrespondenteIndexRoute: typeof CorrespondenteIndexRoute
 }
 
 const CorrespondenteRouteChildren: CorrespondenteRouteChildren = {
   CorrespondenteCrmRoute: CorrespondenteCrmRouteWithChildren,
+  CorrespondenteFinanceiroRoute: CorrespondenteFinanceiroRouteWithChildren,
   CorrespondenteOperacionalRoute: CorrespondenteOperacionalRouteWithChildren,
   CorrespondenteIndexRoute: CorrespondenteIndexRoute,
 }
@@ -847,6 +1237,29 @@ const CorretorCrmRouteChildren: CorretorCrmRouteChildren = {
 const CorretorCrmRouteWithChildren = CorretorCrmRoute._addFileChildren(
   CorretorCrmRouteChildren,
 )
+
+interface CorretorFinanceiroRouteChildren {
+  CorretorFinanceiroComissoesRoute: typeof CorretorFinanceiroComissoesRoute
+  CorretorFinanceiroDespesasRoute: typeof CorretorFinanceiroDespesasRoute
+  CorretorFinanceiroFluxoRoute: typeof CorretorFinanceiroFluxoRoute
+  CorretorFinanceiroRecebiveisRoute: typeof CorretorFinanceiroRecebiveisRoute
+  CorretorFinanceiroRecorrenciasRoute: typeof CorretorFinanceiroRecorrenciasRoute
+  CorretorFinanceiroRelatoriosRoute: typeof CorretorFinanceiroRelatoriosRoute
+  CorretorFinanceiroIndexRoute: typeof CorretorFinanceiroIndexRoute
+}
+
+const CorretorFinanceiroRouteChildren: CorretorFinanceiroRouteChildren = {
+  CorretorFinanceiroComissoesRoute: CorretorFinanceiroComissoesRoute,
+  CorretorFinanceiroDespesasRoute: CorretorFinanceiroDespesasRoute,
+  CorretorFinanceiroFluxoRoute: CorretorFinanceiroFluxoRoute,
+  CorretorFinanceiroRecebiveisRoute: CorretorFinanceiroRecebiveisRoute,
+  CorretorFinanceiroRecorrenciasRoute: CorretorFinanceiroRecorrenciasRoute,
+  CorretorFinanceiroRelatoriosRoute: CorretorFinanceiroRelatoriosRoute,
+  CorretorFinanceiroIndexRoute: CorretorFinanceiroIndexRoute,
+}
+
+const CorretorFinanceiroRouteWithChildren =
+  CorretorFinanceiroRoute._addFileChildren(CorretorFinanceiroRouteChildren)
 
 interface CorretorOperacionalRouteChildren {
   CorretorOperacionalAtualizacaoRoute: typeof CorretorOperacionalAtualizacaoRoute
@@ -878,12 +1291,14 @@ const CorretorOperacionalRouteWithChildren =
 
 interface CorretorRouteChildren {
   CorretorCrmRoute: typeof CorretorCrmRouteWithChildren
+  CorretorFinanceiroRoute: typeof CorretorFinanceiroRouteWithChildren
   CorretorOperacionalRoute: typeof CorretorOperacionalRouteWithChildren
   CorretorIndexRoute: typeof CorretorIndexRoute
 }
 
 const CorretorRouteChildren: CorretorRouteChildren = {
   CorretorCrmRoute: CorretorCrmRouteWithChildren,
+  CorretorFinanceiroRoute: CorretorFinanceiroRouteWithChildren,
   CorretorOperacionalRoute: CorretorOperacionalRouteWithChildren,
   CorretorIndexRoute: CorretorIndexRoute,
 }
