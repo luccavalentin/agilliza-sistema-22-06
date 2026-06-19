@@ -63,9 +63,6 @@ function PainelOperacionalInner({
   const [visao, setVisao] = useState<"geral" | "individual">(
     escopo === "corretor" ? "individual" : "geral",
   );
-  const [visao, setVisao] = useState<"geral" | "individual">(
-    escopo === "corretor" ? "individual" : "geral",
-  );
 
   // Recorte do escopo
   const props = useMemo(() => {
