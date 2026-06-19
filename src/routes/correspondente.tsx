@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Layers,
   CheckSquare,
+  Settings,
 } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
@@ -78,6 +79,12 @@ const groups: PortalNavGroup[] = [
   {
     label: "Gestão Administrativa",
     items: [{ label: "Cadastros Gerais", icon: Database }],
+  },
+  {
+    label: "Configurações",
+    items: [
+      { label: "Configurações", to: "/correspondente/configuracoes", icon: Settings },
+    ],
   },
 ];
 
