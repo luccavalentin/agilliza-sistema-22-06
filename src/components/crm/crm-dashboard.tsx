@@ -25,6 +25,11 @@ import {
   Funnel,
   AlertList,
 } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 
 const COLOR = {
   brand: "var(--brand)",
