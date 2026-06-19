@@ -238,8 +238,9 @@ function LoginPage() {
                       ))}
                     </div>
                   </div>
-
+                </>
               ) : (
+
                 <>
                   <div className="space-y-1.5">
                     <label htmlFor="email" className="text-xs font-medium text-graphite">
