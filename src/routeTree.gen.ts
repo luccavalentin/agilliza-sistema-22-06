@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CorretorIndexRouteImport } from './routes/corretor.index'
 import { Route as CorrespondenteIndexRouteImport } from './routes/correspondente.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as CorrespondenteCrmRouteImport } from './routes/correspondente.crm'
 import { Route as CorretorCrmIndexRouteImport } from './routes/corretor.crm.index'
 import { Route as CorrespondenteCrmIndexRouteImport } from './routes/correspondente.crm.index'
 import { Route as CorretorCrmRelatoriosRouteImport } from './routes/corretor.crm.relatorios'
@@ -60,15 +61,20 @@ const ClienteIndexRoute = ClienteIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ClienteRoute,
 } as any)
+const CorrespondenteCrmRoute = CorrespondenteCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => CorrespondenteRoute,
+} as any)
 const CorretorCrmIndexRoute = CorretorCrmIndexRouteImport.update({
   id: '/crm/',
   path: '/crm/',
   getParentRoute: () => CorretorRoute,
 } as any)
 const CorrespondenteCrmIndexRoute = CorrespondenteCrmIndexRouteImport.update({
-  id: '/crm/',
-  path: '/crm/',
-  getParentRoute: () => CorrespondenteRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => CorrespondenteCrmRoute,
 } as any)
 const CorretorCrmRelatoriosRoute = CorretorCrmRelatoriosRouteImport.update({
   id: '/crm/relatorios',
@@ -87,21 +93,21 @@ const CorretorCrmCadastroRoute = CorretorCrmCadastroRouteImport.update({
 } as any)
 const CorrespondenteCrmRelatoriosRoute =
   CorrespondenteCrmRelatoriosRouteImport.update({
-    id: '/crm/relatorios',
-    path: '/crm/relatorios',
-    getParentRoute: () => CorrespondenteRoute,
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => CorrespondenteCrmRoute,
   } as any)
 const CorrespondenteCrmConsultasRoute =
   CorrespondenteCrmConsultasRouteImport.update({
-    id: '/crm/consultas',
-    path: '/crm/consultas',
-    getParentRoute: () => CorrespondenteRoute,
+    id: '/consultas',
+    path: '/consultas',
+    getParentRoute: () => CorrespondenteCrmRoute,
   } as any)
 const CorrespondenteCrmCadastroRoute =
   CorrespondenteCrmCadastroRouteImport.update({
-    id: '/crm/cadastro',
-    path: '/crm/cadastro',
-    getParentRoute: () => CorrespondenteRoute,
+    id: '/cadastro',
+    path: '/cadastro',
+    getParentRoute: () => CorrespondenteCrmRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/cliente': typeof ClienteRouteWithChildren
   '/correspondente': typeof CorrespondenteRouteWithChildren
   '/corretor': typeof CorretorRouteWithChildren
+  '/correspondente/crm': typeof CorrespondenteCrmRouteWithChildren
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
@@ -141,6 +148,7 @@ export interface FileRoutesById {
   '/cliente': typeof ClienteRouteWithChildren
   '/correspondente': typeof CorrespondenteRouteWithChildren
   '/corretor': typeof CorretorRouteWithChildren
+  '/correspondente/crm': typeof CorrespondenteCrmRouteWithChildren
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
@@ -160,6 +168,7 @@ export interface FileRouteTypes {
     | '/cliente'
     | '/correspondente'
     | '/corretor'
+    | '/correspondente/crm'
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/cliente'
     | '/correspondente'
     | '/corretor'
+    | '/correspondente/crm'
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
@@ -262,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClienteIndexRouteImport
       parentRoute: typeof ClienteRoute
     }
+    '/correspondente/crm': {
+      id: '/correspondente/crm'
+      path: '/crm'
+      fullPath: '/correspondente/crm'
+      preLoaderRoute: typeof CorrespondenteCrmRouteImport
+      parentRoute: typeof CorrespondenteRoute
+    }
     '/corretor/crm/': {
       id: '/corretor/crm/'
       path: '/crm'
@@ -271,10 +288,10 @@ declare module '@tanstack/react-router' {
     }
     '/correspondente/crm/': {
       id: '/correspondente/crm/'
-      path: '/crm'
+      path: '/'
       fullPath: '/correspondente/crm/'
       preLoaderRoute: typeof CorrespondenteCrmIndexRouteImport
-      parentRoute: typeof CorrespondenteRoute
+      parentRoute: typeof CorrespondenteCrmRoute
     }
     '/corretor/crm/relatorios': {
       id: '/corretor/crm/relatorios'
@@ -299,24 +316,24 @@ declare module '@tanstack/react-router' {
     }
     '/correspondente/crm/relatorios': {
       id: '/correspondente/crm/relatorios'
-      path: '/crm/relatorios'
+      path: '/relatorios'
       fullPath: '/correspondente/crm/relatorios'
       preLoaderRoute: typeof CorrespondenteCrmRelatoriosRouteImport
-      parentRoute: typeof CorrespondenteRoute
+      parentRoute: typeof CorrespondenteCrmRoute
     }
     '/correspondente/crm/consultas': {
       id: '/correspondente/crm/consultas'
-      path: '/crm/consultas'
+      path: '/consultas'
       fullPath: '/correspondente/crm/consultas'
       preLoaderRoute: typeof CorrespondenteCrmConsultasRouteImport
-      parentRoute: typeof CorrespondenteRoute
+      parentRoute: typeof CorrespondenteCrmRoute
     }
     '/correspondente/crm/cadastro': {
       id: '/correspondente/crm/cadastro'
-      path: '/crm/cadastro'
+      path: '/cadastro'
       fullPath: '/correspondente/crm/cadastro'
       preLoaderRoute: typeof CorrespondenteCrmCadastroRouteImport
-      parentRoute: typeof CorrespondenteRoute
+      parentRoute: typeof CorrespondenteCrmRoute
     }
   }
 }
@@ -332,20 +349,31 @@ const ClienteRouteChildren: ClienteRouteChildren = {
 const ClienteRouteWithChildren =
   ClienteRoute._addFileChildren(ClienteRouteChildren)
 
-interface CorrespondenteRouteChildren {
-  CorrespondenteIndexRoute: typeof CorrespondenteIndexRoute
+interface CorrespondenteCrmRouteChildren {
   CorrespondenteCrmCadastroRoute: typeof CorrespondenteCrmCadastroRoute
   CorrespondenteCrmConsultasRoute: typeof CorrespondenteCrmConsultasRoute
   CorrespondenteCrmRelatoriosRoute: typeof CorrespondenteCrmRelatoriosRoute
   CorrespondenteCrmIndexRoute: typeof CorrespondenteCrmIndexRoute
 }
 
-const CorrespondenteRouteChildren: CorrespondenteRouteChildren = {
-  CorrespondenteIndexRoute: CorrespondenteIndexRoute,
+const CorrespondenteCrmRouteChildren: CorrespondenteCrmRouteChildren = {
   CorrespondenteCrmCadastroRoute: CorrespondenteCrmCadastroRoute,
   CorrespondenteCrmConsultasRoute: CorrespondenteCrmConsultasRoute,
   CorrespondenteCrmRelatoriosRoute: CorrespondenteCrmRelatoriosRoute,
   CorrespondenteCrmIndexRoute: CorrespondenteCrmIndexRoute,
+}
+
+const CorrespondenteCrmRouteWithChildren =
+  CorrespondenteCrmRoute._addFileChildren(CorrespondenteCrmRouteChildren)
+
+interface CorrespondenteRouteChildren {
+  CorrespondenteCrmRoute: typeof CorrespondenteCrmRouteWithChildren
+  CorrespondenteIndexRoute: typeof CorrespondenteIndexRoute
+}
+
+const CorrespondenteRouteChildren: CorrespondenteRouteChildren = {
+  CorrespondenteCrmRoute: CorrespondenteCrmRouteWithChildren,
+  CorrespondenteIndexRoute: CorrespondenteIndexRoute,
 }
 
 const CorrespondenteRouteWithChildren = CorrespondenteRoute._addFileChildren(
