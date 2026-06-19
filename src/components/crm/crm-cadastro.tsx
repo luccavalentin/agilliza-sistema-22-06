@@ -19,6 +19,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
+import { MaskedInput } from "@/components/ui/masked-input";
+import type { MaskKind } from "@/lib/formatters";
 import type { CrmScope } from "./crm-dashboard";
 
 type SectionKey =
@@ -46,6 +48,21 @@ const sections: { key: SectionKey; label: string; icon: typeof User2 }[] = [
   { key: "documentos", label: "Documentos", icon: FileText },
 ];
 
+// Detecta máscara automaticamente a partir do label do campo.
+function inferMask(label: string): { mask?: MaskKind; validate?: "cpf" | "cnpj" | "cpfcnpj" | "email"; type?: string } {
+  const l = label.toLowerCase();
+  if (l.includes("cpf / cnpj") || l.includes("cpf/cnpj")) return { mask: "cpfcnpj", validate: "cpfcnpj" };
+  if (l.includes("cnpj")) return { mask: "cnpj", validate: "cnpj" };
+  if (l.includes("cpf")) return { mask: "cpf", validate: "cpf" };
+  if (l.includes("e-mail") || l.includes("email")) return { validate: "email", type: "email" };
+  if (l.includes("celular") || l.includes("telefone")) return { mask: "phone" };
+  if (l.includes("cep")) return { mask: "cep" };
+  if (l.startsWith("data") || l.includes(" data")) return { type: "date" };
+  if (l.includes("renda") || l.includes("faturamento") || l.includes("patrimônio") || l.includes("capital") || l.includes("saldo") || l.includes("valor")) return { mask: "currency" };
+  if (l.includes("percentual") || l.includes("(%)")) return { mask: "percent" };
+  return {};
+}
+
 function Field({
   label,
   children,
@@ -57,16 +74,28 @@ function Field({
   required?: boolean;
   span?: string;
 }) {
+  const inferred = inferMask(label);
   return (
     <label className={`flex flex-col gap-1 ${span}`}>
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label} {required && <span className="text-direction">*</span>}
       </span>
       {children ?? (
-        <input
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-          placeholder=" "
-        />
+        inferred.mask || inferred.validate ? (
+          <MaskedInput
+            mask={inferred.mask}
+            validate={inferred.validate}
+            type={inferred.type}
+            className="h-9 px-3"
+            placeholder=" "
+          />
+        ) : (
+          <input
+            type={inferred.type ?? "text"}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
+            placeholder=" "
+          />
+        )
       )}
     </label>
   );
