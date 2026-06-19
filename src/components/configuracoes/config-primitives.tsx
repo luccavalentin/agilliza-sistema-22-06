@@ -167,11 +167,22 @@ function FieldRow({ field }: { field: ConfigField }) {
     case "text":
       return (
         <Labeled label={field.label}>
-          <input
+          <MaskedInput
             type={field.type ?? "text"}
             defaultValue={field.defaultValue}
             placeholder={field.placeholder}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
+            validate={field.type === "email" ? "email" : undefined}
+          />
+        </Labeled>
+      );
+    case "mask":
+      return (
+        <Labeled label={field.label}>
+          <MaskedInput
+            mask={field.mask}
+            defaultValue={field.defaultValue}
+            placeholder={field.placeholder}
+            validate={field.validate}
           />
         </Labeled>
       );
