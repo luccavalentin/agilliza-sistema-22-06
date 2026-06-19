@@ -10,6 +10,11 @@ import {
   Building2, Download, Filter,
 } from "lucide-react";
 import { PanelHeader, Panel, KpiCard } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
