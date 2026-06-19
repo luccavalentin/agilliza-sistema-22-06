@@ -106,10 +106,14 @@ export const contasPagar: Lancamento[] = Array.from({ length: 28 }, (_, i) => {
   const isVencido = new Date(venc).getTime() < now;
   let status: StatusPagar = pick(statusP, i);
   if (isVencido && status === "Em aberto") status = "Vencido";
+  const natureza = ["Folha de Pagamento", "Aluguel sede", "Plataforma CRM", "Energia + Internet", "Google Ads"].some(n => base.d.includes(n))
+    ? "Recorrente"
+    : i % 5 === 0 ? "Parcelado" : "Esporádico";
   return {
     id: `pag-${i + 1}`,
     descricao: `${base.d} ${i + 1}`,
     tipo: "pagar",
+    natureza,
     fornecedor: ["Imobiliária Central", "Construtech S.A.", "Fornecedor X", "Tech Solutions", "Marketing Pro"][i % 5],
     beneficiario: pick(usuarios, i).nome,
     categoriaId: base.c,
@@ -122,9 +126,18 @@ export const contasPagar: Lancamento[] = Array.from({ length: 28 }, (_, i) => {
     status,
     forma: pick(formas, i + 1),
     contaId: pick(contas, i).id,
+    recorrencia: natureza === "Recorrente" ? {
+      frequencia: "Mensal", diaVencimento: 10, dataInicio: dAgo(180),
+      indefinido: true, valorFixo: !base.d.includes("Energia") && !base.d.includes("Ads"),
+      permitirAlteracao: true, gerarFuturosAuto: true, mesesPreGerar: 12, status: "Ativa",
+    } : undefined,
+    parcelamento: natureza === "Parcelado" ? {
+      totalParcelas: 6, parcelaAtual: (i % 6) + 1, valorTotal: base.v * 6, valorParcela: base.v,
+      primeiroVencimento: dAgo(120), frequencia: "Mensal", diaVencimento: 10, grupoId: `grp-pag-${i}`,
+    } : undefined,
     criadoPor: "u-corr-1",
     criadoEm: dAgo(15 + i),
-  };
+  } as Lancamento;
 });
 
 // --- Comissões ---
