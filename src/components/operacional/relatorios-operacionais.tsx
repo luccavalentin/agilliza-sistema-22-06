@@ -177,7 +177,7 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
           delta="+12,4%"
           positivo
           icon={<Wallet className="h-4 w-4" />}
-          gradient="from-blue-600 to-indigo-600"
+          gradient={`linear-gradient(135deg, ${TOKENS.brand}, ${TOKENS.brandSoft})`}
         />
         <KpiCard
           label="Taxa de conversão"
@@ -185,7 +185,7 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
           delta="+3,1%"
           positivo
           icon={<TrendingUp className="h-4 w-4" />}
-          gradient="from-violet-600 to-fuchsia-600"
+          gradient={`linear-gradient(135deg, ${TOKENS.info}, ${TOKENS.brand})`}
           sub={`${totalSim} sim. → ${totalProp} prop.`}
         />
         <KpiCard
@@ -194,7 +194,7 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
           delta="+5,8%"
           positivo
           icon={<Target className="h-4 w-4" />}
-          gradient="from-emerald-600 to-teal-600"
+          gradient={`linear-gradient(135deg, ${TOKENS.success}, ${TOKENS.successSoft})`}
           sub={`${aprovadas} aprovadas`}
         />
         <KpiCard
@@ -203,7 +203,7 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
           delta="-2"
           positivo
           icon={<BarChart3 className="h-4 w-4" />}
-          gradient="from-amber-500 to-orange-600"
+          gradient={`linear-gradient(135deg, ${TOKENS.direction}, ${TOKENS.warning})`}
           sub={`${transf} transferências`}
         />
       </section>
