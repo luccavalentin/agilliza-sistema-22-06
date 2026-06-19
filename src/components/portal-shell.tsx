@@ -14,7 +14,7 @@ import {
 
 export type PortalNavItem = {
   label: string;
-  to: string;
+  to?: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
 };
 
