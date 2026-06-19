@@ -10,6 +10,11 @@ import {
   Building2, Download, Filter,
 } from "lucide-react";
 import { PanelHeader, Panel, KpiCard } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +37,28 @@ const filtrosCorr = ["Período", "Mês", "Ano", "Centro de custo", "Categoria", 
 const filtrosCor = ["Período", "Produto", "Cliente", "Proposta", "Status", "Categoria", "Forma de pagamento"];
 
 export function PainelFinanceiro({ escopo }: { escopo: Escopo }) {
+  return (
+    <DashboardDetailProvider>
+      <PainelFinanceiroInner escopo={escopo} />
+    </DashboardDetailProvider>
+  );
+}
+
+function PainelFinanceiroInner({ escopo }: { escopo: Escopo }) {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string, count = 16) =>
+    open({
+      title,
+      subtitle: `Painel Financeiro · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+      period: "Últimos 30 dias",
+      kpis: [
+        { label: title, value },
+        { label: "Período", value: "30 dias" },
+        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
+        { label: "Registros", value: String(count) },
+      ],
+      rows: buildMockRows(count),
+    });
   const corretorId = "u-cor-1";
   const [periodo, setPeriodo] = useState("30 dias");
 
@@ -166,7 +193,7 @@ export function PainelFinanceiro({ escopo }: { escopo: Escopo }) {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(c => <KpiCard key={c.label} {...c} />)}
+        {cards.map(c => <KpiCard key={c.label} {...c} onClick={() => drill(c.label, c.value, 18)} />)}
       </div>
 
       {/* KPIs por natureza de lançamento */}
@@ -182,12 +209,12 @@ export function PainelFinanceiro({ escopo }: { escopo: Escopo }) {
             const pagParc = sumN(pagDados, "Parcelado");
             return (
               <>
-                <KpiCard label="Esporádico a receber" value={formatBRL(recEsp)} accent={TOKENS.muted} icon={Receipt} />
-                <KpiCard label="Recorrente a receber" value={formatBRL(recRec)} accent={TOKENS.brand} icon={Clock} />
-                <KpiCard label="Parcelado a receber" value={formatBRL(recParc)} accent={TOKENS.info} icon={Receipt} />
-                <KpiCard label="Esporádico a pagar" value={formatBRL(pagEsp)} accent={TOKENS.muted} icon={Receipt} />
-                <KpiCard label="Recorrente a pagar" value={formatBRL(pagRec)} accent={TOKENS.direction} icon={Clock} />
-                <KpiCard label="Parcelado a pagar" value={formatBRL(pagParc)} accent={TOKENS.warning} icon={Receipt} />
+                <KpiCard label="Esporádico a receber" value={formatBRL(recEsp)} accent={TOKENS.muted} icon={Receipt} onClick={() => drill("Esporádico a receber", formatBRL(recEsp), 12)} />
+                <KpiCard label="Recorrente a receber" value={formatBRL(recRec)} accent={TOKENS.brand} icon={Clock} onClick={() => drill("Recorrente a receber", formatBRL(recRec), 12)} />
+                <KpiCard label="Parcelado a receber" value={formatBRL(recParc)} accent={TOKENS.info} icon={Receipt} onClick={() => drill("Parcelado a receber", formatBRL(recParc), 12)} />
+                <KpiCard label="Esporádico a pagar" value={formatBRL(pagEsp)} accent={TOKENS.muted} icon={Receipt} onClick={() => drill("Esporádico a pagar", formatBRL(pagEsp), 12)} />
+                <KpiCard label="Recorrente a pagar" value={formatBRL(pagRec)} accent={TOKENS.direction} icon={Clock} onClick={() => drill("Recorrente a pagar", formatBRL(pagRec), 12)} />
+                <KpiCard label="Parcelado a pagar" value={formatBRL(pagParc)} accent={TOKENS.warning} icon={Receipt} onClick={() => drill("Parcelado a pagar", formatBRL(pagParc), 12)} />
               </>
             );
           })()}

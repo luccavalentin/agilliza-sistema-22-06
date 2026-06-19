@@ -12,6 +12,11 @@ import {
   KpiCard, MultiBarChart, Panel, PanelHeader,
 } from "@/components/dashboards/primitives";
 import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
+import {
   bancos, clientes, demandas, propostas, simulacoes,
   tarefas, usuarios, usuarioById, bancoById, clienteById,
 } from "@/lib/operacional/mock-data";
@@ -27,6 +32,34 @@ export function PainelOperacional({
   escopo: Escopo;
   usuarioAtualId?: string;
 }) {
+  return (
+    <DashboardDetailProvider>
+      <PainelOperacionalInner escopo={escopo} usuarioAtualId={usuarioAtualId} />
+    </DashboardDetailProvider>
+  );
+}
+
+function PainelOperacionalInner({
+  escopo,
+  usuarioAtualId = "u-cor-1",
+}: {
+  escopo: Escopo;
+  usuarioAtualId?: string;
+}) {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string, count = 16, hint?: { banco?: string; status?: string }) =>
+    open({
+      title,
+      subtitle: `Painel Operacional · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+      period: "Últimos 30 dias",
+      kpis: [
+        { label: title, value },
+        { label: "Período", value: "30 dias" },
+        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
+        { label: "Registros", value: String(count) },
+      ],
+      rows: buildMockRows(count, hint),
+    });
   const [visao, setVisao] = useState<"geral" | "individual">(
     escopo === "corretor" ? "individual" : "geral",
   );
@@ -263,105 +296,116 @@ export function PainelOperacional({
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         <KpiCard label="Total simulações" value={String(totalSim)} accent="#001bbf" icon={Sparkles}
           sub={[{ k: "Mês", v: String(simMes) }, { k: "Em andamento", v: String(simEmAndamento) }]}
-          footer={{ label: "Enviadas para proposta", value: String(simParaProposta) }} />
+          footer={{ label: "Enviadas para proposta", value: String(simParaProposta) }}
+          onClick={() => drill("Total simulações", String(totalSim), 20)}
+          onSubClick={(k) => drill(`Simulações · ${k}`, k === "Mês" ? String(simMes) : String(simEmAndamento), 14)} />
         <KpiCard label="Total propostas" value={String(totalProp)} accent="#0a8fdc" icon={FileCheck2}
           sub={[{ k: "Aprovadas", v: String(propAprovadas) }, { k: "Em aprov.", v: String(propEmAprovacao) }]}
-          footer={{ label: "Sequenciadas", value: String(propSequenciadas) }} />
+          footer={{ label: "Sequenciadas", value: String(propSequenciadas) }}
+          onClick={() => drill("Total propostas", String(totalProp), 20)}
+          onSubClick={(k) => drill(`Propostas · ${k}`, k === "Aprovadas" ? String(propAprovadas) : String(propEmAprovacao), 14, { status: k === "Aprovadas" ? "Aprovada" : "Em análise" })} />
         <KpiCard label="SLA médio (dias)" value={String(slaMedio)} accent="#ff8a00" icon={Gauge}
-          caption="Distância média até o vencimento de SLA por proposta" />
+          caption="Distância média até o vencimento de SLA por proposta"
+          onClick={() => drill("SLA médio", `${slaMedio} dias`, 16)} />
         <KpiCard label="Demandas abertas" value={String(demAbertas)} accent="#7a7af1" icon={Activity}
-          sub={[{ k: "Atrasadas", v: String(demAtrasadas) }, { k: "Concluídas", v: String(demConcluidas) }]} />
+          sub={[{ k: "Atrasadas", v: String(demAtrasadas) }, { k: "Concluídas", v: String(demConcluidas) }]}
+          onClick={() => drill("Demandas abertas", String(demAbertas), 18)}
+          onSubClick={(k) => drill(`Demandas · ${k}`, k === "Atrasadas" ? String(demAtrasadas) : String(demConcluidas), 14)} />
       </section>
 
       {/* KPIs propostas detalhados */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
-        <KpiCard label="Não sequenciadas" value={String(propNaoSeq)} accent="#e02323" />
-        <KpiCard label="Em tratativa" value={String(propTratativa)} accent="#ff8a00" />
-        <KpiCard label="Doc. pendente" value={String(propDocPend)} accent="#ff8a00" />
-        <KpiCard label="Aguardando banco" value={String(propAguardBanco)} accent="#0a8fdc" />
-        <KpiCard label="Análise jurídica" value={String(propJuridica)} accent="#7a7af1" />
-        <KpiCard label="Contrato emitido" value={String(propContrato)} accent="#00b35a" />
+        <KpiCard label="Não sequenciadas" value={String(propNaoSeq)} accent="#e02323" onClick={() => drill("Não sequenciadas", String(propNaoSeq), 12)} />
+        <KpiCard label="Em tratativa" value={String(propTratativa)} accent="#ff8a00" onClick={() => drill("Em tratativa", String(propTratativa), 12, { status: "Tratativa" })} />
+        <KpiCard label="Doc. pendente" value={String(propDocPend)} accent="#ff8a00" onClick={() => drill("Doc. pendente", String(propDocPend), 12, { status: "Pendência docs" })} />
+        <KpiCard label="Aguardando banco" value={String(propAguardBanco)} accent="#0a8fdc" onClick={() => drill("Aguardando banco", String(propAguardBanco), 12, { status: "Em análise" })} />
+        <KpiCard label="Análise jurídica" value={String(propJuridica)} accent="#7a7af1" onClick={() => drill("Análise jurídica", String(propJuridica), 10)} />
+        <KpiCard label="Contrato emitido" value={String(propContrato)} accent="#00b35a" onClick={() => drill("Contrato emitido", String(propContrato), 12)} />
       </section>
 
       {/* Tarefas pessoais */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Reprovadas" value={String(propReprovadas)} accent="#e02323" icon={AlertTriangle} />
-        <KpiCard label="Finalizadas" value={String(propFinalizadas)} accent="#00b35a" icon={CheckCircle2} />
-        <KpiCard label="Tarefas pendentes" value={String(tarPendentes)} accent="#001bbf" icon={ListChecks} />
-        <KpiCard label="Tarefas concluídas" value={String(tarConcluidas)} accent="#00b35a" icon={CheckCircle2} />
+        <KpiCard label="Reprovadas" value={String(propReprovadas)} accent="#e02323" icon={AlertTriangle} onClick={() => drill("Reprovadas", String(propReprovadas), 12, { status: "Reprovada" })} />
+        <KpiCard label="Finalizadas" value={String(propFinalizadas)} accent="#00b35a" icon={CheckCircle2} onClick={() => drill("Finalizadas", String(propFinalizadas), 14, { status: "Aprovada" })} />
+        <KpiCard label="Tarefas pendentes" value={String(tarPendentes)} accent="#001bbf" icon={ListChecks} onClick={() => drill("Tarefas pendentes", String(tarPendentes), 12)} />
+        <KpiCard label="Tarefas concluídas" value={String(tarConcluidas)} accent="#00b35a" icon={CheckCircle2} onClick={() => drill("Tarefas concluídas", String(tarConcluidas), 12)} />
       </section>
 
       {/* Gráficos */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Evolução simulações × propostas" icon={TrendingUp} className="lg:col-span-2">
+        <Panel title="Evolução simulações × propostas" icon={TrendingUp} className="lg:col-span-2" onClick={() => drill("Evolução simulações × propostas", String(totalSim + totalProp), 20)}>
           <MultiBarChart
             data={evolucaoSimPropPorMes}
             series={[
               { color: "#001bbf", label: "Simulações" },
               { color: "#00b35a", label: "Propostas" },
             ]}
+            onBarClick={(period, serieLabel, value) => drill(`${serieLabel} · ${period}`, String(value), 14)}
           />
         </Panel>
-        <Panel title="Funil operacional" icon={Filter}>
-          <Funnel steps={funilOperacional} />
+        <Panel title="Funil operacional" icon={Filter} onClick={() => drill("Funil operacional", String(totalProp), 18)}>
+          <Funnel steps={funilOperacional} onStepClick={(label, value) => drill(`Funil · ${label}`, String(value), 14)} />
         </Panel>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Distribuição por status" icon={Layers}>
+        <Panel title="Distribuição por status" icon={Layers} onClick={() => drill("Distribuição por status", String(totalProp), 18)}>
           {distStatusProp.length > 0 ? (
-            <Donut segments={distStatusProp} centerLabel="Propostas" centerValue={String(totalProp)} />
+            <Donut segments={distStatusProp} centerLabel="Propostas" centerValue={String(totalProp)} onSegmentClick={(label, value) => drill(`Status · ${label}`, String(value), 14)} />
           ) : (
             <p className="text-xs text-muted-foreground">Sem dados.</p>
           )}
         </Panel>
-        <Panel title="Distribuição por etapa" icon={Target}>
-          <HBarList rows={distEtapa} accent="#001bbf" />
+        <Panel title="Distribuição por etapa" icon={Target} onClick={() => drill("Distribuição por etapa", String(totalProp), 18)}>
+          <HBarList rows={distEtapa} accent="#001bbf" onRowClick={(label, value) => drill(`Etapa · ${label}`, String(value), 14)} />
         </Panel>
-        <Panel title="Financiamento × Home Equity" icon={Building2}>
-          <Donut segments={finVsHe} centerLabel="Mix produtos" centerValue={String(totalProp)} />
+        <Panel title="Financiamento × Home Equity" icon={Building2} onClick={() => drill("Mix de produtos", String(totalProp), 18)}>
+          <Donut segments={finVsHe} centerLabel="Mix produtos" centerValue={String(totalProp)} onSegmentClick={(label, value) => drill(`Produto · ${label}`, String(value), 14)} />
         </Panel>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Propostas por banco" icon={Banknote}>
-          <HBarList rows={propPorBanco} accent="#0a8fdc" />
+        <Panel title="Propostas por banco" icon={Banknote} onClick={() => drill("Propostas por banco", String(totalProp), 20)}>
+          <HBarList rows={propPorBanco} accent="#0a8fdc" onRowClick={(label, value) => drill(`Banco · ${label}`, String(value), 14, { banco: label })} />
         </Panel>
-        <Panel title="Simulações por banco" icon={Banknote}>
-          <HBarList rows={simPorBanco} accent="#7a7af1" />
+        <Panel title="Simulações por banco" icon={Banknote} onClick={() => drill("Simulações por banco", String(totalSim), 20)}>
+          <HBarList rows={simPorBanco} accent="#7a7af1" onRowClick={(label, value) => drill(`Sim · ${label}`, String(value), 14, { banco: label })} />
         </Panel>
-        <Panel title="Produtividade por usuário" icon={Users}>
-          <HBarList rows={produtividadeUsuario} accent="#00b35a" />
+        <Panel title="Produtividade por usuário" icon={Users} onClick={() => drill("Produtividade por usuário", String(totalProp), 16)}>
+          <HBarList rows={produtividadeUsuario} accent="#00b35a" onRowClick={(label, value) => drill(`Usuário · ${label}`, String(value), 14)} />
         </Panel>
       </div>
 
       {/* Blocos de monitoramento */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Propostas próximas do SLA" icon={Clock}>
+        <Panel title="Propostas próximas do SLA" icon={Clock} onClick={() => drill("Propostas próximas do SLA", String(propProxSla.length), 12)}>
           <AlertList
             items={propProxSla.map((p) => ({
               tone: "warning" as const,
               title: `${p.numero} — ${clienteById(p.clienteId)?.nome ?? ""}`,
               meta: `${bancoById(p.bancoId)?.sigla} • ${p.etapa} • vence em ${Math.max(0, Math.round((+new Date(p.slaPrazo) - Date.now()) / 86400000))}d`,
             }))}
+            onItemClick={(title) => drill(title, "Próximo do SLA", 8)}
           />
         </Panel>
-        <Panel title="Propostas vencidas" icon={AlertTriangle}>
+        <Panel title="Propostas vencidas" icon={AlertTriangle} onClick={() => drill("Propostas vencidas", String(propVencidas.length), 12)}>
           <AlertList
             items={propVencidas.map((p) => ({
               tone: "critical" as const,
               title: `${p.numero} — ${clienteById(p.clienteId)?.nome ?? ""}`,
               meta: `Vencida há ${Math.max(1, Math.round((Date.now() - +new Date(p.slaPrazo)) / 86400000))}d • ${p.etapa}`,
             }))}
+            onItemClick={(title) => drill(title, "Vencida", 8)}
           />
         </Panel>
-        <Panel title="Propostas paradas" icon={Activity}>
+        <Panel title="Propostas paradas" icon={Activity} onClick={() => drill("Propostas paradas", String(propParadas.length), 12)}>
           <AlertList
             items={propParadas.map((p) => ({
               tone: "info" as const,
               title: `${p.numero} — ${clienteById(p.clienteId)?.nome ?? ""}`,
               meta: `Sem movimento há ${Math.round((Date.now() - +new Date(p.atualizadaEm)) / 86400000)}d`,
             }))}
+            onItemClick={(title) => drill(title, "Parada", 8)}
           />
         </Panel>
       </div>
