@@ -9,13 +9,18 @@ import {
   Calculator,
   CheckCircle2,
   Clock,
-  
   ListChecks,
   BarChart3,
   ArrowDownCircle,
   ArrowUpCircle,
   FileBarChart,
   Database,
+  Wallet,
+  Banknote,
+  TrendingUp,
+  RefreshCw,
+  Layers,
+  CheckSquare,
 } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
