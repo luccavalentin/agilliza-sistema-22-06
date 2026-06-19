@@ -24,8 +24,24 @@ type Escopo = "correspondente" | "corretor";
 
 const periodos = ["7 dias", "30 dias", "90 dias", "Ano"];
 
-// Paleta executiva
-const PALETA = ["#2563eb", "#7c3aed", "#0ea5e9", "#16a34a", "#f59e0b", "#dc2626", "#0891b2", "#db2777"];
+// Paleta institucional — tokens do sistema
+const TOKENS = {
+  brand: "#000f9f",
+  brandSoft: "#4a55c4",
+  direction: "#f5333f",
+  directionSoft: "#f8757e",
+  success: "#15803d",
+  successSoft: "#4ea870",
+  warning: "#d97706",
+  info: "#2563eb",
+  graphite: "#1a1f2e",
+  muted: "#6b7280",
+  grid: "#e5e7eb",
+};
+const PALETA = [
+  TOKENS.brand, TOKENS.direction, TOKENS.success, TOKENS.warning,
+  TOKENS.info, TOKENS.brandSoft, TOKENS.directionSoft, TOKENS.successSoft,
+];
 
 export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
   const [periodo, setPeriodo] = useState("30 dias");
@@ -98,7 +114,7 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
     return tipos.map((t, i) => ({
       name: t,
       value: props.filter((p) => p.produto === t).length,
-      fill: i === 0 ? "#2563eb" : "#7c3aed",
+      fill: i === 0 ? TOKENS.brand : TOKENS.direction,
     }));
   }, [props]);
 
