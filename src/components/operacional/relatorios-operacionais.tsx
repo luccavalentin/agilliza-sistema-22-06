@@ -410,7 +410,7 @@ function KpiCard({
 }) {
   return (
     <article className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${gradient}`} />
+      <div className="absolute inset-x-0 top-0 h-1" style={{ background: gradient }} />
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -418,18 +418,18 @@ function KpiCard({
             <p className="mt-1.5 text-2xl font-bold tracking-tight text-graphite">{valor}</p>
             {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
           </div>
-          <div className={`grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br ${gradient} text-white shadow-sm`}>
+          <div className="grid h-9 w-9 place-items-center rounded-lg text-white shadow-sm" style={{ background: gradient }}>
             {icon}
           </div>
         </div>
         {delta && (
           <div className="mt-3 flex items-center gap-1 text-[11px]">
             {positivo ? (
-              <ArrowUpRight className="h-3 w-3 text-emerald-600" />
+              <ArrowUpRight className="h-3 w-3" style={{ color: TOKENS.success }} />
             ) : (
-              <ArrowDownRight className="h-3 w-3 text-red-600" />
+              <ArrowDownRight className="h-3 w-3" style={{ color: TOKENS.direction }} />
             )}
-            <span className={positivo ? "font-semibold text-emerald-700" : "font-semibold text-red-700"}>{delta}</span>
+            <span className="font-semibold" style={{ color: positivo ? TOKENS.success : TOKENS.direction }}>{delta}</span>
             <span className="text-muted-foreground">vs período anterior</span>
           </div>
         )}
