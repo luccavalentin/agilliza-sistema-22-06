@@ -373,7 +373,7 @@ function PropostaDetalhe({
           )}
           {aba === "chat" && (
             <PopoutChat
-              titulo={`Chat interno — ${proposta.codigo ?? proposta.id}`}
+              titulo={`Chat interno — ${proposta.id}`}
               storageKey={`proposta-${proposta.id}`}
               mensagens={[
                 { autor: usuarios[0].nome, texto: "Documentação do imóvel pendente — solicitar matrícula atualizada.", quando: "há 2h" },
