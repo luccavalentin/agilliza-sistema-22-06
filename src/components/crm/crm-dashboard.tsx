@@ -215,7 +215,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
 
       {/* Distribuição por vínculos */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Clientes por origem" icon={Layers}>
+        <Panel title="Clientes por origem" icon={Layers} onClick={() => drill("Clientes por origem", "Origem", 20)}>
           <HBarList
             accent={COLOR.brand}
             rows={[
@@ -226,10 +226,11 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { label: "Indicação cliente", value: 96 },
               { label: "Outros", value: 65 },
             ]}
+            onRowClick={(label, value) => drill(`Origem · ${label}`, String(value), 14)}
           />
         </Panel>
         {isCorr ? (
-          <Panel title="Clientes por corretor" icon={UserCheck}>
+          <Panel title="Clientes por corretor" icon={UserCheck} onClick={() => drill("Clientes por corretor", "Equipe", 20)}>
             <HBarList
               accent={COLOR.info}
               rows={[
@@ -239,10 +240,11 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
                 { label: "Bruno Tavares", value: 96 },
                 { label: "Ana Beatriz", value: 74 },
               ]}
+              onRowClick={(label, value) => drill(`Corretor · ${label}`, String(value), 14)}
             />
           </Panel>
         ) : (
-          <Panel title="Clientes por produto" icon={Building2}>
+          <Panel title="Clientes por produto" icon={Building2} onClick={() => drill("Clientes por produto", "Produto", 16)}>
             <HBarList
               accent={COLOR.info}
               rows={[
@@ -250,11 +252,12 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
                 { label: "Imob. Usado", value: 54 },
                 { label: "Home Equity", value: 68 },
               ]}
+              onRowClick={(label, value) => drill(`Produto · ${label}`, String(value), 12)}
             />
           </Panel>
         )}
         {isCorr ? (
-          <Panel title="Clientes por imobiliária" icon={Building2}>
+          <Panel title="Clientes por imobiliária" icon={Building2} onClick={() => drill("Clientes por imobiliária", "Parceiros", 18)}>
             <HBarList
               accent={COLOR.success}
               rows={[
@@ -264,10 +267,11 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
                 { label: "Auxiliadora", value: 118 },
                 { label: "Independentes", value: 96 },
               ]}
+              onRowClick={(label, value) => drill(`Imobiliária · ${label}`, String(value), 14)}
             />
           </Panel>
         ) : (
-          <Panel title="Clientes por status" icon={Activity}>
+          <Panel title="Clientes por status" icon={Activity} onClick={() => drill("Clientes por status", "Status", 16)}>
             <HBarList
               accent={COLOR.success}
               rows={[
@@ -276,6 +280,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
                 { label: "Reprovados", value: 12 },
                 { label: "Sem mov.", value: 14 },
               ]}
+              onRowClick={(label, value) => drill(`Status · ${label}`, String(value), 12)}
             />
           </Panel>
         )}
@@ -283,7 +288,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
 
       {/* Geografia + pendências */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Clientes por cidade / UF" icon={MapPin}>
+        <Panel title="Clientes por cidade / UF" icon={MapPin} onClick={() => drill("Clientes por cidade / UF", "Geografia", 22)}>
           <HBarList
             accent={COLOR.brand}
             rows={[
@@ -294,9 +299,10 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { label: "Curitiba — PR", value: 96 },
               { label: "Porto Alegre — RS", value: 74 },
             ]}
+            onRowClick={(label, value) => drill(`Cidade · ${label}`, String(value), 14)}
           />
         </Panel>
-        <Panel title="Pendências por tipo" icon={FileWarning}>
+        <Panel title="Pendências por tipo" icon={FileWarning} onClick={() => drill("Pendências por tipo", pendDoc, 18, { status: "Pendência docs" })}>
           <HBarList
             accent={COLOR.warning}
             rows={[
@@ -307,9 +313,10 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { label: "Matrícula do imóvel", value: 18 },
               { label: "IPTU / Escritura", value: 14 },
             ]}
+            onRowClick={(label, value) => drill(`Pendência · ${label}`, String(value), 14, { status: "Pendência docs" })}
           />
         </Panel>
-        <Panel title="Sem movimentação por tempo" icon={Clock}>
+        <Panel title="Sem movimentação por tempo" icon={Clock} onClick={() => drill("Sem movimentação por tempo", semMov, 16)}>
           <HBarList
             accent="#6b7280"
             rows={[
@@ -319,6 +326,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
               { label: "31 — 60 dias", value: 10 },
               { label: "> 60 dias", value: 4 },
             ]}
+            onRowClick={(label, value) => drill(`Sem movimentação · ${label}`, String(value), 12)}
           />
         </Panel>
       </div>
