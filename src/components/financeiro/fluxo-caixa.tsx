@@ -12,7 +12,8 @@ import {
   buildMockRows,
 } from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
-import { contasReceber, contasPagar, categoriaById } from "@/lib/financeiro/mock-data";
+import { categoriaById } from "@/lib/financeiro/mock-data";
+import { useReceber, usePagar } from "@/data/hooks";
 import { formatBRL } from "@/lib/operacional/formatters";
 
 const TOKENS = {
@@ -46,8 +47,10 @@ function FluxoCaixaInner({ escopo }: { escopo: "correspondente" | "corretor" }) 
       rows: buildMockRows(24),
     });
   const [vis, setVis] = useState("Mensal");
-  const recDados = escopo === "corretor" ? contasReceber.filter(r => r.corretorId === "u-cor-1") : contasReceber;
-  const pagDados = escopo === "corretor" ? contasPagar.slice(0, 6) : contasPagar;
+  const allReceber = useReceber();
+  const allPagar = usePagar();
+  const recDados = escopo === "corretor" ? allReceber.filter((r) => r.corretorId === "u-cor-1") : allReceber;
+  const pagDados = escopo === "corretor" ? allPagar.slice(0, 6) : allPagar;
 
   const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const dados = useMemo(() => meses.map((m, i) => {

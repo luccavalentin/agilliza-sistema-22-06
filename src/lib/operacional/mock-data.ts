@@ -17,6 +17,7 @@ import type {
   Usuario,
 } from "./types";
 import { ETAPAS_PROPOSTA } from "./types";
+import { ANCHOR_NOW, daysAgo, daysAhead } from "@/data/anchor";
 
 export const usuarios: Usuario[] = [
   { id: "u-corr-1", nome: "Marina Souza", papel: "correspondente", email: "marina@plataforma.com" },
@@ -50,10 +51,8 @@ export const clientes: Cliente[] = [
   { id: "c-8", nome: "Patrícia Ramalho", cpf: "55566677788", email: "patricia@email.com", telefone: "31988887777", corretorId: "u-cor-2" },
 ];
 
-// --- helpers para gerar datas relativas
-const now = Date.now();
-const daysAgo = (n: number) => new Date(now - n * 86400000).toISOString();
-const daysAhead = (n: number) => new Date(now + n * 86400000).toISOString();
+// --- helpers para gerar datas relativas (ancoradas para SSR-safety)
+const now = ANCHOR_NOW;
 
 const produtos: Produto[] = ["Financiamento Imobiliário", "Home Equity"];
 const prioridades: Prioridade[] = ["Baixa", "Média", "Alta", "Urgente", "Crítica"];

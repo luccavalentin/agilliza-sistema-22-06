@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  contasReceber, contasPagar, categoriaById, clientes,
-} from "@/lib/financeiro/mock-data";
+import { categoriaById, clientes } from "@/lib/financeiro/mock-data";
+import { useLancamentos } from "@/data/hooks";
+import { adicionarLancamento, marcarLancamentoPago } from "@/data/repositories";
 import { formatBRL, formatData } from "@/lib/operacional/formatters";
 import { LancamentoFormDialog } from "./lancamento-form-dialog";
 import type { Lancamento, NaturezaLancamento } from "@/lib/financeiro/types";
@@ -39,11 +39,10 @@ const naturezaConfig: Record<NaturezaLancamento, { color: string; icon: any; bg:
 };
 
 export function LancamentosLista({ tipo, escopo }: { tipo: "receber" | "pagar"; escopo: "correspondente" | "corretor" }) {
-  const seed = tipo === "receber" ? contasReceber : contasPagar;
-  const [extras, setExtras] = useState<Lancamento[]>([]);
-  const dadosBase = useMemo(() => [...extras.filter(e => e.tipo === tipo), ...seed], [extras, seed, tipo]);
+  const lancamentos = useLancamentos();
+  const dadosBase = useMemo(() => lancamentos.filter((l) => l.tipo === tipo), [lancamentos, tipo]);
   const dados = useMemo(() => (
-    escopo === "corretor" && tipo === "receber" ? dadosBase.filter(d => d.corretorId === "u-cor-1") : dadosBase
+    escopo === "corretor" && tipo === "receber" ? dadosBase.filter((d) => d.corretorId === "u-cor-1") : dadosBase
   ), [dadosBase, escopo, tipo]);
 
   const [q, setQ] = useState("");
@@ -200,7 +199,7 @@ export function LancamentosLista({ tipo, escopo }: { tipo: "receber" | "pagar"; 
         open={openForm}
         onOpenChange={setOpenForm}
         tipo={tipo}
-        onSave={(novos) => setExtras(prev => [...novos, ...prev])}
+        onSave={(novos) => novos.forEach((n) => adicionarLancamento(n))}
       />
     </div>
   );

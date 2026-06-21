@@ -24,6 +24,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useNotificacoes as useDBNotifs } from "@/data/hooks";
+import { marcarNotificacaoLida, marcarTodasLidas, removerNotificacao, limparNotificacoes } from "@/data/repositories";
 import type { PortalKind } from "@/components/portal-shell";
 
 export type NotifCategory =
@@ -177,7 +179,8 @@ function savePrefs(p: Prefs) {
 }
 
 function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
+  const ANCHOR = new Date("2026-06-21T12:00:00.000Z").getTime();
+  const diff = ANCHOR - new Date(iso).getTime();
   const min = Math.floor(diff / 60_000);
   if (min < 1) return "agora";
   if (min < 60) return `${min}min`;
@@ -205,16 +208,24 @@ const levelMeta: Record<NotifLevel, { icon: typeof Info; cls: string }> = {
 
 export function NotificationsCenter({ kind }: { kind: PortalKind }) {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<Notification[]>(() => loadList(kind));
+  // ---- conecta na store central reativa ----
+  const storeItems = useDBNotifs();
+  const items: Notification[] = useMemo(
+    () =>
+      storeItems.map((n) => ({
+        id: n.id,
+        title: n.titulo,
+        description: n.descricao,
+        time: n.criadoEm,
+        category: n.categoria as NotifCategory,
+        level: n.nivel as NotifLevel,
+        read: n.lida,
+      })),
+    [storeItems],
+  );
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs());
   const [tab, setTab] = useState<"todas" | "nao-lidas" | "config">("todas");
   const [filter, setFilter] = useState<NotifCategory | "all">("all");
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(`${STORAGE_KEY}.${kind}`, JSON.stringify(items));
-    } catch {}
-  }, [items, kind]);
 
   useEffect(() => savePrefs(prefs), [prefs]);
 
@@ -227,15 +238,13 @@ export function NotificationsCenter({ kind }: { kind: PortalKind }) {
   }, [items, tab, filter]);
 
   const markAll = () => {
-    setItems((xs) => xs.map((x) => ({ ...x, read: true })));
+    marcarTodasLidas();
     toast.success("Todas as notificações marcadas como lidas");
   };
-  const markOne = (id: string) =>
-    setItems((xs) => xs.map((x) => (x.id === id ? { ...x, read: true } : x)));
-  const removeOne = (id: string) =>
-    setItems((xs) => xs.filter((x) => x.id !== id));
+  const markOne = (id: string) => marcarNotificacaoLida(id);
+  const removeOne = (id: string) => removerNotificacao(id);
   const clearAll = () => {
-    setItems([]);
+    limparNotificacoes();
     toast.success("Notificações limpas");
   };
 
