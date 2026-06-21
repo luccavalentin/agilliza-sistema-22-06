@@ -43,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { PortalKind } from "@/components/portal-shell";
 import { Link } from "@tanstack/react-router";
+import { resetDemo, limparTudo } from "@/data/repositories";
 
 const PROFILE_KEY = "portal.profile";
 
