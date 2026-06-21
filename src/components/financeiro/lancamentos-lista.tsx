@@ -39,11 +39,10 @@ const naturezaConfig: Record<NaturezaLancamento, { color: string; icon: any; bg:
 };
 
 export function LancamentosLista({ tipo, escopo }: { tipo: "receber" | "pagar"; escopo: "correspondente" | "corretor" }) {
-  const seed = tipo === "receber" ? contasReceber : contasPagar;
-  const [extras, setExtras] = useState<Lancamento[]>([]);
-  const dadosBase = useMemo(() => [...extras.filter(e => e.tipo === tipo), ...seed], [extras, seed, tipo]);
+  const lancamentos = useLancamentos();
+  const dadosBase = useMemo(() => lancamentos.filter((l) => l.tipo === tipo), [lancamentos, tipo]);
   const dados = useMemo(() => (
-    escopo === "corretor" && tipo === "receber" ? dadosBase.filter(d => d.corretorId === "u-cor-1") : dadosBase
+    escopo === "corretor" && tipo === "receber" ? dadosBase.filter((d) => d.corretorId === "u-cor-1") : dadosBase
   ), [dadosBase, escopo, tipo]);
 
   const [q, setQ] = useState("");
