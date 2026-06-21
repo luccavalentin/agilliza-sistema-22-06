@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  contasReceber, contasPagar, categoriaById, clientes,
-} from "@/lib/financeiro/mock-data";
+import { categoriaById, clientes } from "@/lib/financeiro/mock-data";
+import { useLancamentos } from "@/data/hooks";
+import { adicionarLancamento, marcarLancamentoPago } from "@/data/repositories";
 import { formatBRL, formatData } from "@/lib/operacional/formatters";
 import { LancamentoFormDialog } from "./lancamento-form-dialog";
 import type { Lancamento, NaturezaLancamento } from "@/lib/financeiro/types";
