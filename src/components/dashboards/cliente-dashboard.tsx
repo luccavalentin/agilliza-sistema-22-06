@@ -14,6 +14,11 @@ import {
   Upload,
 } from "lucide-react";
 import { PanelHeader, Panel } from "./primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "./detail-dialog";
 
 const COLOR = {
   brand: "var(--brand)",
@@ -52,6 +57,28 @@ const docMeta = {
 } as const;
 
 export function ClienteDashboard() {
+  return (
+    <DashboardDetailProvider>
+      <ClienteDashboardInner />
+    </DashboardDetailProvider>
+  );
+}
+
+function ClienteDashboardInner() {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string, count = 12) =>
+    open({
+      title,
+      subtitle: "Acompanhamento · Cliente",
+      period: "Sua proposta",
+      kpis: [
+        { label: title, value },
+        { label: "Banco", value: "Caixa Econômica" },
+        { label: "Produto", value: "Financiamento Imobiliário" },
+        { label: "Registros", value: String(count) },
+      ],
+      rows: buildMockRows(count, { banco: "Caixa" }),
+    });
   return (
     <div className="space-y-6">
       <PanelHeader
@@ -119,9 +146,11 @@ export function ClienteDashboard() {
           { l: "Próxima ação", v: "Aguardar retorno", c: "#6b7280" },
           { l: "Documentos pendentes", v: "2", c: COLOR.direction },
         ].map((k) => (
-          <article
+          <button
+            type="button"
             key={k.l}
-            className="overflow-hidden rounded-lg border border-border bg-card"
+            onClick={() => drill(k.l, k.v)}
+            className="overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-brand/40 hover:shadow-md"
           >
             <div className="h-1 w-full" style={{ background: k.c }} />
             <div className="p-4">
@@ -130,7 +159,7 @@ export function ClienteDashboard() {
               </p>
               <p className="mt-1.5 text-xl font-bold tracking-tight text-graphite">{k.v}</p>
             </div>
-          </article>
+          </button>
         ))}
       </section>
 
