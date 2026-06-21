@@ -236,15 +236,13 @@ export function NotificationsCenter({ kind }: { kind: PortalKind }) {
   }, [items, tab, filter]);
 
   const markAll = () => {
-    setItems((xs) => xs.map((x) => ({ ...x, read: true })));
+    marcarTodasLidas();
     toast.success("Todas as notificações marcadas como lidas");
   };
-  const markOne = (id: string) =>
-    setItems((xs) => xs.map((x) => (x.id === id ? { ...x, read: true } : x)));
-  const removeOne = (id: string) =>
-    setItems((xs) => xs.filter((x) => x.id !== id));
+  const markOne = (id: string) => marcarNotificacaoLida(id);
+  const removeOne = (id: string) => removerNotificacao(id);
   const clearAll = () => {
-    setItems([]);
+    limparNotificacoes();
     toast.success("Notificações limpas");
   };
 
