@@ -22,6 +22,7 @@ import {
 } from "@/lib/operacional/mock-data";
 import { ETAPAS_PROPOSTA } from "@/lib/operacional/types";
 import { formatBRL, formatDataHora } from "@/lib/operacional/formatters";
+import { useDashboardFilters, PERIODOS } from "@/hooks/use-dashboard-filters";
 
 type Escopo = "correspondente" | "corretor";
 
