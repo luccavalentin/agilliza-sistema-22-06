@@ -6,6 +6,11 @@ import {
 } from "recharts";
 import { Download, Filter, TrendingUp } from "lucide-react";
 import { PanelHeader, Panel, KpiCard } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
 import { contasReceber, contasPagar, categoriaById } from "@/lib/financeiro/mock-data";
 import { formatBRL } from "@/lib/operacional/formatters";
@@ -18,6 +23,28 @@ const TOKENS = {
 const visualizacoes = ["Diário", "Semanal", "Mensal", "Trimestral", "Anual"];
 
 export function FluxoCaixaView({ escopo }: { escopo: "correspondente" | "corretor" }) {
+  return (
+    <DashboardDetailProvider>
+      <FluxoCaixaInner escopo={escopo} />
+    </DashboardDetailProvider>
+  );
+}
+
+function FluxoCaixaInner({ escopo }: { escopo: "correspondente" | "corretor" }) {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string) =>
+    open({
+      title,
+      subtitle: `Fluxo de Caixa · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+      period: "Últimos 12 meses",
+      kpis: [
+        { label: title, value },
+        { label: "Visualização", value: "Mensal" },
+        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
+        { label: "Registros", value: "24" },
+      ],
+      rows: buildMockRows(24),
+    });
   const [vis, setVis] = useState("Mensal");
   const recDados = escopo === "corretor" ? contasReceber.filter(r => r.corretorId === "u-cor-1") : contasReceber;
   const pagDados = escopo === "corretor" ? contasPagar.slice(0, 6) : contasPagar;
@@ -67,10 +94,10 @@ export function FluxoCaixaView({ escopo }: { escopo: "correspondente" | "correto
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Entradas Previstas" value={formatBRL(totalEntradasPrev)} accent={TOKENS.brand} />
-        <KpiCard label="Entradas Realizadas" value={formatBRL(totalEntradasReal)} accent={TOKENS.success} />
-        <KpiCard label="Saídas Previstas" value={formatBRL(totalSaidasPrev)} accent={TOKENS.warning} />
-        <KpiCard label="Saídas Realizadas" value={formatBRL(totalSaidasReal)} accent={TOKENS.direction} />
+        <KpiCard label="Entradas Previstas" value={formatBRL(totalEntradasPrev)} accent={TOKENS.brand} onClick={() => drill("Entradas Previstas", formatBRL(totalEntradasPrev))} />
+        <KpiCard label="Entradas Realizadas" value={formatBRL(totalEntradasReal)} accent={TOKENS.success} onClick={() => drill("Entradas Realizadas", formatBRL(totalEntradasReal))} />
+        <KpiCard label="Saídas Previstas" value={formatBRL(totalSaidasPrev)} accent={TOKENS.warning} onClick={() => drill("Saídas Previstas", formatBRL(totalSaidasPrev))} />
+        <KpiCard label="Saídas Realizadas" value={formatBRL(totalSaidasReal)} accent={TOKENS.direction} onClick={() => drill("Saídas Realizadas", formatBRL(totalSaidasReal))} />
       </div>
 
       <Panel title="Saldo Previsto x Realizado" icon={TrendingUp}>

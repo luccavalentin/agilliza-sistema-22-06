@@ -2,6 +2,11 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, Download, MoreVertical, Lock, Unlock, CheckCircle2 } from "lucide-react";
 import { PanelHeader, KpiCard } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +31,28 @@ const statusCor: Record<string, string> = {
 };
 
 export function ComissoesView({ escopo }: { escopo: "correspondente" | "corretor" }) {
+  return (
+    <DashboardDetailProvider>
+      <ComissoesViewInner escopo={escopo} />
+    </DashboardDetailProvider>
+  );
+}
+
+function ComissoesViewInner({ escopo }: { escopo: "correspondente" | "corretor" }) {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string) =>
+    open({
+      title,
+      subtitle: `Comissões · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+      period: "Últimos 30 dias",
+      kpis: [
+        { label: title, value },
+        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Minhas comissões" },
+        { label: "Período", value: "30 dias" },
+        { label: "Registros", value: "20" },
+      ],
+      rows: buildMockRows(20),
+    });
   const dados = useMemo(() => (
     escopo === "corretor" ? comissoes.filter(c => c.corretorId === "u-cor-1") : comissoes
   ), [escopo]);
@@ -66,7 +93,7 @@ export function ComissoesView({ escopo }: { escopo: "correspondente" | "corretor
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {cards.map(c => <KpiCard key={c.label} {...c} />)}
+        {cards.map(c => <KpiCard key={c.label} {...c} onClick={() => drill(c.label, c.value)} />)}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">

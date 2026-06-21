@@ -2,6 +2,11 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, X, AlertTriangle, Paperclip, Download, Filter } from "lucide-react";
 import { PanelHeader, KpiCard } from "@/components/dashboards/primitives";
+import {
+  DashboardDetailProvider,
+  useDashboardDetail,
+  buildMockRows,
+} from "@/components/dashboards/detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { itensConciliacao, contaById, categoriaById, contas } from "@/lib/financeiro/mock-data";
@@ -20,6 +25,28 @@ const statusCor: Record<string, string> = {
 };
 
 export function ConciliacaoView() {
+  return (
+    <DashboardDetailProvider>
+      <ConciliacaoViewInner />
+    </DashboardDetailProvider>
+  );
+}
+
+function ConciliacaoViewInner() {
+  const { open } = useDashboardDetail();
+  const drill = (title: string, value: string) =>
+    open({
+      title,
+      subtitle: "Conciliação Bancária",
+      period: "Período atual",
+      kpis: [
+        { label: title, value },
+        { label: "Origem", value: "Extrato bancário" },
+        { label: "Período", value: "Mês corrente" },
+        { label: "Registros", value: "20" },
+      ],
+      rows: buildMockRows(20),
+    });
   const [conta, setConta] = useState("todas");
   const [status, setStatus] = useState("todos");
 
@@ -46,10 +73,10 @@ export function ConciliacaoView() {
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Conciliados" value={String(tot("Conciliado"))} accent={TOKENS.success} />
-        <KpiCard label="Não conciliados" value={String(tot("Não conciliado"))} accent={TOKENS.warning} />
-        <KpiCard label="Divergentes" value={String(tot("Divergente"))} accent={TOKENS.direction} />
-        <KpiCard label="Em revisão" value={String(tot("Em revisão"))} accent={TOKENS.info} />
+        <KpiCard label="Conciliados" value={String(tot("Conciliado"))} accent={TOKENS.success} onClick={() => drill("Conciliados", String(tot("Conciliado")))} />
+        <KpiCard label="Não conciliados" value={String(tot("Não conciliado"))} accent={TOKENS.warning} onClick={() => drill("Não conciliados", String(tot("Não conciliado")))} />
+        <KpiCard label="Divergentes" value={String(tot("Divergente"))} accent={TOKENS.direction} onClick={() => drill("Divergentes", String(tot("Divergente")))} />
+        <KpiCard label="Em revisão" value={String(tot("Em revisão"))} accent={TOKENS.info} onClick={() => drill("Em revisão", String(tot("Em revisão")))} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
