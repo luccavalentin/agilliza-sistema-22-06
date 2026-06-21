@@ -48,14 +48,15 @@ function PainelOperacionalInner({
   usuarioAtualId?: string;
 }) {
   const { open } = useDashboardDetail();
+  const { filters, set, reset, apply } = useDashboardFilters();
   const drill = (title: string, value: string, count = 16, hint?: { banco?: string; status?: string }) =>
     open({
       title,
       subtitle: `Painel Operacional · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
-      period: "Últimos 30 dias",
+      period: filters.periodo,
       kpis: [
         { label: title, value },
-        { label: "Período", value: "30 dias" },
+        { label: "Período", value: filters.periodo },
         { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
         { label: "Registros", value: String(count) },
       ],
