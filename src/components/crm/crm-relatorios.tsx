@@ -9,6 +9,7 @@ import {
   Donut,
 } from "@/components/dashboards/primitives";
 import type { CrmScope } from "./crm-dashboard";
+import { useDashboardFilters, PERIODOS } from "@/hooks/use-dashboard-filters";
 
 const COLOR = {
   brand: "var(--brand)",
