@@ -20,6 +20,9 @@ import {
   Eye,
   EyeOff,
   Check,
+  Database,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
