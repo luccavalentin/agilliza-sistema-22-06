@@ -186,6 +186,27 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
   const aggCom = sumBy(data, p => p.analistaCom, p => p.valor);
   const aggImob = sumBy(data, p => p.imobiliaria, p => p.valor);
 
+  // Cruzamentos (matriz): Analista × Banco / Imobiliária × Banco / Tipo × Banco
+  const bancosUnicos = Array.from(new Set(data.map(p => p.bancoNome))).sort();
+  const buildMatrix = (rowKey: (p: ProcessoRow) => string) => {
+    const rows = Array.from(new Set(data.map(rowKey))).sort();
+    return rows.map(r => {
+      const row: Record<string, any> = { name: r, total: 0 };
+      for (const b of bancosUnicos) {
+        const subset = data.filter(p => rowKey(p) === r && p.bancoNome === b);
+        const v = subset.reduce((s, p) => s + p.valor, 0);
+        row[b] = v;
+        row.total += v;
+      }
+      return row;
+    }).sort((a, b) => b.total - a.total);
+  };
+  const matrizAdmBanco = buildMatrix(p => p.analistaAdm);
+  const matrizComBanco = buildMatrix(p => p.analistaCom);
+  const matrizImobBanco = buildMatrix(p => p.imobiliaria);
+  const matrizCorretorBanco = buildMatrix(p => p.corretor);
+  const matrizTipoBanco = buildMatrix(p => p.produto);
+
   // evolução mensal (por atualizadaEm)
   const evolucao = useMemo(() => {
     const m = new Map<string, { name: string; valor: number; qtd: number }>();
