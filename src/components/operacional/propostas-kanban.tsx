@@ -282,10 +282,14 @@ function PropostaDetalhe({
   proposta,
   onClose,
   onMover,
+  onAprovar,
+  onReprovar,
 }: {
   proposta: Proposta;
   onClose: () => void;
   onMover: (e: EtapaProposta) => void;
+  onAprovar: () => void;
+  onReprovar: () => void;
 }) {
   const cli = clienteById(proposta.clienteId);
   const banco = bancoById(proposta.bancoId);
