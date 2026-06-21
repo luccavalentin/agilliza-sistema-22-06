@@ -186,6 +186,27 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
   const aggCom = sumBy(data, p => p.analistaCom, p => p.valor);
   const aggImob = sumBy(data, p => p.imobiliaria, p => p.valor);
 
+  // Cruzamentos (matriz): Analista × Banco / Imobiliária × Banco / Tipo × Banco
+  const bancosUnicos = Array.from(new Set(data.map(p => p.bancoNome))).sort();
+  const buildMatrix = (rowKey: (p: ProcessoRow) => string) => {
+    const rows = Array.from(new Set(data.map(rowKey))).sort();
+    return rows.map(r => {
+      const row: Record<string, any> = { name: r, total: 0 };
+      for (const b of bancosUnicos) {
+        const subset = data.filter(p => rowKey(p) === r && p.bancoNome === b);
+        const v = subset.reduce((s, p) => s + p.valor, 0);
+        row[b] = v;
+        row.total += v;
+      }
+      return row;
+    }).sort((a, b) => b.total - a.total);
+  };
+  const matrizAdmBanco = buildMatrix(p => p.analistaAdm);
+  const matrizComBanco = buildMatrix(p => p.analistaCom);
+  const matrizImobBanco = buildMatrix(p => p.imobiliaria);
+  const matrizCorretorBanco = buildMatrix(p => p.corretor);
+  const matrizTipoBanco = buildMatrix(p => p.produto);
+
   // evolução mensal (por atualizadaEm)
   const evolucao = useMemo(() => {
     const m = new Map<string, { name: string; valor: number; qtd: number }>();
@@ -417,6 +438,45 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
           {ordered.length > 40 && (
             <div className="text-xs text-muted-foreground text-center py-3">Exibindo 40 de {ordered.length} registros. Use os filtros para refinar ou exporte o relatório completo.</div>
           )}
+        </div>
+      </Panel>
+
+      {/* Matrizes de cruzamento (separado por banco) */}
+      <Panel title="Cruzamentos por Banco (matriz)" icon={Building2}>
+        <div className="space-y-6">
+          {[
+            { label: "Analista Administrativo × Banco", rows: matrizAdmBanco },
+            { label: "Analista Comercial × Banco", rows: matrizComBanco },
+            { label: "Imobiliária × Banco", rows: matrizImobBanco },
+            { label: "Corretor × Banco", rows: matrizCorretorBanco },
+            { label: "Tipo (Financiamento × Home Equity) × Banco", rows: matrizTipoBanco },
+          ].map(m => (
+            <div key={m.label}>
+              <div className="text-xs font-semibold text-graphite mb-2">{m.label}</div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-left text-muted-foreground border-b">
+                    <tr>
+                      <th className="py-2 px-2 font-medium">—</th>
+                      {bancosUnicos.map(b => <th key={b} className="py-2 px-2 font-medium text-right">{b}</th>)}
+                      <th className="py-2 px-2 font-medium text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {m.rows.slice(0, 10).map(r => (
+                      <tr key={r.name} className="border-b hover:bg-muted/40">
+                        <td className="py-1.5 px-2 font-medium text-graphite">{r.name}</td>
+                        {bancosUnicos.map(b => (
+                          <td key={b} className="py-1.5 px-2 text-right tabular-nums">{r[b] ? formatBRL(r[b]) : "—"}</td>
+                        ))}
+                        <td className="py-1.5 px-2 text-right font-semibold tabular-nums">{formatBRL(r.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
         </div>
       </Panel>
 
