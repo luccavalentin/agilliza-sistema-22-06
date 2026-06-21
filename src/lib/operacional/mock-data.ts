@@ -17,6 +17,7 @@ import type {
   Usuario,
 } from "./types";
 import { ETAPAS_PROPOSTA } from "./types";
+import { ANCHOR_NOW, daysAgo, daysAhead } from "@/data/anchor";
 
 export const usuarios: Usuario[] = [
   { id: "u-corr-1", nome: "Marina Souza", papel: "correspondente", email: "marina@plataforma.com" },
