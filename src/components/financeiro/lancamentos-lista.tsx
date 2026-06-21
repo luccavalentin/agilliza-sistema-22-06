@@ -199,7 +199,7 @@ export function LancamentosLista({ tipo, escopo }: { tipo: "receber" | "pagar"; 
         open={openForm}
         onOpenChange={setOpenForm}
         tipo={tipo}
-        onSave={(novos) => setExtras(prev => [...novos, ...prev])}
+        onSave={(novos) => novos.forEach((n) => adicionarLancamento(n))}
       />
     </div>
   );
