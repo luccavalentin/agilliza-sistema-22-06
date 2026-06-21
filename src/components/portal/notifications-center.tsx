@@ -24,6 +24,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useNotificacoes as useDBNotifs } from "@/data/hooks";
+import { marcarNotificacaoLida, marcarTodasLidas, removerNotificacao, limparNotificacoes } from "@/data/repositories";
 import type { PortalKind } from "@/components/portal-shell";
 
 export type NotifCategory =
