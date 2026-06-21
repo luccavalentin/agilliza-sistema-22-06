@@ -100,7 +100,7 @@ export function PropostasKanban({
   const aprovadas = filtradas.filter((p) => p.status === "Aprovada" || p.status === "Contrato emitido" || p.status === "Finalizada").length;
   const emAnalise = filtradas.filter((p) => ["Em aprovação","Aguardando banco","Análise jurídica","Em tratativa"].includes(p.status)).length;
   const pendDoc = filtradas.filter((p) => p.status === "Documentação pendente" || p.pendencias > 0).length;
-  const slaVencidas = filtradas.filter((p) => new Date(p.slaPrazo).getTime() < Date.now()).length;
+  const slaVencidas = filtradas.filter((p) => new Date(p.slaPrazo).getTime() < ANCHOR_NOW).length;
   const reprovadas = filtradas.filter((p) => p.status === "Reprovada").length;
 
   return (
