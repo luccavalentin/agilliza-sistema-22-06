@@ -294,20 +294,17 @@ function PainelOperacionalInner({
       />
 
       <FilterBar
+        onReset={reset}
         filters={[
-          { label: "Período", value: "Últimos 30 dias" },
-          { label: "Usuário", value: "Todos" },
-          { label: "Corretor", value: "Todos" },
-          { label: "Analista", value: "Todos" },
-          { label: "Backoffice", value: "Todos" },
-          { label: "Banco", value: "Todos" },
-          { label: "Produto", value: "Todos" },
-          { label: "Status", value: "Todos" },
-          { label: "Etapa", value: "Todas" },
-          { label: "SLA", value: "Todos" },
-          { label: "Prioridade", value: "Todas" },
+          { label: "Período", value: filters.periodo, options: PERIODOS, onChange: set("periodo") },
+          { label: "Corretor", value: filters.corretor, options: ["Todos", ...usuarios.filter(u => u.papel === "corretor" || u.papel === "correspondente").map(u => u.nome)], onChange: set("corretor") },
+          { label: "Banco", value: filters.banco, options: ["Todos", ...bancos.map(b => b.sigla)], onChange: set("banco") },
+          { label: "Produto", value: filters.produto, options: ["Todos", "Financiamento Imobiliário", "Home Equity"], onChange: set("produto") },
+          { label: "Status", value: filters.status, options: ["Todos", "Em aprovação", "Sequenciada", "Não sequenciada", "Aprovada", "Reprovada", "Em tratativa", "Documentação pendente", "Aguardando banco", "Análise jurídica", "Contrato emitido", "Finalizada"], onChange: set("status") },
+          { label: "Etapa", value: filters.fase, options: ["Todas", ...ETAPAS_PROPOSTA], onChange: set("fase") },
         ]}
       />
+
 
       {/* KPIs principais */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
