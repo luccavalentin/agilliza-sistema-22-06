@@ -5,19 +5,20 @@
 import { useMemo, useState, type DragEvent } from "react";
 import {
   AlertTriangle, ArrowLeftRight, CheckCircle2, Clock,
-  FileText, MessageSquare, Paperclip, Search, X,
+  FileText, MessageSquare, Paperclip, Search, X, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  bancoById, clienteById, propostas as propostasMock,
-  usuarioById, usuarios,
-} from "@/lib/operacional/mock-data";
+import { bancoById, clienteById, usuarioById, usuarios } from "@/lib/operacional/mock-data";
 import { formatBRL, formatData } from "@/lib/operacional/formatters";
 import { ETAPAS_PROPOSTA, type EtapaProposta, type Prioridade, type Proposta } from "@/lib/operacional/types";
 import { PopoutChat } from "@/components/operacional/popout-chat";
+import { usePropostas } from "@/data/hooks";
+import { moverProposta, aprovarProposta, reprovarProposta } from "@/data/repositories";
+import { ANCHOR_NOW } from "@/data/anchor";
+import { toast } from "sonner";
 
 const prioridadeStyle: Record<Prioridade, string> = {
   "Baixa": "bg-slate-100 text-slate-700",
