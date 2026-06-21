@@ -701,3 +701,86 @@ function PlanoPanel({ kind }: { kind: PortalKind }) {
     </div>
   );
 }
+
+function DadosDemoPanel() {
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+  return (
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-sm font-semibold text-graphite">Dados de demonstração</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          O sistema usa uma camada de dados local (navegador) que simula o backend.
+          Aqui você pode restaurar para o estado inicial ou limpar tudo para testar
+          o fluxo do zero. Suas alterações ficam apenas no seu navegador.
+        </p>
+      </div>
+
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="flex items-start gap-3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand/10 text-brand">
+            <RotateCcw className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-graphite">Restaurar dados demo</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Substitui o estado atual pelo conjunto de dados original (60+ propostas,
+              comissões, lançamentos e notificações coerentes).
+            </p>
+          </div>
+          {!confirmReset ? (
+            <Button size="sm" variant="outline" onClick={() => setConfirmReset(true)}>
+              Restaurar
+            </Button>
+          ) : (
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" onClick={() => setConfirmReset(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" onClick={() => { resetDemo(); setConfirmReset(false); toast.success("Dados demo restaurados"); }}>
+                Confirmar
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-md border border-red-200 bg-red-50/40 p-4">
+        <div className="flex items-start gap-3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-red-100 text-red-600">
+            <Trash2 className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-graphite">Limpar tudo</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Esvazia propostas, lançamentos, comissões e notificações. Útil para
+              demonstrar o fluxo de criação do zero. As configurações (bancos,
+              categorias, contas) permanecem.
+            </p>
+          </div>
+          {!confirmClear ? (
+            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => setConfirmClear(true)}>
+              Limpar
+            </Button>
+          ) : (
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" onClick={() => setConfirmClear(false)}>
+                Cancelar
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => { limparTudo(); setConfirmClear(false); toast.success("Sistema esvaziado"); }}>
+                Confirmar
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-md border border-border bg-secondary/40 p-3 text-[11px] text-muted-foreground">
+        <p><b className="text-graphite">Como funciona?</b> Toda mutação (mover proposta no Kanban, aprovar,
+        marcar lançamento pago, etc.) é persistida em <code>localStorage</code> e propagada em tempo real
+        para todos os dashboards. Quando o sistema for migrado para Supabase, apenas a camada de
+        repositório é trocada — telas continuam iguais.</p>
+      </div>
+    </div>
+  );
+}
