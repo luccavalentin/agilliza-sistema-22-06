@@ -74,7 +74,7 @@ export function useDashboardFilters(initial?: Partial<DashFilters>) {
   const cutoffMs = useMemo(() => {
     const days = periodoToDays(filters.periodo);
     if (days == null) return null;
-    return ANCHOR_NOW.getTime() - days * 24 * 3600 * 1000;
+    return ANCHOR_NOW - days * 24 * 3600 * 1000;
   }, [filters.periodo]);
 
   // Helper genérico: aplica filtro a um array tipado.
