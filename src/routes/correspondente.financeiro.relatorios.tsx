@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileBarChart } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { RelatoriosFinanceiros } from "@/components/financeiro/relatorios-financeiros";
 
 export const Route = createFileRoute("/correspondente/financeiro/relatorios")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Correspondente · Financeiro"
-      title="Relatórios Financeiros e Métricas Operacionais"
-      description="Indicadores e relatórios financeiros."
-      icon={FileBarChart}
-    />
-  ),
+  component: () => <div className="p-6"><RelatoriosFinanceiros escopo="correspondente" /></div>,
 });

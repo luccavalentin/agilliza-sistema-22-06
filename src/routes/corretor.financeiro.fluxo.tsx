@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { TrendingUp } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { FluxoCaixaView } from "@/components/financeiro/fluxo-caixa";
 
 export const Route = createFileRoute("/corretor/financeiro/fluxo")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Corretor · Financeiro"
-      title="Fluxo de Caixa"
-      description="Fluxo de caixa do corretor."
-      icon={TrendingUp}
-    />
-  ),
+  component: () => <div className="p-6"><FluxoCaixaView escopo="corretor" /></div>,
 });
