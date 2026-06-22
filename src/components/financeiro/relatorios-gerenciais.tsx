@@ -256,7 +256,7 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
                   ],
                   confidential: true,
                   kpis: [
-                    { label: "Volume total", value: formatBRL(totalGeral) },
+                    { label: "Volume total", value: formatBRL(sum(data)) },
                     { label: "Em andamento", value: String(andamentoAll.length) },
                     { label: "Aprovadas", value: String(aprovadasAll.length) },
                     { label: "Contratos", value: String(contratosAll.length) },
