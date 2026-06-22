@@ -89,7 +89,7 @@ export function Card({
   );
 }
 
-type Tone = "brand" | "success" | "warning" | "direction" | "info" | "neutral";
+type Tone = "brand" | "success" | "warning" | "direction" | "info" | "neutral" | "amber";
 
 const toneMap: Record<
   Tone,
