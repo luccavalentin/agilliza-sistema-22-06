@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SimulacaoWizard } from "@/components/operacional/simulacao-wizard";
+import { SimulacaoCompleta } from "@/components/operacional/simulacao-completa";
 
 export const Route = createFileRoute("/corretor/operacional/simulacoes")({
-  component: () => <div className="p-6"><SimulacaoWizard escopo="corretor" /></div>,
+  component: () => <div className="p-6"><SimulacaoCompleta /></div>,
 });
