@@ -112,7 +112,7 @@ export interface HomefinSimulacaoResponse {
   cet?: number;
   rendaMinima?: number;
   status?: string;
-  [k: string]: unknown;
+  [k: string]: Json | undefined;
 }
 
 // ---- Participante ----
