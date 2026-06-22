@@ -181,16 +181,21 @@ export function PortalShell({
 
   return (
     <GlobalSearchProvider>
-    <div className="flex min-h-screen bg-secondary text-foreground">
+    <div className="flex min-h-dvh bg-secondary text-foreground">
+      <a href="#conteudo-principal" className="skip-to-content">
+        Pular para o conteúdo
+      </a>
       {mobileOpen && (
         <button
           aria-label="Fechar menu"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-30 bg-graphite/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-graphite/40 backdrop-blur-sm lg:hidden"
         />
       )}
 
       <aside
+        id="portal-sidebar"
+        aria-label="Menu principal"
         className={[
           "fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-200",
           "shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]",
