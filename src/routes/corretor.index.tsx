@@ -3,7 +3,6 @@ import {
   Activity,
   AlertTriangle,
   ArrowUpRight,
-  Banknote,
   BarChart3,
   Building2,
   CheckCircle2,
