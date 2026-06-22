@@ -256,7 +256,7 @@ export async function downloadBrandedPdf(opts: BrandedPdfOptions) {
         description: "Tente novamente. Se o problema persistir, atualize a página.",
       });
     } catch { /* sonner não montado */ }
-    throw err;
+    return undefined;
   }
 }
 
@@ -279,6 +279,6 @@ export async function openBrandedPdf(opts: BrandedPdfOptions) {
         description: "Tente novamente em instantes.",
       });
     } catch { /* */ }
-    throw err;
+    return undefined;
   }
 }
