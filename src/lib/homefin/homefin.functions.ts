@@ -66,9 +66,8 @@ async function getClient() {
 }
 
 function toClientError(err: unknown) {
-  // Normaliza para um shape seguro de retornar ao browser
-  if (err && typeof err === "object" && "name" in err && (err as { name: string }).name === "HomefinError") {
-    const e = err as { message: string; status: number; code?: string };
+  if (err && typeof err === "object" && (err as { name?: string }).name === "HomefinError") {
+    const e = err as unknown as { message: string; status: number; code?: string };
     return { ok: false as const, error: { message: e.message, status: e.status, code: e.code } };
   }
   console.error("[homefin] erro inesperado:", err);
