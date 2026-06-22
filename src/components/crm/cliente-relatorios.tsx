@@ -112,7 +112,7 @@ export function ClienteRelatorios({ scope }: { scope: RelatoriosScope }) {
                       title: "Clientes da base",
                       head: ["Nome", "Documento", "UF", "Pessoa", "Qualif.", "Corretor", "Ticket"],
                       body: base.slice(0, 80).map((c) => [
-                        c.nome, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, fmtBRL(c.ticketMedio ?? 0),
+                        c.nomeParticipante, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, fmtBRL(c.renda ?? 0),
                       ]),
                       columnStyles: { 6: { halign: "right" } },
                     },
@@ -590,7 +590,7 @@ function periodoLabel(p: string) {
 
 function exportCSV(base: Cliente[], xlsx = false) {
   const header = ["Nome", "Documento", "UF", "Pessoa", "Qualificação", "Corretor", "Ticket"];
-  const rows = base.map((c) => [c.nome, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, String(c.ticketMedio ?? 0)]);
+  const rows = base.map((c) => [c.nomeParticipante, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, String(c.renda ?? 0)]);
   const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
   const blob = new Blob(["\ufeff" + csv], { type: xlsx ? "application/vnd.ms-excel" : "text/csv;charset=utf-8" });
   const a = document.createElement("a");
