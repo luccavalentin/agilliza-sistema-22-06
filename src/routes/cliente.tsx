@@ -1,13 +1,12 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, FileSearch } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
 const groups: PortalNavGroup[] = [
   {
-    label: "Visão Geral",
+    label: "Principal",
     items: [
-      { label: "Painel de Monitoramento", to: "/cliente", icon: LayoutDashboard },
-      { label: "Acompanhar Minha Proposta", to: "/cliente/proposta", icon: FileSearch },
+      { label: "Visão Geral", to: "/cliente", icon: LayoutDashboard },
     ],
   },
 ];
