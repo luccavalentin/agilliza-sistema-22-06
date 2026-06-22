@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CorrespondenteDashboard } from "@/components/dashboards/correspondente-dashboard";
+import { LayoutDashboard } from "lucide-react";
+import { SectionPlaceholder } from "@/components/portal/section-placeholder";
 
 export const Route = createFileRoute("/correspondente/")({
-  component: CorrespondenteDashboard,
+  component: () => (
+    <SectionPlaceholder
+      eyebrow="Correspondente Imobiliário"
+      title="Visão Geral"
+      description="Painel central do correspondente com indicadores estratégicos, monitoramento operacional e visão consolidada do ecossistema."
+      icon={LayoutDashboard}
+    />
+  ),
 });

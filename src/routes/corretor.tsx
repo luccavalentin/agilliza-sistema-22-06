@@ -2,84 +2,21 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Users,
-  Calculator,
-  CheckCircle2,
-  Clock,
-  ListChecks,
-  RefreshCw,
-  BarChart3,
+  Activity,
   Wallet,
-  PieChart,
-  Settings,
-  Search,
-  Sparkles,
-  Zap,
-  BrainCircuit,
-  ScanLine,
-  Database,
+  BarChart3,
 } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
 const groups: PortalNavGroup[] = [
   {
-    label: "Visão Geral",
+    label: "Principal",
     items: [
-      { label: "Painel de Monitoramento", to: "/corretor", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "CRM e Gestão de Cliente",
-    items: [
-      { label: "Scan IA", to: "/corretor/crm/scan-ia", icon: ScanLine },
-      { label: "Flash IA", to: "/corretor/crm/flash-ia", icon: BrainCircuit },
-      {
-        label: "CRM de Clientes",
-        icon: Users,
-        children: [
-          { label: "Dashboard de Clientes", to: "/corretor/crm", icon: LayoutDashboard },
-          { label: "Cadastro de Cliente", to: "/corretor/crm/cadastro", icon: Users },
-          { label: "Consultas", to: "/corretor/crm/consultas", icon: Search },
-          { label: "Relatórios", to: "/corretor/crm/relatorios", icon: PieChart },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Operacional",
-    items: [
-      { label: "Painel", to: "/corretor/operacional", icon: LayoutDashboard },
-      { label: "Consultas", to: "/corretor/operacional/consultas", icon: Search },
-      { label: "Simulações", to: "/corretor/operacional/simulacoes", icon: Calculator },
-      { label: "Minhas Simulações", to: "/corretor/operacional/minhas-simulacoes", icon: Sparkles },
-      { label: "Propostas", to: "/corretor/operacional/propostas", icon: CheckCircle2 },
-      { label: "Demandas & SLA", to: "/corretor/operacional/demandas", icon: Clock },
-      { label: "Minhas Tarefas", to: "/corretor/operacional/tarefas", icon: ListChecks },
-      { label: "Atualização de Proposta", to: "/corretor/operacional/atualizacao", icon: RefreshCw },
-      { label: "Relatórios e Métricas Operacionais", to: "/corretor/operacional/relatorios", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "Gestão Financeira",
-    items: [
-      { label: "Painel Financeiro", to: "/corretor/financeiro", icon: Wallet },
-      { label: "Meus Recebíveis", to: "/corretor/financeiro/recebiveis", icon: BarChart3 },
-      { label: "Minhas Comissões", to: "/corretor/financeiro/comissoes", icon: PieChart },
-      { label: "Minhas Despesas", to: "/corretor/financeiro/despesas", icon: Wallet },
-      { label: "Fluxo de Caixa", to: "/corretor/financeiro/fluxo", icon: BarChart3 },
-      { label: "Recorrências", to: "/corretor/financeiro/recorrencias", icon: RefreshCw },
-      { label: "Relatórios Financeiros e Métricas Operacionais", to: "/corretor/financeiro/relatorios", icon: PieChart },
-    ],
-  },
-  {
-    label: "Configurações",
-    items: [
-      { label: "Configurações", to: "/corretor/configuracoes", icon: Settings },
-    ],
-  },
-  {
-    label: "Backup",
-    items: [
-      { label: "Backup do Sistema", to: "/corretor/backup", icon: Database },
+      { label: "Visão Geral", to: "/corretor", icon: LayoutDashboard },
+      { label: "CRM e Gestão de Clientes", to: "/corretor/crm", icon: Users },
+      { label: "Operacional", to: "/corretor/operacional", icon: Activity },
+      { label: "Gestão Financeira", to: "/corretor/financeiro", icon: Wallet },
+      { label: "Relatórios e Dashboards", to: "/corretor/relatorios", icon: BarChart3 },
     ],
   },
 ];
