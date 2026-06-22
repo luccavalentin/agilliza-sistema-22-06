@@ -23,6 +23,8 @@ import {
 import {
   prazoMaxPorIdade, formatIdadeAnos, PRAZO_MAX_ABSOLUTO,
 } from "@/lib/operacional/prazo-idade";
+import { BankLogo } from "@/components/operacional/bank-logo";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 type TipoSimulacao = "generica" | "completa";
 type Modalidade = "com_entrada" | "sem_entrada" | "sem_entrada_custas";
