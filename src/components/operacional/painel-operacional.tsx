@@ -276,7 +276,7 @@ function PainelOperacionalInner({
       <PanelHeader
         eyebrow="OPERACIONAL"
         title="Painel Operacional"
-        subtitle="Monitoramento em tempo real do ecossistema: simulações, propostas, demandas e SLA."
+        subtitle="Monitoramento em tempo real: simulações, propostas, demandas e SLA."
         right={
           escopo === "correspondente" ? (
             <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs">

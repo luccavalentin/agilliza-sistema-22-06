@@ -631,7 +631,7 @@ export function ConfiguracoesCorrespondente() {
   return (
     <ConfigShell
       title="Configurações do Correspondente"
-      subtitle="Gerencie o ecossistema completo: usuários, corretores, parceiros, regras operacionais, financeiras, documentos, portal do cliente, segurança e auditoria."
+      subtitle="Usuários, corretores, parceiros, regras operacionais, financeiras, documentos, portal do cliente, segurança e auditoria."
       sections={sections}
     />
   );

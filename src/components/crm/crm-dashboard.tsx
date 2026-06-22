@@ -113,7 +113,7 @@ function CrmDashboardInner({ scope }: { scope: CrmScope }) {
       <PanelHeader
         eyebrow={`CRM de Clientes · ${isCorr ? "Correspondente" : "Corretor"}`}
         title="Dashboard de Clientes"
-        subtitle={`${isCorr ? "Base consolidada do ecossistema" : "Sua carteira"} — ${filters.periodo} · Status: ${filters.status} · Produto: ${filters.produto} · Origem: ${filters.origem}.`}
+        subtitle={`${filters.periodo} · Status: ${filters.status} · Produto: ${filters.produto} · Origem: ${filters.origem}.`}
         right={
           <span className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-brand">
             {isCorr ? "Escopo total" : "Minha carteira"}

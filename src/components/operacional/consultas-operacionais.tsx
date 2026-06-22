@@ -131,7 +131,7 @@ export function ConsultasOperacionais({
       <PanelHeader
         eyebrow="OPERACIONAL"
         title="Consultas Operacionais"
-        subtitle="Pesquise propostas, simulações e demandas em todo o ecossistema, com filtros e ações."
+        subtitle="Pesquise propostas, simulações e demandas, com filtros e ações."
       />
 
       <FilterBar

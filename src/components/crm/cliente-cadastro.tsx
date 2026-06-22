@@ -177,10 +177,6 @@ export function ClienteCadastro({ scope }: { scope: CadastroScope }) {
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-graphite">
               Cadastro de Cliente
             </h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Wizard de 6 etapas espelhado em <code className="rounded bg-secondary px-1 text-[11px]">CreateParticipantRequest</code> da
-              API HomeFin. Rascunho salvo automaticamente e histórico (autor / IP / timestamp) registrado em log de auditoria.
-            </p>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             {salvo && (
