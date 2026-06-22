@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState, type ComponentType } from "react";
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   Banknote,
   BarChart3,
