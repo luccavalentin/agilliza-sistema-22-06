@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DataHydrationGate } from "@/data/hydration-gate";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+
 
 function NotFoundComponent() {
   return (
@@ -77,18 +79,46 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Plataforma de Crédito Imobiliário e Home Equity" },
-      { name: "description", content: "Ecossistema seguro para correspondentes, corretores e clientes." },
-      { property: "og:title", content: "Plataforma de Crédito Imobiliário e Home Equity" },
-      { property: "og:description", content: "Ecossistema seguro para correspondentes, corretores e clientes." },
+      {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5",
+      },
+      { name: "theme-color", content: "#000f9f" },
+      { name: "color-scheme", content: "light" },
+      { name: "application-name", content: "Agilliza" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Agilliza" },
+      { name: "format-detection", content: "telephone=no" },
+      { title: "Agilliza — Plataforma de Crédito Imobiliário e Home Equity" },
+      {
+        name: "description",
+        content: "Ecossistema seguro para correspondentes, corretores e clientes.",
+      },
+      {
+        property: "og:title",
+        content: "Agilliza — Plataforma de Crédito Imobiliário e Home Equity",
+      },
+      {
+        property: "og:description",
+        content: "Ecossistema seguro para correspondentes, corretores e clientes.",
+      },
       { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/icons/favicon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/icons/favicon-16.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -119,6 +149,7 @@ function RootComponent() {
       <DataHydrationGate />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <PwaInstallPrompt />
     </QueryClientProvider>
   );
 }
