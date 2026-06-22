@@ -114,30 +114,61 @@ function NavBranch({
   const [userOpen, setUserOpen] = useState<boolean | null>(defaultOpen ? true : null);
   const open = userOpen ?? anyActive;
   const Icon = item.icon;
+  const firstChildTo = item.children?.find((c) => c.to)?.to;
+  const baseCls = [
+    "group relative flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors",
+    anyActive ? "text-white" : "text-white/85 hover:bg-white/10 hover:text-white",
+  ].join(" ");
+  const labelContent = (
+    <>
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={anyActive ? 2.5 : 2} />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+    </>
+  );
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setUserOpen(!open)}
-        className={[
-          "group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors",
-          anyActive ? "text-white" : "text-white/85 hover:bg-white/10 hover:text-white",
-        ].join(" ")}
-        title={collapsed ? item.label : undefined}
-        aria-expanded={open}
-        aria-label={item.label}
-      >
-        <Icon className="h-4 w-4 shrink-0" strokeWidth={anyActive ? 2.5 : 2} />
+      <div className="flex items-center">
+        {firstChildTo ? (
+          <Link
+            to={firstChildTo}
+            onClick={() => {
+              setUserOpen(true);
+              onNavigate();
+            }}
+            className={baseCls}
+            title={collapsed ? item.label : undefined}
+          >
+            {labelContent}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setUserOpen(!open)}
+            className={baseCls}
+            title={collapsed ? item.label : undefined}
+            aria-expanded={open}
+          >
+            {labelContent}
+          </button>
+        )}
         {!collapsed && (
-          <>
-            <span className="truncate">{item.label}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setUserOpen(!open);
+            }}
+            className="ml-1 rounded-md p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+            aria-label={open ? "Recolher" : "Expandir"}
+            aria-expanded={open}
+          >
             <ChevronDown
-              className={`ml-auto h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+              className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
               aria-hidden
             />
-          </>
+          </button>
         )}
-      </button>
+      </div>
       {open && !collapsed && item.children && (
         <div className="mt-1 space-y-1">
           {item.children.map((child) => (
