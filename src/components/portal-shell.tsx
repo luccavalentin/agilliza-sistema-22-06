@@ -327,12 +327,14 @@ export function PortalShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background px-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:px-6">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-brand lg:hidden"
             aria-label="Abrir menu"
+            aria-controls="portal-sidebar"
+            aria-expanded={mobileOpen}
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -348,7 +350,7 @@ export function PortalShell({
             <GlobalSearchInput />
 
             <span className="hidden items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-brand sm:inline-flex">
-              <ShieldCheck className="h-3 w-3" />
+              <ShieldCheck className="h-3 w-3" aria-hidden />
               Sessão segura
             </span>
 
@@ -358,7 +360,9 @@ export function PortalShell({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main id="conteudo-principal" tabIndex={-1} className="flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8">
+          {children}
+        </main>
       </div>
     </div>
     </GlobalSearchProvider>
