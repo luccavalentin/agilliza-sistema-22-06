@@ -133,7 +133,7 @@ export interface Cliente {
   // Cônjuge
   conjuge?: Conjuge;
 
-  // Vínculos do ecossistema
+  // Vínculos internos (parceiro / corretor / imobiliária / analista)
   idUsuarioParceiro: number;
   nomeCorretor: string;
   nomeImobiliaria?: string;
