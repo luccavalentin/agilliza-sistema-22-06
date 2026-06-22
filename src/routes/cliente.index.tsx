@@ -78,7 +78,7 @@ function PainelCliente() {
         eyebrow="Visão Geral · Cliente"
         title="Olá, Fernanda — sua proposta está em análise"
         subtitle="Financiamento Imobiliário · Banco A · Proposta nº 2024-08731"
-        badge="Acesso seguro · Dados criptografados"
+        
       />
 
       {/* Status macro */}

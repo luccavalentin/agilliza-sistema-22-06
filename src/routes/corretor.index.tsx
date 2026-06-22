@@ -95,7 +95,7 @@ function PainelCorretor() {
         eyebrow="Visão Geral · Corretor"
         title="Bom dia, Mariana — sua carteira hoje"
         subtitle="Período: 30 dias · Produto: Todos · Banco: Todos · Status: Todos · Carteira pessoal"
-        badge="Visão Pessoal · Carteira"
+        
       />
 
       {/* Atalhos rápidos */}
