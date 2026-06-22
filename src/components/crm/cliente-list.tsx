@@ -745,7 +745,7 @@ function FichaTab({ cliente: c, mascarar }: { cliente: Cliente; mascarar: boolea
 
       {c.conjuge && (
         <>
-          <GroupTitle icon={Users}>Cônjuge</GroupTitle>
+          <GroupTitle icon={User}>Cônjuge</GroupTitle>
           <div className="grid gap-2 sm:grid-cols-2">
             <Field label="Nome" value={c.conjuge.nomeConjuge} />
             <Field label="CPF" value={mascarar ? maskCpfCnpj(c.conjuge.cpfConjuge) : fmtCpfCnpj(c.conjuge.cpfConjuge)} />
