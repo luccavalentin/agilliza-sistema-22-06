@@ -85,11 +85,12 @@ function NavLeaf({
       onClick={onNavigate}
       className={baseCls}
       title={collapsed ? item.label : undefined}
+      aria-current={active ? "page" : undefined}
     >
       {content}
     </Link>
   ) : (
-    <button type="button" className={baseCls} title={collapsed ? item.label : undefined}>
+    <button type="button" className={baseCls} title={collapsed ? item.label : undefined} aria-label={item.label}>
       {content}
     </button>
   );
