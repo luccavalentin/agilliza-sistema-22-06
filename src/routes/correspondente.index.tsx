@@ -397,6 +397,20 @@ function PainelCorrespondente() {
         </div>
       </section>
 
+      {/* Alertas operacionais */}
+      <section>
+        <SectionTitle
+          icon={Bell}
+          title="Alertas operacionais"
+          description="Hierarquia por urgência — críticos pulsam, ATENÇÃO em âmbar e INFO em azul claro."
+        />
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {alertasOperacionais.map((a) => (
+            <AlertaCard key={a.id} alerta={a} />
+          ))}
+        </div>
+      </section>
+
       {/* Evolução + Distribuição */}
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-2">
