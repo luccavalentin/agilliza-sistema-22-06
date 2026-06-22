@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2 } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { PropostasKanban } from "@/components/operacional/propostas-kanban";
 
 export const Route = createFileRoute("/correspondente/operacional/propostas")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Correspondente · Operacional"
-      title="Propostas"
-      description="Acompanhamento e gestão das propostas em andamento."
-      icon={CheckCircle2}
-    />
-  ),
+  component: () => <div className="p-6"><PropostasKanban escopo="correspondente" /></div>,
 });
