@@ -31,7 +31,7 @@ export type PortalKind = "correspondente" | "corretor" | "cliente";
 const kindMeta: Record<PortalKind, { label: string; description: string; user: string }> = {
   correspondente: {
     label: "Correspondente Imobiliário",
-    description: "Controle operacional do ecossistema",
+    description: "Gestão operacional consolidada",
     user: "Administrador",
   },
   corretor: {
