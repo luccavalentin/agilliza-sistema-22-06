@@ -10,6 +10,7 @@ import {
 } from "@/components/dashboards/primitives";
 import type { CrmScope } from "./crm-dashboard";
 import { useDashboardFilters, PERIODOS } from "@/hooks/use-dashboard-filters";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 const COLOR = {
   brand: "var(--brand)",
@@ -54,8 +55,39 @@ export function CrmRelatorios({ scope }: { scope: CrmScope }) {
         title="Relatórios"
         subtitle={`${isCorr ? "Relatórios completos do CRM" : "Relatórios da sua carteira"} — ${filters.periodo} · Produto ${filters.produto} · Origem ${filters.origem} · Status ${filters.status}.`}
         right={
-          <button className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground hover:bg-brand-strong">
-            <Download className="h-3.5 w-3.5" /> Exportar
+          <button
+            onClick={() =>
+              downloadBrandedPdf({
+                title: "Relatórios de CRM",
+                subtitle: isCorr ? "Visão consolidada do correspondente" : "Carteira do corretor",
+                module: `CRM · ${isCorr ? "Correspondente" : "Corretor"}`,
+                period: filters.periodo,
+                scope: isCorr ? "Correspondente · Visão consolidada" : "Corretor · Minha carteira",
+                filters: [
+                  { label: "Produto", value: filters.produto },
+                  { label: "Origem", value: filters.origem },
+                  { label: "Status", value: filters.status },
+                ],
+                confidential: true,
+                kpis: [
+                  { label: "Relatórios disponíveis", value: String(reports.length) },
+                  { label: "Período", value: filters.periodo },
+                  { label: "Produto", value: filters.produto },
+                  { label: "Status", value: filters.status },
+                ],
+                sections: [
+                  {
+                    title: "Catálogo de relatórios",
+                    head: ["#", "Relatório"],
+                    body: reports.map((r, i) => [String(i + 1), r]),
+                  },
+                ],
+                fileName: "agilliza-crm-relatorios",
+              })
+            }
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-brand-foreground hover:bg-brand-strong"
+          >
+            <Download className="h-3.5 w-3.5" /> Exportar PDF
           </button>
         }
       />

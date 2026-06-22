@@ -19,6 +19,7 @@ import {
 } from "@/lib/operacional/mock-data";
 import { formatBRL } from "@/lib/operacional/formatters";
 import { ETAPAS_PROPOSTA } from "@/lib/operacional/types";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 type Escopo = "correspondente" | "corretor";
 
@@ -162,8 +163,52 @@ export function RelatoriosOperacionais({ escopo }: { escopo: Escopo }) {
             <Button variant="outline" size="sm" className="gap-1">
               <Filter className="h-3.5 w-3.5" /> Filtros
             </Button>
-            <Button size="sm" className="gap-1">
-              <Download className="h-3.5 w-3.5" /> Exportar
+            <Button
+              size="sm"
+              className="gap-1"
+              onClick={() =>
+                downloadBrandedPdf({
+                  title: "Relatórios e Métricas Operacionais",
+                  subtitle: `Dashboard executivo — visão ${escopo === "correspondente" ? "geral da operação" : "individual do corretor"}`,
+                  module: `Operacional · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+                  period: periodo,
+                  scope: escopo === "correspondente" ? "Visão consolidada" : "Carteira individual",
+                  confidential: true,
+                  kpis: [
+                    { label: "Volume em propostas", value: formatBRL(volume) },
+                    { label: "Propostas", value: String(totalProp) },
+                    { label: "Aprovadas", value: String(aprovadas) },
+                    { label: "Conversão", value: `${conversao}%` },
+                    { label: "Taxa de aprovação", value: `${taxaAprov}%` },
+                    { label: "Simulações", value: String(totalSim) },
+                    { label: "SLA vencidos", value: String(slaVenc) },
+                    { label: "Transferidas", value: String(transf) },
+                  ],
+                  sections: [
+                    {
+                      title: "Produção por banco",
+                      head: ["Banco", "Propostas", "Aprovadas", "Volume"],
+                      body: porBanco.map((b) => [b.banco, String(b.propostas), String(b.aprovadas), formatBRL(b.volume)]),
+                      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
+                    },
+                    {
+                      title: "Funil por etapa",
+                      head: ["Etapa", "Propostas"],
+                      body: funil.map((f) => [f.etapa, String(f.valor)]),
+                      columnStyles: { 1: { halign: "right" } },
+                    },
+                    {
+                      title: "Produtividade por responsável",
+                      head: ["Usuário", "Simulações", "Propostas", "Demandas"],
+                      body: porUsuario.map((u) => [u.nome, String(u.simulacoes), String(u.propostas), String(u.demandas)]),
+                      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
+                    },
+                  ],
+                  fileName: "agilliza-operacional-relatorios",
+                })
+              }
+            >
+              <Download className="h-3.5 w-3.5" /> Exportar PDF
             </Button>
           </div>
         }

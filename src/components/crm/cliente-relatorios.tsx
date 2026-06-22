@@ -29,6 +29,7 @@ import {
   YAxis,
 } from "recharts";
 import { CLIENTES_MOCK, DOM_UFS, fmtBRL, type Cliente } from "@/data/homefin-clientes";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 export type RelatoriosScope = "correspondente" | "corretor";
 
@@ -82,9 +83,44 @@ export function ClienteRelatorios({ scope }: { scope: RelatoriosScope }) {
             </p>
           </div>
           <div className="flex items-center gap-2 text-[11px]">
-            <ExportBtn label="CSV" />
-            <ExportBtn label="XLSX" />
-            <ExportBtn label="PDF" hint="Confidencial · uso interno" />
+            <ExportBtn label="CSV" onClick={() => exportCSV(base)} />
+            <ExportBtn label="XLSX" onClick={() => exportCSV(base, true)} />
+            <ExportBtn
+              label="PDF"
+              hint="Confidencial · uso interno"
+              onClick={() =>
+                downloadBrandedPdf({
+                  title: RELATORIOS.find((r) => r.id === rel)?.label ?? "Relatório de Clientes",
+                  subtitle: `Base ${scope === "correspondente" ? "consolidada" : "do corretor"} · ${base.length} registros`,
+                  module: scope === "correspondente" ? "CRM · Correspondente" : "CRM · Corretor",
+                  scope: scope === "correspondente" ? "Visão consolidada" : "Carteira individual",
+                  period: periodoLabel(periodo),
+                  filters: [
+                    { label: "UF", value: uf || "Todas" },
+                    { label: "Pessoa", value: tipoPessoa === "F" ? "Física" : tipoPessoa === "J" ? "Jurídica" : "Todos" },
+                    { label: "Qualificação", value: tipoQualificacao === "CO" ? "Comprador" : tipoQualificacao === "VD" ? "Vendedor" : "Todos" },
+                  ],
+                  confidential: true,
+                  kpis: [
+                    { label: "Total de clientes", value: String(base.length) },
+                    { label: "Ativos", value: String(base.filter((c) => c.tipoSituacao === "A").length) },
+                    { label: "Pessoa Física", value: String(base.filter((c) => c.tipoPessoa === "F").length) },
+                    { label: "Pessoa Jurídica", value: String(base.filter((c) => c.tipoPessoa === "J").length) },
+                  ],
+                  sections: [
+                    {
+                      title: "Clientes da base",
+                      head: ["Nome", "Documento", "UF", "Pessoa", "Qualif.", "Corretor", "Renda"],
+                      body: base.slice(0, 80).map((c) => [
+                        c.nomeParticipante, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, fmtBRL(c.renda ?? 0),
+                      ]),
+                      columnStyles: { 6: { halign: "right" } },
+                    },
+                  ],
+                  fileName: `agilliza-clientes-${rel}`,
+                })
+              }
+            />
           </div>
         </div>
       </header>
@@ -540,12 +576,28 @@ function ChartCard({ title, subtitle, children, className = "", small }: { title
   );
 }
 
-function ExportBtn({ label, hint }: { label: string; hint?: string }) {
+function ExportBtn({ label, hint, onClick }: { label: string; hint?: string; onClick?: () => void }) {
   return (
-    <button title={hint} className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-2.5 py-1.5 font-semibold uppercase tracking-wider text-graphite hover:border-brand/40">
+    <button onClick={onClick} title={hint} className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-2.5 py-1.5 font-semibold uppercase tracking-wider text-graphite hover:border-brand/40">
       <Download className="h-3.5 w-3.5" /> {label}
     </button>
   );
+}
+
+function periodoLabel(p: string) {
+  return ({ "ult-7": "Últimos 7 dias", "ult-30": "Últimos 30 dias", "mtd": "Mês atual", "ytd": "Ano atual", "12m": "Últimos 12 meses" } as Record<string, string>)[p] ?? p;
+}
+
+function exportCSV(base: Cliente[], xlsx = false) {
+  const header = ["Nome", "Documento", "UF", "Pessoa", "Qualificação", "Corretor", "Renda"];
+  const rows = base.map((c) => [c.nomeParticipante, c.cpfCnpj, c.uf, c.tipoPessoa, c.tipoQualificacao, c.nomeCorretor, String(c.renda ?? 0)]);
+  const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
+  const blob = new Blob(["\ufeff" + csv], { type: xlsx ? "application/vnd.ms-excel" : "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `agilliza-clientes.${xlsx ? "xls" : "csv"}`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // reserva ícones

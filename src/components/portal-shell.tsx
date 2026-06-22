@@ -8,11 +8,12 @@ import {
   ChevronDown,
   LogOut,
   ShieldCheck,
-  Building2,
+  
 } from "lucide-react";
 import { NotificationsCenter } from "@/components/portal/notifications-center";
 import { AccountMenu } from "@/components/portal/account-menu";
 import { GlobalSearchProvider, GlobalSearchInput } from "@/components/portal/global-search";
+import brandMark from "@/assets/brand-mark.png";
 
 export type PortalNavItem = {
   label: string;
@@ -201,12 +202,12 @@ export function PortalShell({
         }}
       >
         <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white text-brand">
-            <Building2 className="h-5 w-5" strokeWidth={2.5} />
+          <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
+            <img src={brandMark} alt="Agilliza" className="h-full w-full object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold tracking-tight">Plataforma</p>
+              <p className="truncate text-sm font-bold tracking-tight">Agilliza</p>
               <p className="truncate text-[11px] text-white/65">Crédito Imobiliário</p>
             </div>
           )}

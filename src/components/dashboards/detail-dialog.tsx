@@ -8,6 +8,7 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 export type DetailRow = {
   data: string;
@@ -72,70 +73,24 @@ function downloadCSV(filename: string, rows: DetailRow[]) {
   toast.success("Excel exportado", { description: `${rows.length} registros baixados.` });
 }
 
-function exportPDF(ctx: DetailContext, rows: DetailRow[]) {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const w = doc.internal.pageSize.getWidth();
-
-  // Header
-  doc.setFillColor(0, 15, 159);
-  doc.rect(0, 0, w, 56, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text(ctx.title, 32, 28);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  if (ctx.subtitle) doc.text(ctx.subtitle, 32, 44);
-  doc.text(
-    `Período: ${ctx.period ?? "—"}    Registros: ${rows.length}    Emitido: ${new Date().toLocaleString("pt-BR")}`,
-    32, 72,
-  );
-  doc.setTextColor(20, 20, 20);
-
-  // KPIs
-  let y = 92;
-  const cardW = (w - 64 - 24) / 4;
-  ctx.kpis.slice(0, 8).forEach((k, i) => {
-    const col = i % 4;
-    const row = Math.floor(i / 4);
-    const x = 32 + col * (cardW + 8);
-    const yy = y + row * 58;
-    doc.setDrawColor(226, 232, 240);
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(x, yy, cardW, 50, 4, 4, "FD");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(k.label.toUpperCase(), x + 10, yy + 16);
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text(k.value, x + 10, yy + 38);
-    doc.setFont("helvetica", "normal");
+async function exportPDF(ctx: DetailContext, rows: DetailRow[]) {
+  await downloadBrandedPdf({
+    title: ctx.title,
+    subtitle: ctx.subtitle,
+    module: "Painel · Detalhamento",
+    period: ctx.period,
+    confidential: true,
+    kpis: ctx.kpis,
+    sections: [
+      {
+        title: "Registros",
+        head: ["Data", "Cliente", "Banco", "Status", "Usuário", "Valor"],
+        body: rows.map((r) => [r.data, r.cliente, r.banco, r.status, r.usuario, r.valor]),
+        columnStyles: { 5: { halign: "right", fontStyle: "bold" } },
+      },
+    ],
+    fileName: ctx.title,
   });
-  y += Math.ceil(Math.min(ctx.kpis.length, 8) / 4) * 58 + 8;
-
-  // Table
-  autoTable(doc, {
-    startY: y,
-    head: [["Data", "Cliente", "Banco", "Status", "Usuário", "Valor"]],
-    body: rows.map((r) => [r.data, r.cliente, r.banco, r.status, r.usuario, r.valor]),
-    headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontSize: 9 },
-    bodyStyles: { fontSize: 9, textColor: [30, 41, 59] },
-    alternateRowStyles: { fillColor: [250, 251, 253] },
-    margin: { left: 32, right: 32 },
-    columnStyles: { 5: { halign: "right", fontStyle: "bold" } },
-  });
-
-  // Footer
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text(`Página ${i} de ${pages}`, w - 80, doc.internal.pageSize.getHeight() - 16);
-  }
-
-  doc.save(`${ctx.title.replace(/[^\w\s-]/g, "")}.pdf`);
   toast.success("PDF gerado", { description: `${rows.length} registros incluídos.` });
 }
 
