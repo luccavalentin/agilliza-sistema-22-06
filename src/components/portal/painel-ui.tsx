@@ -26,26 +26,26 @@ export function PainelHeader({
 }) {
   const [firstWord, rest] = splitFirstWord(title);
   return (
-    <header className="relative overflow-hidden rounded-xl border-b border-[#E2E8F0] bg-gradient-to-br from-brand/[0.06] via-brand/[0.02] to-transparent px-6 py-5">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+    <header className="relative overflow-hidden rounded-xl border-b border-[#E2E8F0] bg-gradient-to-br from-brand/[0.06] via-brand/[0.02] to-transparent px-4 py-4 sm:px-6 sm:py-5">
+      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-4">
         <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand">
-            <span className="relative flex h-1.5 w-1.5">
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/70" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
-            {eyebrow}
+            <span className="truncate">{eyebrow}</span>
           </span>
-          <h1 className="mt-3 truncate text-2xl font-black tracking-tight text-graphite sm:text-[28px]">
+          <h1 className="mt-3 text-xl font-black leading-tight tracking-tight text-graphite sm:truncate sm:text-2xl md:text-[28px]">
             <span className="text-brand">{firstWord}</span>
             {rest}
           </h1>
-          <p className="mt-1 max-w-2xl text-[13px] text-muted-foreground">{subtitle}</p>
+          <p className="mt-1 max-w-2xl text-[12px] leading-snug text-muted-foreground sm:text-[13px]">{subtitle}</p>
         </div>
         {badge && (
           <span
             title={badge}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand/15 bg-white/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-brand shadow-sm backdrop-blur-sm"
+            className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-brand/15 bg-white/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-brand shadow-sm backdrop-blur-sm"
           >
             <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
             {badge}

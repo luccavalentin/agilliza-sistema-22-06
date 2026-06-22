@@ -159,7 +159,7 @@ function PainelFinanceiroInner({ escopo }: { escopo: Escopo }) {
   const filtros = escopo === "correspondente" ? filtrosCorr : filtrosCor;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-6">
       <PanelHeader
         eyebrow="Gestão Financeira"
         title={escopo === "correspondente" ? "Painel Financeiro" : "Meu Painel Financeiro"}
@@ -167,11 +167,11 @@ function PainelFinanceiroInner({ escopo }: { escopo: Escopo }) {
           ? "Receitas, despesas, comissões e fluxo de caixa."
           : "Acompanhe seus recebíveis, comissões e resultado pessoal."}
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-md border border-border bg-card p-0.5">
               {["7 dias", "30 dias", "90 dias", "Ano"].map(p => (
                 <button key={p} onClick={() => setPeriodo(p)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded ${periodo === p ? "bg-brand text-white" : "text-muted-foreground hover:text-graphite"}`}>
+                  className={`px-2.5 py-1.5 text-xs font-semibold rounded sm:px-3 ${periodo === p ? "bg-brand text-white" : "text-muted-foreground hover:text-graphite"}`}>
                   {p}
                 </button>
               ))}
