@@ -39,7 +39,7 @@ function LoginPage() {
 
   return (
     <div
-      className="relative flex min-h-screen items-center justify-center bg-background px-4 py-10"
+      className="relative flex min-h-dvh items-center justify-center bg-background px-4 py-10"
       style={{
         backgroundImage:
           "radial-gradient(60% 60% at 50% 0%, rgba(0,15,159,0.06) 0%, transparent 70%)," +

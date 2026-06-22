@@ -31,7 +31,7 @@ export type PortalKind = "correspondente" | "corretor" | "cliente";
 const kindMeta: Record<PortalKind, { label: string; description: string; user: string }> = {
   correspondente: {
     label: "Correspondente Imobiliário",
-    description: "Controle operacional do ecossistema",
+    description: "Gestão operacional consolidada",
     user: "Administrador",
   },
   corretor: {
@@ -85,11 +85,12 @@ function NavLeaf({
       onClick={onNavigate}
       className={baseCls}
       title={collapsed ? item.label : undefined}
+      aria-current={active ? "page" : undefined}
     >
       {content}
     </Link>
   ) : (
-    <button type="button" className={baseCls} title={collapsed ? item.label : undefined}>
+    <button type="button" className={baseCls} title={collapsed ? item.label : undefined} aria-label={item.label}>
       {content}
     </button>
   );
@@ -122,6 +123,8 @@ function NavBranch({
           anyActive ? "text-white" : "text-white/85 hover:bg-white/10 hover:text-white",
         ].join(" ")}
         title={collapsed ? item.label : undefined}
+        aria-expanded={open}
+        aria-label={item.label}
       >
         <Icon className="h-4 w-4 shrink-0" strokeWidth={anyActive ? 2.5 : 2} />
         {!collapsed && (
@@ -129,6 +132,7 @@ function NavBranch({
             <span className="truncate">{item.label}</span>
             <ChevronDown
               className={`ml-auto h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden
             />
           </>
         )}
@@ -177,16 +181,21 @@ export function PortalShell({
 
   return (
     <GlobalSearchProvider>
-    <div className="flex min-h-screen bg-secondary text-foreground">
+    <div className="flex min-h-dvh bg-secondary text-foreground">
+      <a href="#conteudo-principal" className="skip-to-content">
+        Pular para o conteúdo
+      </a>
       {mobileOpen && (
         <button
           aria-label="Fechar menu"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-30 bg-graphite/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-graphite/40 backdrop-blur-sm lg:hidden"
         />
       )}
 
       <aside
+        id="portal-sidebar"
+        aria-label="Menu principal"
         className={[
           "fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-200",
           "shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]",
@@ -318,12 +327,14 @@ export function PortalShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background px-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:px-6">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-brand lg:hidden"
             aria-label="Abrir menu"
+            aria-controls="portal-sidebar"
+            aria-expanded={mobileOpen}
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -339,7 +350,7 @@ export function PortalShell({
             <GlobalSearchInput />
 
             <span className="hidden items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-brand sm:inline-flex">
-              <ShieldCheck className="h-3 w-3" />
+              <ShieldCheck className="h-3 w-3" aria-hidden />
               Sessão segura
             </span>
 
@@ -349,7 +360,9 @@ export function PortalShell({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main id="conteudo-principal" tabIndex={-1} className="flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8">
+          {children}
+        </main>
       </div>
     </div>
     </GlobalSearchProvider>
