@@ -606,26 +606,36 @@ export async function gerarBackupXLSX(): Promise<void> {
     "-" + String(agora.getHours()).padStart(2, "0") + String(agora.getMinutes()).padStart(2, "0");
   const nomeArquivo = `agilliza-backup-${stamp}.xlsx`;
 
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "Agilliza";
-  wb.created = agora;
-  wb.lastModifiedBy = "Agilliza Backup Engine";
+  let url: string | undefined;
+  let anchor: HTMLAnchorElement | undefined;
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Agilliza";
+    wb.created = agora;
+    wb.lastModifiedBy = "Agilliza Backup Engine";
 
-  addResumoSheet(wb, agora);
-  for (const spec of buildSheets()) applySheet(wb, spec);
+    addResumoSheet(wb, agora);
+    for (const spec of buildSheets()) applySheet(wb, spec);
 
-  const buf = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buf], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nomeArquivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    url = URL.createObjectURL(blob);
+    anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = nomeArquivo;
+    document.body.appendChild(anchor);
+    anchor.click();
+  } catch (err) {
+    console.error("[backup-engine] gerarBackupXLSX falhou", err);
+    throw new Error(
+      "Não foi possível gerar o arquivo de backup. Verifique o espaço disponível e tente novamente."
+    );
+  } finally {
+    if (anchor && anchor.parentNode) anchor.parentNode.removeChild(anchor);
+    if (url) setTimeout(() => URL.revokeObjectURL(url!), 1000);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DataHydrationGate } from "@/data/hydration-gate";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { Toaster } from "@/components/ui/sonner";
 
 
 function NotFoundComponent() {
@@ -150,6 +151,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <PwaInstallPrompt />
+      <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
 }
