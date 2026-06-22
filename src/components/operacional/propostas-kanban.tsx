@@ -20,6 +20,7 @@ import { usePropostas } from "@/data/hooks";
 import { moverProposta, aprovarProposta, reprovarProposta } from "@/data/repositories";
 import { ANCHOR_NOW } from "@/data/anchor";
 import { toast } from "sonner";
+import { BankLogo } from "@/components/operacional/bank-logo";
 
 const prioridadeStyle: Record<Prioridade, string> = {
   "Baixa": "bg-slate-100 text-slate-700",
