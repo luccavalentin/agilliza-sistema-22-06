@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
+import { useDashboardDetailOptional, buildMockRows } from "@/components/dashboards/detail-dialog";
 
 function splitFirstWord(s: string): [string, string] {
   const i = s.indexOf(" ");
