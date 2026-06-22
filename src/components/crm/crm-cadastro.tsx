@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import {
   User2,
   IdCard,
@@ -18,11 +18,17 @@ import {
   Clock,
   ShieldCheck,
   Zap,
+  Eye,
+  Upload,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
 import { MaskedInput } from "@/components/ui/masked-input";
 import type { MaskKind } from "@/lib/formatters";
 import type { CrmScope } from "./crm-dashboard";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /** Dados importados pelo Flash IA via sessionStorage */
 interface FlashIaLead {
