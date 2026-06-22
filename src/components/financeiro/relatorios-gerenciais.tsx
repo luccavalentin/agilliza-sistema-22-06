@@ -13,6 +13,7 @@ import { Panel, PanelHeader, KpiCard } from "@/components/dashboards/primitives"
 import { Button } from "@/components/ui/button";
 import { propostas, usuarios, clientes, bancos } from "@/lib/operacional/mock-data";
 import { formatBRL } from "@/lib/operacional/formatters";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 import type { Proposta } from "@/lib/operacional/types";
 
 const TOKENS = {
@@ -238,7 +239,52 @@ export function RelatoriosGerenciais({ escopo }: { escopo: "correspondente" | "c
             <Button variant="outline" size="sm"><Save className="h-4 w-4 mr-1.5" /> Salvar filtro</Button>
             <Button variant="outline" size="sm"><Share2 className="h-4 w-4 mr-1.5" /> Compartilhar</Button>
             <Button variant="outline" size="sm"><Printer className="h-4 w-4 mr-1.5" /> Imprimir</Button>
-            <Button size="sm" style={{ background: TOKENS.brand }}><Download className="h-4 w-4 mr-1.5" /> Exportar</Button>
+            <Button
+              size="sm"
+              style={{ background: TOKENS.brand }}
+              onClick={() =>
+                downloadBrandedPdf({
+                  title: cfg.title,
+                  subtitle: cfg.subtitle,
+                  module: "Gestão Financeira × Operacional",
+                  period: filtros.periodo,
+                  scope: "Correspondente · Visão consolidada",
+                  filters: [
+                    { label: "Banco", value: filtros.banco },
+                    { label: "Produto", value: filtros.produto },
+                    { label: "Status", value: filtros.status },
+                  ],
+                  confidential: true,
+                  kpis: [
+                    { label: "Volume total", value: formatBRL(totalGeral) },
+                    { label: "Em andamento", value: String(andamentoAll.length) },
+                    { label: "Aprovadas", value: String(aprovadasAll.length) },
+                    { label: "Contratos", value: String(contratosAll.length) },
+                    { label: "Conversão aprovação", value: `${conversaoApr.toFixed(1)}%` },
+                    { label: "Conversão contrato", value: `${conversaoCon.toFixed(1)}%` },
+                  ],
+                  sections: [
+                    {
+                      title: `Detalhamento — ${cfg.title}`,
+                      head: ["Cliente", "Banco", "Produto", "Corretor", "Status", "Valor"],
+                      body: data.slice(0, 80).map((p) => [
+                        p.cliente, p.bancoNome, p.produto, p.corretor, p.status, formatBRL(p.valor),
+                      ]),
+                      columnStyles: { 5: { halign: "right", fontStyle: "bold" } },
+                    },
+                    {
+                      title: "Agregação por banco",
+                      head: ["Banco", "Qtd", "Volume"],
+                      body: aggBanco.map((b) => [b.name, String(b.qtd), formatBRL(b.valor)]),
+                      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+                    },
+                  ],
+                  fileName: `agilliza-financeiro-${tab}`,
+                })
+              }
+            >
+              <Download className="h-4 w-4 mr-1.5" /> Exportar PDF
+            </Button>
           </div>
         }
       />
