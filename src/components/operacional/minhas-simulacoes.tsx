@@ -89,23 +89,34 @@ export function MinhasSimulacoes({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-xs">
+          <table className="w-full min-w-[1100px] text-xs">
             <thead>
               <tr className="bg-secondary">
-                {["ID", "Cliente", "Produto", "Valor", "Prazo", "Cenários", "Status", "Criada por", "Criada em", "Ações"].map((h) => (
+                {["ID", "Cliente", "Produto", "Bancos", "Valor", "Prazo", "Cenários", "Status", "Criada por", "Criada em", "Ações"].map((h) => (
                   <th key={h} className="border-b border-border px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {linhas.map((s) => (
-                <tr key={s.id} className="border-b border-border">
+              {linhas.map((s) => {
+                const bancosUnicos = Array.from(new Set(s.cenarios.map((c) => c.bancoId)))
+                  .map((id) => bancoById(id)).filter(Boolean);
+                return (
+                <tr key={s.id} className="border-b border-border hover:bg-secondary/40">
                   <td className="px-3 py-2 font-bold text-graphite">
                     {s.id}
                     {s.origemCopiaDeId && <span className="ml-1.5 rounded bg-info/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-info">Cópia</span>}
                   </td>
                   <td className="px-3 py-2">{clienteById(s.clienteId)?.nome ?? <span className="italic text-muted-foreground">Sem cliente</span>}</td>
                   <td className="px-3 py-2">{s.produto}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex -space-x-1">
+                      {bancosUnicos.slice(0, 5).map((b) => (
+                        <BankLogo key={b!.id} banco={b} size="xs" />
+                      ))}
+                      {bancosUnicos.length === 0 && <span className="text-muted-foreground">—</span>}
+                    </div>
+                  </td>
                   <td className="px-3 py-2">{formatBRL(s.valorImovel ?? s.valorSolicitado ?? 0)}</td>
                   <td className="px-3 py-2">{s.prazoMesesBase}m</td>
                   <td className="px-3 py-2">{s.cenarios.length || "—"}</td>
@@ -114,17 +125,21 @@ export function MinhasSimulacoes({
                   <td className="px-3 py-2 whitespace-nowrap text-[11px] text-muted-foreground">{formatDataHora(s.criadaEm)}</td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-1">
-                      {[Eye, Pencil, Copy, Send, Share2, Download, Star, History, ArrowRightLeft].map((Icon, i) => (
-                        <button key={i} className="grid h-7 w-7 place-items-center rounded border border-border bg-background text-muted-foreground hover:border-brand/40 hover:text-brand">
-                          <Icon className="h-3.5 w-3.5" />
-                        </button>
-                      ))}
+                      <IconBtn icon={Eye}        title="Visualizar"   onClick={() => toast.info(`Abrindo ${s.id}`)} />
+                      <IconBtn icon={Pencil}     title="Editar"       onClick={() => toast.info("Edição em breve")} />
+                      <IconBtn icon={Copy}       title="Duplicar"     onClick={() => toast.success("Simulação duplicada")} />
+                      <IconBtn icon={Send}       title="Enviar p/ proposta" onClick={() => toast.success("Enviada para proposta")} />
+                      <IconBtn icon={Share2}     title="Compartilhar" onClick={() => toast.info("Link copiado")} />
+                      <IconBtn icon={Download}   title="Baixar PDF"   onClick={() => baixarSimulacaoPdf(s)} />
+                      <IconBtn icon={Star}       title="Favoritar"    onClick={() => toast.success("Favoritada")} />
+                      <IconBtn icon={History}    title="Histórico"    onClick={() => toast.info("Histórico")} />
+                      <IconBtn icon={ArrowRightLeft} title="Comparar" onClick={() => toast.info("Comparar")} />
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
               {linhas.length === 0 && (
-                <tr><td colSpan={10} className="p-6 text-center text-xs text-muted-foreground">Nenhuma simulação encontrada.</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-xs text-muted-foreground">Nenhuma simulação encontrada.</td></tr>
               )}
             </tbody>
           </table>
@@ -132,4 +147,57 @@ export function MinhasSimulacoes({
       </section>
     </div>
   );
+}
+
+function IconBtn({ icon: Icon, title, onClick }: { icon: typeof Eye; title: string; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      className="grid h-7 w-7 place-items-center rounded border border-border bg-background text-muted-foreground transition hover:border-brand/40 hover:text-brand"
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+async function baixarSimulacaoPdf(s: Simulacao) {
+  if (!s.cenarios.length) {
+    toast.info("Esta simulação ainda não tem cenários para exportar.");
+    return;
+  }
+  const cli = clienteById(s.clienteId);
+  await downloadBrandedPdf({
+    title: `Simulação ${s.id}`,
+    module: "Operacional",
+    subtitle: cli ? `Cliente: ${cli.nome} · ${s.produto}` : s.produto,
+    fileName: `simulacao-${s.id}`,
+    kpis: [
+      { label: "Valor do imóvel", value: formatBRL(s.valorImovel ?? s.valorSolicitado ?? 0) },
+      { label: "Prazo base", value: `${s.prazoMesesBase} m` },
+      { label: "Cenários", value: String(s.cenarios.length) },
+      { label: "Status", value: s.status },
+    ],
+    sections: [{
+      title: "Cenários comparativos",
+      head: ["Banco", "Prazo", "Tabela", "Taxa a.a.", "Parcela inicial", "Parcela final", "Total pago", "Juros", "CET", "Renda mín."],
+      body: s.cenarios.map((c) => {
+        const b = bancoById(c.bancoId);
+        return [
+          b?.nome ?? c.bancoId,
+          `${c.prazoMeses}m`,
+          c.tabela,
+          formatPercent(c.taxaAaPercent),
+          formatBRL(c.parcelaInicial),
+          formatBRL(c.parcelaFinal),
+          formatBRL(c.totalPago),
+          formatBRL(c.totalJuros),
+          formatPercent(c.cetPercent),
+          formatBRL(c.rendaMinima),
+        ];
+      }),
+    }],
+  });
 }
