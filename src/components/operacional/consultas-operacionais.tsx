@@ -298,7 +298,7 @@ function TabelaPropostas({
                 {p.transferida && <span className="ml-1.5 inline-flex items-center gap-1 rounded bg-info/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-info"><ArrowRightLeft className="h-2.5 w-2.5" />Transf.</span>}
               </Td>
               <Td>{clienteById(p.clienteId)?.nome}</Td>
-              <Td>{bancoById(p.bancoId)?.sigla}</Td>
+              <Td><BankLogo banco={bancoById(p.bancoId)} size="xs" showName /></Td>
               <Td>{p.produto}</Td>
               <Td>{formatBRL(p.valor)}</Td>
               <Td>{p.etapa}</Td>
