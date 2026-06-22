@@ -1055,56 +1055,8 @@ export function CrmCadastro({ scope }: { scope: CrmScope }) {
               title="Documentos"
               icon={FileText}
               badge="Checklist por categoria"
-              action={
-                <button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-brand/30 px-3 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/5">
-                  <Paperclip className="h-3.5 w-3.5" /> Anexar
-                </button>
-              }
             >
-              <div className="md:col-span-3 space-y-4">
-                {[
-                  { cat: "Cliente", items: ["Documento de identificação", "Comprovante de renda", "Comprovante de endereço", "Certidão de casamento", "Extrato FGTS", "Imposto de renda"] },
-                  { cat: "Cônjuge", items: ["Documento de identificação", "Comprovante de renda", "Comprovante de endereço"] },
-                  { cat: "Composição de renda", items: ["Documento de identificação", "Comprovante de renda", "Autorização de dados"] },
-                  { cat: "Vendedor", items: ["Documento de identificação", "Certidão do vendedor", "Comprovante de endereço", "Documentos do cônjuge do vendedor", "Documentos societários (PJ)"] },
-                  { cat: "Imóvel", items: ["Matrícula atualizada", "IPTU", "Escritura", "Contrato de compra e venda", "Certidões do imóvel", "Laudo / avaliação"] },
-                  { cat: "Home Equity", items: ["Matrícula atualizada", "IPTU", "Comprovante de propriedade", "Contrato de financiamento atual", "Saldo devedor", "Documentos dos demais proprietários", "Autorização de análise da garantia"] },
-                  { cat: "Adicionais", items: ["Outros documentos"] },
-                ].map((g) => (
-                  <div key={g.cat} className="rounded-md border border-border bg-background">
-                    <header className="flex items-center justify-between border-b border-border px-3 py-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-brand">{g.cat}</p>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {g.items.length} itens
-                      </span>
-                    </header>
-                    <ul className="divide-y divide-border">
-                      {g.items.map((d, i) => {
-                        const status = i % 4 === 0 ? "Aprovado" : i % 4 === 1 ? "Pendente" : i % 4 === 2 ? "Reprovado" : "Aguardando";
-                        const tone =
-                          status === "Aprovado"
-                            ? "text-emerald-700 bg-emerald-50"
-                            : status === "Reprovado"
-                              ? "text-red-700 bg-red-50"
-                              : status === "Pendente"
-                                ? "text-amber-700 bg-amber-50"
-                                : "text-slate-600 bg-slate-100";
-                        return (
-                          <li key={d} className="flex flex-wrap items-center gap-3 px-3 py-2 text-xs">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium text-graphite">{d}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>{status}</span>
-                            <span className="ml-auto text-[10px] text-muted-foreground">Responsável: —</span>
-                            <button type="button" className="rounded border border-border px-2 py-1 text-[10px] font-semibold text-graphite hover:border-brand/40 hover:text-brand">
-                              <Paperclip className="mr-1 inline h-3 w-3" /> Anexar
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <DocumentosChecklist clienteId={clienteId} />
             </SectionCard>
           )}
 
