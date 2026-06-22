@@ -575,6 +575,13 @@ export function CrmCadastro({ scope }: { scope: CrmScope }) {
   const creatorRole = scope === "correspondente" ? "Correspondente" : "Corretor";
   const [lead, setLead] = useState<FlashIaLead | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  // UUID estável para o cadastro em andamento — usado como cliente_id nos uploads
+  // até que o cliente seja persistido no banco.
+  const [clienteId] = useState<string>(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  );
 
   // Lê dados do Flash IA (se vieram via navegação)
   useEffect(() => {
