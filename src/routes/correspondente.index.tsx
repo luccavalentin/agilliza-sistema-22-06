@@ -13,10 +13,12 @@ import {
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
   ShieldCheck,
-  TrendingDown,
+  Timer,
   TrendingUp,
   Trophy,
+  Wallet,
   XCircle,
+  Zap,
 } from "lucide-react";
 import {
   Bar,
@@ -44,13 +46,20 @@ export const Route = createFileRoute("/correspondente/")({
   component: PainelCorrespondente,
 });
 
+/* =========================================================================
+ * Mock data alinhado ao contrato HomeFin: simulações, aprovações, reprovações,
+ * volume, status operacionais, comparativo por produto/banco e ranking de
+ * corretores. Quando o transporte real (Edge Functions) for plugado, basta
+ * substituir cada constante por uma query — os componentes não mudam.
+ * ========================================================================= */
+
 const evolucao = [
-  { mes: "Jan", simul: 184, aprov: 96, reprov: 38, trat: 22 },
-  { mes: "Fev", simul: 212, aprov: 118, reprov: 41, trat: 25 },
-  { mes: "Mar", simul: 246, aprov: 132, reprov: 47, trat: 31 },
-  { mes: "Abr", simul: 198, aprov: 110, reprov: 36, trat: 18 },
-  { mes: "Mai", simul: 268, aprov: 152, reprov: 44, trat: 28 },
-  { mes: "Jun", simul: 304, aprov: 176, reprov: 49, trat: 34 },
+  { mes: "Jan", simul: 184, aprov: 96, reprov: 38, volume: 412 },
+  { mes: "Fev", simul: 212, aprov: 118, reprov: 41, volume: 486 },
+  { mes: "Mar", simul: 246, aprov: 132, reprov: 47, volume: 538 },
+  { mes: "Abr", simul: 198, aprov: 110, reprov: 36, volume: 461 },
+  { mes: "Mai", simul: 268, aprov: 152, reprov: 44, volume: 612 },
+  { mes: "Jun", simul: 304, aprov: 176, reprov: 49, volume: 684 },
 ];
 
 const statusDist = [
@@ -69,27 +78,51 @@ const funil = [
   { etapa: "Formalizadas", qtd: 226, pct: 18 },
 ];
 
-const bancos = [
-  { nome: "Banco A", volume: 184_500_000, aprov: 86, reprov: 14 },
-  { nome: "Banco B", volume: 142_300_000, aprov: 78, reprov: 22 },
-  { nome: "Banco C", volume: 96_700_000, aprov: 71, reprov: 29 },
-  { nome: "Banco D", volume: 74_100_000, aprov: 65, reprov: 35 },
-  { nome: "Banco E", volume: 41_900_000, aprov: 58, reprov: 42 },
+// Comparativo Financiamento × Home Equity por banco (volume em milhões)
+const bancosComparativo = [
+  { nome: "Itaú", fin: 92.4, he: 41.2 },
+  { nome: "Bradesco", fin: 78.1, he: 36.8 },
+  { nome: "Santander", fin: 64.3, he: 28.9 },
+  { nome: "Caixa", fin: 88.7, he: 9.4 },
+  { nome: "Inter", fin: 22.6, he: 38.1 },
+  { nome: "BTG", fin: 14.2, he: 25.6 },
 ];
 
-const ranking = [
-  { corretor: "Mariana Pires", volume: 28_400_000, aprovacoes: 24 },
-  { corretor: "Eduardo Lima", volume: 22_100_000, aprovacoes: 19 },
-  { corretor: "Camila Souza", volume: 19_700_000, aprovacoes: 17 },
-  { corretor: "Ricardo Alves", volume: 17_200_000, aprovacoes: 15 },
-  { corretor: "Patrícia Reis", volume: 14_900_000, aprovacoes: 13 },
+// Aprovações × Reprovações absolutas por banco
+const bancosTaxas = [
+  { nome: "Itaú", aprov: 78, reprov: 14, slaDias: 3.2 },
+  { nome: "Bradesco", aprov: 71, reprov: 18, slaDias: 4.1 },
+  { nome: "Santander", aprov: 64, reprov: 22, slaDias: 5.0 },
+  { nome: "Caixa", aprov: 58, reprov: 27, slaDias: 7.8 },
+  { nome: "Inter", aprov: 46, reprov: 31, slaDias: 2.6 },
+  { nome: "BTG", aprov: 39, reprov: 24, slaDias: 3.4 },
+];
+
+const topVolumeSimulado = [
+  { corretor: "Mariana Pires", volume: 64_800_000, qtd: 41 },
+  { corretor: "Eduardo Lima", volume: 52_100_000, qtd: 34 },
+  { corretor: "Camila Souza", volume: 47_700_000, qtd: 29 },
+  { corretor: "Ricardo Alves", volume: 41_200_000, qtd: 27 },
+  { corretor: "Patrícia Reis", volume: 36_900_000, qtd: 24 },
+];
+
+const topVolumeAprovado = [
+  { corretor: "Eduardo Lima", volume: 28_400_000, qtd: 19, conversao: 55.9 },
+  { corretor: "Mariana Pires", volume: 27_100_000, qtd: 24, conversao: 58.5 },
+  { corretor: "Camila Souza", volume: 19_700_000, qtd: 17, conversao: 58.6 },
+  { corretor: "Ricardo Alves", volume: 17_200_000, qtd: 15, conversao: 55.6 },
+  { corretor: "Patrícia Reis", volume: 14_900_000, qtd: 13, conversao: 54.2 },
 ];
 
 const alertas = [
   { tone: "warning" as const, label: "Documentação pendente há +5 dias", qtd: 38 },
   { tone: "direction" as const, label: "SLA estourado (>7 dias sem ação)", qtd: 17 },
-  { tone: "info" as const, label: "Propostas sem responsável atribuído", qtd: 9 },
+  { tone: "direction" as const, label: "Simulações paradas há +10 dias", qtd: 61 },
   { tone: "warning" as const, label: "Reanálises bancárias em aberto", qtd: 22 },
+  { tone: "info" as const, label: "Propostas sem responsável atribuído", qtd: 9 },
+  { tone: "warning" as const, label: "Contratos aguardando assinatura digital", qtd: 14 },
+  { tone: "direction" as const, label: "Comprovantes recusados (reenvio)", qtd: 11 },
+  { tone: "info" as const, label: "Reavaliação de imóvel vencendo", qtd: 7 },
 ];
 
 const fmtBRL = (v: number) =>
@@ -103,7 +136,7 @@ function PainelCorrespondente() {
       <PainelHeader
         eyebrow="Visão Geral · Correspondente"
         title="Painel de Monitoramento"
-        subtitle="Período: 30 dias · Produto: Todos · Banco: Todos · Status: Todos · Visão consolidada do ecossistema"
+        subtitle="Período: Junho/2026 · Produto: Todos · Banco: Todos · Status: Todos · Visão consolidada do ecossistema"
         badge="Visão Total · Auditoria Ativa"
       />
 
@@ -119,13 +152,12 @@ function PainelCorrespondente() {
           </button>
         </div>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <FilterPill label="Período" value="Últimos 30 dias" active />
+          <FilterPill label="Período" value="Junho/2026" active />
           <FilterPill label="Produto" value="Todos" />
           <FilterPill label="Banco" value="Todos (12)" />
           <FilterPill label="Corretor" value="Todos (47)" />
           <FilterPill label="Analista" value="Todos (8)" />
           <FilterPill label="Status" value="Todos" />
-          <FilterPill label="Datas" value="Personalizado" />
         </div>
       </Card>
 
@@ -140,7 +172,7 @@ function PainelCorrespondente() {
           <KpiCard
             label="Simulações"
             value="1.238"
-            hint="Volume: R$ 612,4 mi"
+            hint="No mês · Ticket médio R$ 552 mil"
             tone="brand"
             icon={Activity}
             breakdown={[
@@ -165,6 +197,17 @@ function PainelCorrespondente() {
             icon={XCircle}
           />
           <KpiCard
+            label="Volume total do mês"
+            value="R$ 684,2 mi"
+            hint="+11,7% vs. Mai/26 · 1.238 propostas"
+            tone="brand"
+            icon={Wallet}
+            breakdown={[
+              { label: "Financiamento", value: "R$ 484,7 mi", tone: "brand" },
+              { label: "Home Equity", value: "R$ 199,5 mi", tone: "info" },
+            ]}
+          />
+          <KpiCard
             label="Em andamento"
             value="268"
             hint="Tempo médio em análise: 4,8 dias"
@@ -172,17 +215,10 @@ function PainelCorrespondente() {
             icon={Clock}
           />
           <KpiCard
-            label="Em tratativa"
-            value="144"
-            hint="32 atrasadas (>7 dias)"
-            tone="warning"
-            icon={AlertTriangle}
-          />
-          <KpiCard
-            label="Não sequenciadas"
+            label="Simulações paradas"
             value="61"
-            hint="Sem ação há +10 dias"
-            tone="direction"
+            hint="Sem ação há +10 dias · Requer triagem"
+            tone="warning"
             icon={AlertTriangle}
           />
         </div>
@@ -194,7 +230,7 @@ function PainelCorrespondente() {
           <SectionTitle
             icon={LineChartIcon}
             title="Evolução mensal"
-            description="Simulações, aprovações, reprovações e tratativas nos últimos 6 meses."
+            description="Simulações, aprovações, reprovações e volume financeiro nos últimos 6 meses."
           />
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -214,9 +250,22 @@ function PainelCorrespondente() {
                 <Bar dataKey="simul" name="Simulações" fill="var(--brand)" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="aprov" name="Aprovadas" fill="var(--success)" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="reprov" name="Reprovadas" fill="var(--direction)" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="trat" name="Tratativa" fill="var(--warning)" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-[11px]">
+            <div>
+              <p className="uppercase tracking-wider text-muted-foreground">Volume Jun</p>
+              <p className="text-sm font-bold text-brand">R$ 684,2 mi</p>
+            </div>
+            <div>
+              <p className="uppercase tracking-wider text-muted-foreground">Δ vs. Mai</p>
+              <p className="text-sm font-bold text-[var(--success)]">+11,7%</p>
+            </div>
+            <div>
+              <p className="uppercase tracking-wider text-muted-foreground">Δ vs. Jan</p>
+              <p className="text-sm font-bold text-[var(--success)]">+66,1%</p>
+            </div>
           </div>
         </Card>
 
@@ -264,7 +313,116 @@ function PainelCorrespondente() {
         </Card>
       </section>
 
-      {/* Funil + Comparativo produto */}
+      {/* Comparativo Financiamento × Home Equity por banco */}
+      <section>
+        <Card className="p-4">
+          <SectionTitle
+            icon={Banknote}
+            title="Financiamento × Home Equity por banco"
+            description="Volume contratado (em R$ milhões) por banco, segmentado por produto."
+          />
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={bancosComparativo} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="nome" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" unit="mi" />
+                <Tooltip
+                  formatter={(v: number) => `R$ ${v.toFixed(1)} mi`}
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    fontSize: 12,
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="fin" name="Financiamento Imobiliário" fill="var(--brand)" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="he" name="Home Equity" fill="var(--info)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </section>
+
+      {/* Aprovações × Reprovações por banco */}
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-4">
+          <SectionTitle
+            icon={CheckCircle2}
+            title="Aprovações por banco"
+            description="Taxa de aprovação (%) das simulações enviadas no mês."
+          />
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={bancosTaxas}
+                layout="vertical"
+                margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" unit="%" />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted-foreground)"
+                  width={70}
+                />
+                <Tooltip
+                  formatter={(v: number) => `${v}%`}
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="aprov" name="Aprovação" fill="var(--success)" radius={[0, 2, 2, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <SectionTitle
+            icon={XCircle}
+            title="Reprovações por banco"
+            description="Taxa de reprovação (%) por instituição financeira."
+          />
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={bancosTaxas}
+                layout="vertical"
+                margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" unit="%" />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  tick={{ fontSize: 11 }}
+                  stroke="var(--muted-foreground)"
+                  width={70}
+                />
+                <Tooltip
+                  formatter={(v: number) => `${v}%`}
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="reprov" name="Reprovação" fill="var(--direction)" radius={[0, 2, 2, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </section>
+
+      {/* SLA por banco + Funil */}
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-2">
           <SectionTitle
@@ -297,80 +455,45 @@ function PainelCorrespondente() {
 
         <Card className="p-4">
           <SectionTitle
-            icon={Banknote}
-            title="Produto"
-            description="Financiamento × Home Equity"
+            icon={Timer}
+            title="SLA médio por banco"
+            description="Tempo médio de resposta (dias úteis)."
           />
-          <div className="space-y-3">
-            {[
-              {
-                nome: "Financiamento Imobiliário",
-                volume: "R$ 412,8 mi",
-                ticket: "R$ 612 mil",
-                pct: 68,
-              },
-              {
-                nome: "Home Equity",
-                volume: "R$ 199,6 mi",
-                ticket: "R$ 384 mil",
-                pct: 32,
-              },
-            ].map((p) => (
-              <div key={p.nome} className="rounded-sm border border-border bg-secondary/40 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-graphite">{p.nome}</span>
-                  <span className="text-[11px] text-muted-foreground">Ticket {p.ticket}</span>
-                </div>
-                <p className="mt-0.5 text-lg font-bold text-brand">{p.volume}</p>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-sm bg-card">
-                  <div className="h-full bg-brand" style={{ width: `${p.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ul className="divide-y divide-border">
+            {bancosTaxas
+              .slice()
+              .sort((a, b) => a.slaDias - b.slaDias)
+              .map((b) => {
+                const tone =
+                  b.slaDias <= 3
+                    ? "text-[var(--success)]"
+                    : b.slaDias <= 5
+                    ? "text-[var(--warning)]"
+                    : "text-direction";
+                return (
+                  <li key={b.nome} className="flex items-center gap-3 py-2 text-[12px]">
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-medium text-graphite">{b.nome}</span>
+                    <span className={`ml-auto font-bold ${tone}`}>
+                      {b.slaDias.toFixed(1).replace(".", ",")}d
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
         </Card>
       </section>
 
-      {/* Bancos + Ranking */}
+      {/* Top corretores: volume simulado × volume aprovado */}
       <section className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">
           <SectionTitle
-            icon={Building2}
-            title="Performance por banco"
-            description="Volume e taxa de aprovação."
-          />
-          <ul className="divide-y divide-border">
-            {bancos.map((b) => (
-              <li key={b.nome} className="flex items-center gap-3 py-2.5">
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-accent text-[11px] font-bold text-brand">
-                  {b.nome.split(" ")[1]}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-graphite">{b.nome}</p>
-                  <p className="text-[11px] text-muted-foreground">{fmtBRL(b.volume)}</p>
-                </div>
-                <div className="flex items-center gap-3 text-[11px]">
-                  <span className="inline-flex items-center gap-1 font-semibold text-[var(--success)]">
-                    <TrendingUp className="h-3 w-3" /> {b.aprov}%
-                  </span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-direction">
-                    <TrendingDown className="h-3 w-3" /> {b.reprov}%
-                  </span>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card className="p-4">
-          <SectionTitle
             icon={Trophy}
-            title="Ranking de corretores"
-            description="Clique para abrir a visão filtrada da carteira."
+            title="Top corretores · Volume simulado"
+            description="Maiores volumes apresentados em simulação no período."
           />
           <ul className="divide-y divide-border">
-            {ranking.map((r, i) => (
+            {topVolumeSimulado.map((r, i) => (
               <li key={r.corretor} className="flex items-center gap-3 py-2.5">
                 <span
                   className={`grid h-7 w-7 shrink-0 place-items-center rounded-sm text-[11px] font-bold ${
@@ -386,7 +509,7 @@ function PainelCorrespondente() {
                     {r.corretor}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {r.aprovacoes} aprovações
+                    {r.qtd} simulações
                   </p>
                 </div>
                 <span className="text-[12px] font-bold text-brand">
@@ -397,21 +520,61 @@ function PainelCorrespondente() {
             ))}
           </ul>
         </Card>
+
+        <Card className="p-4">
+          <SectionTitle
+            icon={TrendingUp}
+            title="Top corretores · Volume aprovado"
+            description="Maior valor efetivamente aprovado pelas instituições."
+          />
+          <ul className="divide-y divide-border">
+            {topVolumeAprovado.map((r, i) => (
+              <li key={r.corretor} className="flex items-center gap-3 py-2.5">
+                <span
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-sm text-[11px] font-bold ${
+                    i === 0
+                      ? "bg-[var(--success)] text-white"
+                      : "bg-secondary text-graphite"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-graphite">
+                    {r.corretor}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {r.qtd} aprovações · conv. {r.conversao.toFixed(1).replace(".", ",")}%
+                  </p>
+                </div>
+                <span className="text-[12px] font-bold text-[var(--success)]">
+                  {fmtBRL(r.volume)}
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </li>
+            ))}
+          </ul>
+        </Card>
       </section>
 
-      {/* Alertas */}
+      {/* Alertas operacionais */}
       <section>
         <Card className="p-4">
           <SectionTitle
             icon={AlertTriangle}
             title="Alertas operacionais"
             description="Itens que exigem ação administrativa imediata."
+            action={
+              <span className="inline-flex items-center gap-1.5 rounded-sm bg-[color-mix(in_oklab,var(--direction)_10%,white)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-direction">
+                <Zap className="h-3 w-3" /> 179 itens em risco
+              </span>
+            }
           />
           <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {alertas.map((a) => (
               <li
                 key={a.label}
-                className="flex items-center gap-3 rounded-sm border border-border bg-card p-3"
+                className="flex items-center gap-3 rounded-sm border border-border bg-card p-3 hover:border-brand/40 hover:shadow-sm"
               >
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center rounded-sm text-[13px] font-bold ${
