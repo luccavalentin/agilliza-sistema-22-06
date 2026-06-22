@@ -231,7 +231,7 @@ export function PropostasKanban({
                         </div>
                         <div className="mt-2 flex items-center justify-between text-[11px]">
                           <span className="font-medium text-graphite">{formatBRL(p.valor)}</span>
-                          <span className="text-muted-foreground">{banco?.sigla}</span>
+                          <BankLogo banco={banco} size="xs" />
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-semibold ${sla.cls}`}>
