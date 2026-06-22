@@ -28,6 +28,10 @@ import { Route as CorrespondenteCrmRouteImport } from './routes/correspondente.c
 import { Route as CorrespondenteConfiguracoesRouteImport } from './routes/correspondente.configuracoes'
 import { Route as CorrespondenteBackupRouteImport } from './routes/correspondente.backup'
 import { Route as ClientePropostaRouteImport } from './routes/cliente.proposta'
+import { Route as ClientePerfilRouteImport } from './routes/cliente.perfil'
+import { Route as ClienteMensagensRouteImport } from './routes/cliente.mensagens'
+import { Route as ClienteHistoricoRouteImport } from './routes/cliente.historico'
+import { Route as ClienteDocumentosRouteImport } from './routes/cliente.documentos'
 import { Route as CorretorOperacionalIndexRouteImport } from './routes/corretor.operacional.index'
 import { Route as CorretorFinanceiroIndexRouteImport } from './routes/corretor.financeiro.index'
 import { Route as CorretorCrmIndexRouteImport } from './routes/corretor.crm.index'
@@ -170,6 +174,26 @@ const CorrespondenteBackupRoute = CorrespondenteBackupRouteImport.update({
 const ClientePropostaRoute = ClientePropostaRouteImport.update({
   id: '/proposta',
   path: '/proposta',
+  getParentRoute: () => ClienteRoute,
+} as any)
+const ClientePerfilRoute = ClientePerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => ClienteRoute,
+} as any)
+const ClienteMensagensRoute = ClienteMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => ClienteRoute,
+} as any)
+const ClienteHistoricoRoute = ClienteHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => ClienteRoute,
+} as any)
+const ClienteDocumentosRoute = ClienteDocumentosRouteImport.update({
+  id: '/documentos',
+  path: '/documentos',
   getParentRoute: () => ClienteRoute,
 } as any)
 const CorretorOperacionalIndexRoute =
@@ -438,6 +462,10 @@ export interface FileRoutesByFullPath {
   '/cliente': typeof ClienteRouteWithChildren
   '/correspondente': typeof CorrespondenteRouteWithChildren
   '/corretor': typeof CorretorRouteWithChildren
+  '/cliente/documentos': typeof ClienteDocumentosRoute
+  '/cliente/historico': typeof ClienteHistoricoRoute
+  '/cliente/mensagens': typeof ClienteMensagensRoute
+  '/cliente/perfil': typeof ClientePerfilRoute
   '/cliente/proposta': typeof ClientePropostaRoute
   '/correspondente/backup': typeof CorrespondenteBackupRoute
   '/correspondente/configuracoes': typeof CorrespondenteConfiguracoesRoute
@@ -501,6 +529,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cliente/documentos': typeof ClienteDocumentosRoute
+  '/cliente/historico': typeof ClienteHistoricoRoute
+  '/cliente/mensagens': typeof ClienteMensagensRoute
+  '/cliente/perfil': typeof ClientePerfilRoute
   '/cliente/proposta': typeof ClientePropostaRoute
   '/correspondente/backup': typeof CorrespondenteBackupRoute
   '/correspondente/configuracoes': typeof CorrespondenteConfiguracoesRoute
@@ -562,6 +594,10 @@ export interface FileRoutesById {
   '/cliente': typeof ClienteRouteWithChildren
   '/correspondente': typeof CorrespondenteRouteWithChildren
   '/corretor': typeof CorretorRouteWithChildren
+  '/cliente/documentos': typeof ClienteDocumentosRoute
+  '/cliente/historico': typeof ClienteHistoricoRoute
+  '/cliente/mensagens': typeof ClienteMensagensRoute
+  '/cliente/perfil': typeof ClientePerfilRoute
   '/cliente/proposta': typeof ClientePropostaRoute
   '/correspondente/backup': typeof CorrespondenteBackupRoute
   '/correspondente/configuracoes': typeof CorrespondenteConfiguracoesRoute
@@ -630,6 +666,10 @@ export interface FileRouteTypes {
     | '/cliente'
     | '/correspondente'
     | '/corretor'
+    | '/cliente/documentos'
+    | '/cliente/historico'
+    | '/cliente/mensagens'
+    | '/cliente/perfil'
     | '/cliente/proposta'
     | '/correspondente/backup'
     | '/correspondente/configuracoes'
@@ -693,6 +733,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cliente/documentos'
+    | '/cliente/historico'
+    | '/cliente/mensagens'
+    | '/cliente/perfil'
     | '/cliente/proposta'
     | '/correspondente/backup'
     | '/correspondente/configuracoes'
@@ -753,6 +797,10 @@ export interface FileRouteTypes {
     | '/cliente'
     | '/correspondente'
     | '/corretor'
+    | '/cliente/documentos'
+    | '/cliente/historico'
+    | '/cliente/mensagens'
+    | '/cliente/perfil'
     | '/cliente/proposta'
     | '/correspondente/backup'
     | '/correspondente/configuracoes'
@@ -955,6 +1003,34 @@ declare module '@tanstack/react-router' {
       path: '/proposta'
       fullPath: '/cliente/proposta'
       preLoaderRoute: typeof ClientePropostaRouteImport
+      parentRoute: typeof ClienteRoute
+    }
+    '/cliente/perfil': {
+      id: '/cliente/perfil'
+      path: '/perfil'
+      fullPath: '/cliente/perfil'
+      preLoaderRoute: typeof ClientePerfilRouteImport
+      parentRoute: typeof ClienteRoute
+    }
+    '/cliente/mensagens': {
+      id: '/cliente/mensagens'
+      path: '/mensagens'
+      fullPath: '/cliente/mensagens'
+      preLoaderRoute: typeof ClienteMensagensRouteImport
+      parentRoute: typeof ClienteRoute
+    }
+    '/cliente/historico': {
+      id: '/cliente/historico'
+      path: '/historico'
+      fullPath: '/cliente/historico'
+      preLoaderRoute: typeof ClienteHistoricoRouteImport
+      parentRoute: typeof ClienteRoute
+    }
+    '/cliente/documentos': {
+      id: '/cliente/documentos'
+      path: '/documentos'
+      fullPath: '/cliente/documentos'
+      preLoaderRoute: typeof ClienteDocumentosRouteImport
       parentRoute: typeof ClienteRoute
     }
     '/corretor/operacional/': {
@@ -1276,11 +1352,19 @@ declare module '@tanstack/react-router' {
 }
 
 interface ClienteRouteChildren {
+  ClienteDocumentosRoute: typeof ClienteDocumentosRoute
+  ClienteHistoricoRoute: typeof ClienteHistoricoRoute
+  ClienteMensagensRoute: typeof ClienteMensagensRoute
+  ClientePerfilRoute: typeof ClientePerfilRoute
   ClientePropostaRoute: typeof ClientePropostaRoute
   ClienteIndexRoute: typeof ClienteIndexRoute
 }
 
 const ClienteRouteChildren: ClienteRouteChildren = {
+  ClienteDocumentosRoute: ClienteDocumentosRoute,
+  ClienteHistoricoRoute: ClienteHistoricoRoute,
+  ClienteMensagensRoute: ClienteMensagensRoute,
+  ClientePerfilRoute: ClientePerfilRoute,
   ClientePropostaRoute: ClientePropostaRoute,
   ClienteIndexRoute: ClienteIndexRoute,
 }
