@@ -77,7 +77,7 @@ export interface HomefinOportunidadeResponse {
   idOportunidade: number;
   status?: string;
   // demais campos espelham o request + IDs gerados
-  [k: string]: unknown;
+  [k: string]: Json | undefined;
 }
 
 export interface HomefinAtualizarOportunidadeRequest {
