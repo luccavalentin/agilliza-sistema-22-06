@@ -8,7 +8,7 @@ import {
   ChevronDown,
   LogOut,
   ShieldCheck,
-  Building2,
+  
 } from "lucide-react";
 import { NotificationsCenter } from "@/components/portal/notifications-center";
 import { AccountMenu } from "@/components/portal/account-menu";
