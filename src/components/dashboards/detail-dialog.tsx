@@ -258,66 +258,102 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
     <DetailCtx.Provider value={value}>
       {children}
       <Dialog open={!!ctx} onOpenChange={(o) => !o && close()}>
-        <DialogContent className="max-w-6xl gap-0 p-0">
+        <DialogContent className="max-w-6xl gap-0 overflow-hidden border-0 p-0 sm:rounded-xl">
           {ctx && (
-            <div className="flex max-h-[90vh] flex-col">
-              <header className="flex items-start justify-between gap-3 border-b border-border px-6 py-4">
-                <div className="flex items-center gap-3">
-                  {(stack.length > 1 || record) && (
-                    <button type="button" onClick={back}
-                      className="rounded-md border border-input bg-background px-2 py-1 text-[11px] font-semibold text-graphite hover:border-brand/40">
-                      ← Voltar
-                    </button>
-                  )}
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight text-graphite">
-                      {record ? `${record.cliente} — Registro` : ctx.title}
+            <div className="flex max-h-[92vh] flex-col bg-secondary/40">
+              {/* Header com gradiente da marca */}
+              <header
+                className="relative px-5 py-4 text-white sm:px-7 sm:py-5"
+                style={{ backgroundImage: "linear-gradient(135deg,#001bbf 0%,#000f9f 55%,#000a7a 100%)" }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                      {stack.length > 1 && (
+                        <button type="button" onClick={back}
+                          className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-0.5 text-white/90 hover:bg-white/20">
+                          ← Voltar
+                        </button>
+                      )}
+                      <span>Detalhamento</span>
+                      {ctx.period && (
+                        <>
+                          <span className="opacity-40">·</span>
+                          <span>{ctx.period}</span>
+                        </>
+                      )}
+                    </div>
+                    <h2 className="truncate text-lg font-black tracking-tight sm:text-xl">
+                      {record ? `${record.cliente}` : ctx.title}
                     </h2>
-                    {ctx.subtitle && <p className="text-xs text-muted-foreground">{ctx.subtitle}</p>}
+                    {(record ? `${record.banco} · ${record.data}` : ctx.subtitle) && (
+                      <p className="mt-0.5 truncate text-xs text-white/80">
+                        {record ? `${record.banco} · ${record.data} · resp. ${record.usuario}` : ctx.subtitle}
+                      </p>
+                    )}
                   </div>
+                  <button type="button" onClick={close}
+                    className="rounded-md p-1.5 text-white/80 hover:bg-white/10 hover:text-white" aria-label="Fechar">
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button type="button" onClick={close}
-                  className="rounded-md p-1 text-muted-foreground hover:bg-secondary" aria-label="Fechar">
-                  <X className="h-4 w-4" />
-                </button>
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-direction via-direction/60 to-transparent" />
               </header>
 
-              <div ref={printRef} className="space-y-4 overflow-y-auto px-6 py-4">
+              <div ref={printRef} className="space-y-4 overflow-y-auto px-5 py-5 sm:px-7">
                 {record ? (
                   <RecordDetail row={record}
                     onSeeMore={() => drillFromKpi(record.cliente, record.valor)} />
                 ) : (
                   <>
-                    <section className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3 text-xs">
-                      <div>
-                        <span className="font-semibold uppercase tracking-wider text-muted-foreground">Período</span>{" "}
-                        <span className="font-semibold text-graphite">{ctx.period ?? "Últimos 30 dias"}</span>
-                      </div>
-                      <div className="text-muted-foreground">
-                        <span className="font-semibold text-graphite">{filteredSorted.length}</span> de {ctx.rows.length} registros
-                      </div>
-                    </section>
-
-                    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      {ctx.kpis.map((k) => (
-                        <button type="button" key={k.label}
-                          onClick={() => drillFromKpi(k.label, k.value)}
-                          className="rounded-md border border-border bg-card p-3 text-left hover:border-brand/40 hover:shadow-sm">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{k.label}</span>
-                          <b className="mt-1 block text-lg font-bold text-graphite">{k.value}</b>
+                    {/* Métrica destacada + secundárias */}
+                    {ctx.kpis.length > 0 && (
+                      <section className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
+                        <button type="button"
+                          onClick={() => drillFromKpi(ctx.kpis[0].label, ctx.kpis[0].value)}
+                          className="group relative overflow-hidden rounded-xl border border-brand/15 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand">
+                            Métrica principal
+                          </span>
+                          <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {ctx.kpis[0].label}
+                          </p>
+                          <p className="mt-1 text-4xl font-black leading-none tracking-tight text-graphite">
+                            {ctx.kpis[0].value}
+                          </p>
+                          <p className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-brand opacity-0 transition group-hover:opacity-100">
+                            Detalhar <ArrowRight className="h-3 w-3" />
+                          </p>
+                          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-brand via-brand/40 to-transparent" />
                         </button>
-                      ))}
-                    </section>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          {ctx.kpis.slice(1, 4).map((k) => (
+                            <button type="button" key={k.label}
+                              onClick={() => drillFromKpi(k.label, k.value)}
+                              className="rounded-lg border border-border bg-white p-3 text-left shadow-sm transition hover:border-brand/40 hover:shadow">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{k.label}</span>
+                              <b className="mt-1.5 block text-base font-bold text-graphite">{k.value}</b>
+                            </button>
+                          ))}
+                          <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border bg-white/60 px-3 py-2 text-[11px] sm:col-span-3">
+                            <span className="text-muted-foreground">Registros nesta visão</span>
+                            <b className="text-graphite">{filteredSorted.length} de {ctx.rows.length}</b>
+                          </div>
+                        </div>
+                      </section>
+                    )}
 
                     {ctx.top && ctx.top.length > 0 && (
-                      <section className="rounded-md border border-border bg-card p-4">
-                        <p className="mb-2 text-xs font-bold text-graphite">{ctx.topGroupLabel ?? "Destaques"}</p>
+                      <section className="rounded-xl border border-border bg-white p-4 shadow-sm">
+                        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-graphite">
+                          {ctx.topGroupLabel ?? "Destaques"}
+                        </p>
                         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                           {ctx.top.map((t) => (
                             <button type="button" key={t.label}
                               onClick={() => drillFromTop(t.label, t.meta)}
-                              style={{ borderTopColor: t.color }}
-                              className="flex items-center justify-between gap-2 rounded-md border border-border border-t-[3px] bg-background p-3 text-left hover:border-brand/40 hover:shadow-sm">
+                              style={{ borderLeftColor: t.color }}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border border-l-[3px] bg-secondary/40 p-3 text-left transition hover:bg-secondary hover:shadow-sm">
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-bold text-graphite">{t.label}</p>
                                 <p className="truncate text-[11px] text-muted-foreground">{t.meta}</p>
@@ -329,19 +365,20 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
                       </section>
                     )}
 
-                    <section className="flex flex-wrap items-center justify-between gap-2">
-                      <label className="relative min-w-[220px] flex-1">
+                    {/* Toolbar */}
+                    <section className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-white p-3 shadow-sm">
+                      <label className="relative min-w-[200px] flex-1">
                         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                         <input value={search}
                           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                          placeholder="Buscar no detalhamento"
+                          placeholder="Buscar cliente, banco, status…"
                           className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-xs" />
                       </label>
                       <div className="flex flex-wrap gap-2 print:hidden">
                         <button type="button" onClick={() => setShowFilters((s) => !s)}
-                          className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold ${
+                          className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold transition ${
                             showFilters || activeFilterCount > 0
-                              ? "border-brand/60 bg-brand/5 text-brand"
+                              ? "border-brand bg-brand/5 text-brand"
                               : "border-input bg-background text-graphite hover:border-brand/40"
                           }`}>
                           <Filter className="h-3.5 w-3.5" /> Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
@@ -350,19 +387,19 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
                           className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-semibold text-graphite hover:border-brand/40">
                           <Printer className="h-3.5 w-3.5" /> Imprimir
                         </button>
-                        <button type="button" onClick={() => exportPDF(ctx, filteredSorted)}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-white hover:opacity-90">
-                          <Download className="h-3.5 w-3.5" /> Baixar PDF
-                        </button>
                         <button type="button" onClick={() => downloadCSV(`${ctx.title}.csv`, filteredSorted)}
                           className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-semibold text-graphite hover:border-brand/40">
-                          <FileSpreadsheet className="h-3.5 w-3.5" /> Baixar Excel
+                          <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+                        </button>
+                        <button type="button" onClick={() => exportPDF(ctx, filteredSorted)}
+                          className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-white hover:opacity-90">
+                          <Download className="h-3.5 w-3.5" /> PDF
                         </button>
                       </div>
                     </section>
 
                     {showFilters && (
-                      <section className="grid gap-3 rounded-md border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <section className="grid gap-3 rounded-xl border border-border bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
                         <FilterField label="Banco">
                           <select value={filters.banco}
                             onChange={(e) => { setFilters((f) => ({ ...f, banco: e.target.value })); setPage(1); }}
@@ -418,51 +455,53 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
                       </section>
                     )}
 
-                    <section className="overflow-hidden rounded-md border border-border">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-secondary text-[10px] uppercase tracking-wider text-muted-foreground">
-                          <tr>
-                            <SortHeader k="data" label="Data" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                            <SortHeader k="cliente" label="Cliente" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                            <SortHeader k="banco" label="Banco" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                            <SortHeader k="status" label="Status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                            <SortHeader k="usuario" label="Usuário" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
-                            <SortHeader k="valor" label="Valor" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                            <th className="px-3 py-2 text-right font-semibold print:hidden">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border bg-card">
-                          {pageRows.map((r, i) => (
-                            <tr key={i} onClick={() => setRecord(r)}
-                              className="cursor-pointer hover:bg-secondary/60">
-                              <td className="px-3 py-2 text-muted-foreground">{r.data}</td>
-                              <td className="px-3 py-2 font-semibold text-graphite">{r.cliente}</td>
-                              <td className="px-3 py-2 text-muted-foreground">{r.banco}</td>
-                              <td className="px-3 py-2">
-                                <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                                  style={{
-                                    color: TONE[r.statusTone ?? "info"],
-                                    background: `color-mix(in oklab, ${TONE[r.statusTone ?? "info"]} 12%, transparent)`,
-                                  }}>
-                                  {r.status}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground">{r.usuario}</td>
-                              <td className="px-3 py-2 text-right font-bold text-graphite">{r.valor}</td>
-                              <td className="px-3 py-2 text-right print:hidden">
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-brand">
-                                  Ver <ArrowRight className="h-3 w-3" />
-                                </span>
-                              </td>
+                    <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[640px] text-left text-xs">
+                          <thead className="bg-secondary text-[10px] uppercase tracking-wider text-muted-foreground">
+                            <tr>
+                              <SortHeader k="data" label="Data" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                              <SortHeader k="cliente" label="Cliente" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                              <SortHeader k="banco" label="Banco" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                              <SortHeader k="status" label="Status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                              <SortHeader k="usuario" label="Usuário" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+                              <SortHeader k="valor" label="Valor" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
+                              <th className="px-3 py-2 text-right font-semibold print:hidden">Ações</th>
                             </tr>
-                          ))}
-                          {pageRows.length === 0 && (
-                            <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                              Nenhum registro encontrado.
-                            </td></tr>
-                          )}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {pageRows.map((r, i) => (
+                              <tr key={i} onClick={() => setRecord(r)}
+                                className="cursor-pointer transition hover:bg-secondary/60">
+                                <td className="px-3 py-2 text-muted-foreground">{r.data}</td>
+                                <td className="px-3 py-2 font-semibold text-graphite">{r.cliente}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{r.banco}</td>
+                                <td className="px-3 py-2">
+                                  <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                                    style={{
+                                      color: TONE[r.statusTone ?? "info"],
+                                      background: `color-mix(in oklab, ${TONE[r.statusTone ?? "info"]} 12%, transparent)`,
+                                    }}>
+                                    {r.status}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-muted-foreground">{r.usuario}</td>
+                                <td className="px-3 py-2 text-right font-bold text-graphite">{r.valor}</td>
+                                <td className="px-3 py-2 text-right print:hidden">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-brand">
+                                    Ver <ArrowRight className="h-3 w-3" />
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                            {pageRows.length === 0 && (
+                              <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
+                                Nenhum registro encontrado.
+                              </td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </section>
 
                     <Pagination
@@ -475,7 +514,7 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
                 )}
               </div>
 
-              <footer className="flex items-center justify-end gap-2 border-t border-border bg-card px-6 py-3">
+              <footer className="flex items-center justify-end gap-2 border-t border-border bg-white px-5 py-3 sm:px-7">
                 {(stack.length > 1 || record) && (
                   <button type="button" onClick={back}
                     className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-semibold text-graphite hover:border-brand/40">
@@ -483,7 +522,7 @@ export function DashboardDetailProvider({ children }: { children: ReactNode }) {
                   </button>
                 )}
                 <button type="button" onClick={close}
-                  className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-semibold text-graphite hover:border-brand/40">
+                  className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
                   Fechar
                 </button>
               </footer>
