@@ -205,18 +205,17 @@ export function PortalShell({
           collapsed ? "justify-center px-2" : "gap-3 px-4",
         ].join(" ")}>
           {collapsed ? (
-            <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
-              <img src={brandMark} alt="Agilliza" className="h-full w-full object-contain" />
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white shadow-sm ring-1 ring-white/20">
+              <span className="text-[15px] font-bold tracking-tight text-[#000f9f]">a<span className="text-direction">.</span></span>
             </div>
           ) : (
-            <div className="flex min-w-0 flex-1 items-center rounded-md bg-white/95 px-3 py-1.5 shadow-sm ring-1 ring-white/20">
-              <img
-                src={brandWordmark}
-                alt="Agilliza"
-                className="h-7 w-auto object-contain"
-              />
+            <div className="flex min-w-0 flex-1 items-center rounded-md bg-white/95 px-3 py-2 shadow-sm ring-1 ring-white/20">
+              <span className="text-[18px] font-semibold tracking-[-0.02em] text-[#000f9f]">
+                agilliza<span className="text-direction">.</span>
+              </span>
             </div>
           )}
+
           {!collapsed && (
             <button
               type="button"
