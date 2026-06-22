@@ -8,12 +8,14 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  DollarSign,
   Filter,
   Layers,
   LineChart as LineChartIcon,
   Plus,
   ShieldCheck,
   Target,
+  TrendingUp,
   Users,
   Wallet,
   XCircle,
@@ -138,7 +140,8 @@ function PainelCorretor() {
             value="28"
             hint="Ticket médio: R$ 486 mil"
             tone="brand"
-            icon={Activity}
+            icon={TrendingUp}
+            trend={{ dir: "up", value: "+9,4%" }}
           />
           <KpiCard
             label="Minhas aprovações"
@@ -146,6 +149,7 @@ function PainelCorretor() {
             hint="R$ 8,2 mi · Conversão 60,7%"
             tone="success"
             icon={CheckCircle2}
+            trend={{ dir: "up", value: "+14,2%" }}
           />
           <KpiCard
             label="Minhas reprovações"
@@ -153,6 +157,15 @@ function PainelCorretor() {
             hint="Motivo principal: comprometimento de renda"
             tone="direction"
             icon={XCircle}
+            trend={{ dir: "down", value: "-2,1%" }}
+          />
+          <KpiCard
+            label="Volume total"
+            value="R$ 13,6 mi"
+            hint="Mês atual · todas as carteiras"
+            tone="amber"
+            icon={DollarSign}
+            trend={{ dir: "up", value: "+7,8%" }}
           />
           <KpiCard
             label="Em andamento"
@@ -160,20 +173,15 @@ function PainelCorretor() {
             hint="Aguardando retorno do banco"
             tone="info"
             icon={Clock}
+            trend={{ dir: "up", value: "+3,5%" }}
           />
           <KpiCard
-            label="Em tratativa"
+            label="Simulações paradas"
             value="4"
             hint="2 exigem ação hoje"
             tone="warning"
             icon={AlertTriangle}
-          />
-          <KpiCard
-            label="Comissão prevista"
-            value="R$ 42,8 mil"
-            hint="A receber neste mês · Ver financeiro"
-            tone="success"
-            icon={Wallet}
+            trend={{ dir: "down", value: "-1,6%" }}
           />
         </div>
       </section>

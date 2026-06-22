@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  DollarSign,
   Filter,
   Layers,
   LineChart as LineChartIcon,
@@ -174,7 +175,8 @@ function PainelCorrespondente() {
             value="1.238"
             hint="No mês · Ticket médio R$ 552 mil"
             tone="brand"
-            icon={Activity}
+            icon={TrendingUp}
+            trend={{ dir: "up", value: "+12,4%" }}
             breakdown={[
               { label: "Aprovadas", value: "412", tone: "success" },
               { label: "Reprovadas", value: "188", tone: "direction" },
@@ -188,6 +190,7 @@ function PainelCorrespondente() {
             hint="R$ 248,6 mi · Conversão 33,3%"
             tone="success"
             icon={CheckCircle2}
+            trend={{ dir: "up", value: "+8,1%" }}
           />
           <KpiCard
             label="Reprovações"
@@ -195,13 +198,15 @@ function PainelCorrespondente() {
             hint="R$ 92,1 mi · 15,1% do volume"
             tone="direction"
             icon={XCircle}
+            trend={{ dir: "down", value: "-3,2%" }}
           />
           <KpiCard
             label="Volume total do mês"
             value="R$ 684,2 mi"
             hint="+11,7% vs. Mai/26 · 1.238 propostas"
-            tone="brand"
-            icon={Wallet}
+            tone="amber"
+            icon={DollarSign}
+            trend={{ dir: "up", value: "+11,7%" }}
             breakdown={[
               { label: "Financiamento", value: "R$ 484,7 mi", tone: "brand" },
               { label: "Home Equity", value: "R$ 199,5 mi", tone: "info" },
@@ -213,6 +218,7 @@ function PainelCorrespondente() {
             hint="Tempo médio em análise: 4,8 dias"
             tone="info"
             icon={Clock}
+            trend={{ dir: "up", value: "+4,6%" }}
           />
           <KpiCard
             label="Simulações paradas"
@@ -220,6 +226,7 @@ function PainelCorrespondente() {
             hint="Sem ação há +10 dias · Requer triagem"
             tone="warning"
             icon={AlertTriangle}
+            trend={{ dir: "down", value: "-6,8%" }}
           />
         </div>
       </section>
