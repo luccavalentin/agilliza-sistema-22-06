@@ -201,13 +201,31 @@ export type KpiCardProps = {
 };
 
 export function KpiCard({ label, value, accent, icon: Icon, sub, footer, caption, onClick, onSubClick }: KpiCardProps) {
-  const interactive = !!onClick;
+  const detail = useDashboardDetailOptional();
+  const openAuto = (subLabel?: string) => {
+    if (!detail) return;
+    const title = subLabel ? `${label} · ${subLabel}` : label;
+    detail.open({
+      title: `${title} — Detalhamento`,
+      subtitle: subLabel ? label : undefined,
+      period: "Últimos 30 dias",
+      kpis: [
+        { label, value },
+        ...(sub ?? []).map((s) => ({ label: s.k, value: s.v })),
+        ...(footer ? [{ label: footer.label, value: footer.value }] : []),
+      ].slice(0, 4),
+      rows: buildMockRows(28),
+    });
+  };
+  const handleClick = onClick ?? (detail ? () => openAuto() : undefined);
+  const handleSubClick = onSubClick ?? (detail ? (k: string) => openAuto(k) : undefined);
+  const interactive = !!handleClick;
   return (
     <article
-      onClick={onClick}
+      onClick={handleClick}
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
-      onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick?.(); } } : undefined}
+      onKeyDown={interactive ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick?.(); } } : undefined}
       className={`overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition ${interactive ? "cursor-pointer hover:border-brand/40 hover:shadow-md" : ""}`}
     >
       <div className="h-1 w-full" style={{ backgroundColor: accent }} />
@@ -235,7 +253,7 @@ export function KpiCard({ label, value, accent, icon: Icon, sub, footer, caption
               <button
                 type="button"
                 key={s.k}
-                onClick={(e) => { e.stopPropagation(); onSubClick?.(s.k); }}
+                onClick={(e) => { e.stopPropagation(); handleSubClick?.(s.k); }}
                 className="rounded-md border border-border bg-background px-2 py-1.5 text-left hover:border-brand/40"
               >
                 <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
