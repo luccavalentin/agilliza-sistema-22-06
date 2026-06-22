@@ -13,8 +13,6 @@ import {
 import { NotificationsCenter } from "@/components/portal/notifications-center";
 import { AccountMenu } from "@/components/portal/account-menu";
 import { GlobalSearchProvider, GlobalSearchInput } from "@/components/portal/global-search";
-import brandMark from "@/assets/brand-mark.png";
-import brandWordmark from "@/assets/brand-wordmark.png";
 
 export type PortalNavItem = {
   label: string;
