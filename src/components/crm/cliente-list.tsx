@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  Eye,
-  EyeOff,
   FileText,
   Filter as FilterIcon,
   Home,
@@ -23,11 +21,11 @@ import {
   Search,
   ShieldCheck,
   User,
-  Users,
   Wallet,
   X,
   XCircle,
 } from "lucide-react";
+import { ClientesMonitoringDashboard } from "@/components/crm/clientes-dashboard";
 import {
   Sheet,
   SheetContent,
