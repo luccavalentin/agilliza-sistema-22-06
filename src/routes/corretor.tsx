@@ -4,26 +4,94 @@ import {
   Users,
   Activity,
   Wallet,
+  Database,
+  Settings,
+  ScanLine,
+  BrainCircuit,
+  Search,
   BarChart3,
+  Calculator,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  ListChecks,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Banknote,
+  TrendingUp,
+  RefreshCw,
+  FileBarChart,
+  UserPlus,
 } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
 const groups: PortalNavGroup[] = [
   {
-    label: "Principal",
+    label: "Visão Geral",
     items: [
-      { label: "Visão Geral", to: "/corretor", icon: LayoutDashboard },
-      { label: "CRM e Gestão de Clientes", to: "/corretor/crm", icon: Users },
-      { label: "Operacional", to: "/corretor/operacional", icon: Activity },
-      { label: "Gestão Financeira", to: "/corretor/financeiro", icon: Wallet },
-      { label: "Relatórios e Dashboards", to: "/corretor/relatorios", icon: BarChart3 },
+      { label: "Painel de Monitoramento", to: "/corretor", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "CRM e Gestão de Cliente",
+    items: [
+      { label: "Scan IA", to: "/corretor/crm/scan-ia", icon: ScanLine },
+      { label: "Flash IA", to: "/corretor/crm/flash-ia", icon: BrainCircuit },
+      {
+        label: "CRM de Clientes",
+        icon: Users,
+        children: [
+          { label: "Dashboard de Clientes", to: "/corretor/crm", icon: LayoutDashboard },
+          { label: "Cadastro de Cliente", to: "/corretor/crm/cadastro", icon: UserPlus },
+          { label: "Consultas", to: "/corretor/crm/consultas", icon: Search },
+          { label: "Relatórios", to: "/corretor/crm/relatorios", icon: BarChart3 },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Operacional",
+    items: [
+      { label: "Painel", to: "/corretor/operacional", icon: Activity },
+      { label: "Consultas", to: "/corretor/operacional/consultas", icon: Search },
+      { label: "Simulações", to: "/corretor/operacional/simulacoes", icon: Calculator },
+      { label: "Minhas Simulações", to: "/corretor/operacional/minhas-simulacoes", icon: Sparkles },
+      { label: "Propostas", to: "/corretor/operacional/propostas", icon: CheckCircle2 },
+      { label: "Demandas & SLA", to: "/corretor/operacional/demandas", icon: Clock },
+      { label: "Minhas Tarefas", to: "/corretor/operacional/tarefas", icon: ListChecks },
+      { label: "Atualização de Proposta", to: "/corretor/operacional/atualizacao", icon: RefreshCw },
+      { label: "Relatórios e Métricas Operacionais", to: "/corretor/operacional/relatorios", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Gestão Financeira",
+    items: [
+      { label: "Painel Financeiro", to: "/corretor/financeiro", icon: Wallet },
+      { label: "Meus Recebíveis", to: "/corretor/financeiro/recebiveis", icon: ArrowDownCircle },
+      { label: "Minhas Comissões", to: "/corretor/financeiro/comissoes", icon: Banknote },
+      { label: "Minhas Despesas", to: "/corretor/financeiro/despesas", icon: ArrowUpCircle },
+      { label: "Fluxo de Caixa", to: "/corretor/financeiro/fluxo", icon: TrendingUp },
+      { label: "Recorrências", to: "/corretor/financeiro/recorrencias", icon: RefreshCw },
+      { label: "Relatórios Financeiros e Métricas Operacionais", to: "/corretor/financeiro/relatorios", icon: FileBarChart },
+    ],
+  },
+  {
+    label: "Configurações",
+    items: [
+      { label: "Configurações", to: "/corretor/configuracoes", icon: Settings },
+    ],
+  },
+  {
+    label: "Backup",
+    items: [
+      { label: "Backup do Sistema", to: "/corretor/backup", icon: Database },
     ],
   },
 ];
 
 export const Route = createFileRoute("/corretor")({
   head: () => ({
-    meta: [{ title: "Corretor — Plataforma de Crédito" }],
+    meta: [{ title: "Corretor — Plataforma Agilliza" }],
   }),
   component: () => (
     <PortalShell kind="corretor" groups={groups}>

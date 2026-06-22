@@ -6,8 +6,8 @@ export const Route = createFileRoute("/correspondente/")({
   component: () => (
     <SectionPlaceholder
       eyebrow="Correspondente Imobiliário"
-      title="Visão Geral"
-      description="Painel central do correspondente com indicadores estratégicos, monitoramento operacional e visão consolidada do ecossistema."
+      title="Painel de Monitoramento"
+      description="Indicadores estratégicos, monitoramento operacional e visão consolidada do ecossistema."
       icon={LayoutDashboard}
     />
   ),
