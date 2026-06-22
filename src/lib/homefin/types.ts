@@ -1,6 +1,9 @@
 // Tipos alinhados à API oficial HomeFin (base: https://api.homefin.com.br/external).
 // Fonte: APIs/2 - Documentacao API Homefin.pdf + Postman collection.
 
+export type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
+export type JsonObject = { [k: string]: Json };
+
 export type HomefinTipoImovel = "AP" | "CS" | "GA" | "TE" | "TC";
 export type HomefinUsoImovel = "R" | "C";
 export type HomefinSituacaoImovel = "N" | "U";
