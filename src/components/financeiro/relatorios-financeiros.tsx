@@ -13,6 +13,7 @@ import {
   contasReceber, contasPagar, comissoes, categoriaById, bancos, propostas, usuarios, clientes,
 } from "@/lib/financeiro/mock-data";
 import { formatBRL } from "@/lib/operacional/formatters";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 const TOKENS = {
   brand: "#000f9f", brandSoft: "#4a55c4",
@@ -98,7 +99,60 @@ export function RelatoriosFinanceiros({ escopo }: { escopo: "correspondente" | "
               ))}
             </div>
             <Button variant="outline" size="sm"><Filter className="h-4 w-4 mr-1" />Filtros</Button>
-            <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />Exportar</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                downloadBrandedPdf({
+                  title: "Relatórios Financeiros e Métricas",
+                  subtitle: "Análises executivas da operação financeira",
+                  module: `Financeiro · ${escopo === "correspondente" ? "Correspondente" : "Corretor"}`,
+                  period: periodo,
+                  scope: escopo === "correspondente" ? "Visão consolidada" : "Carteira individual",
+                  confidential: true,
+                  kpis: [
+                    { label: "Receita total", value: formatBRL(totalRec) },
+                    { label: "Despesa total", value: formatBRL(totalPag) },
+                    { label: "Resultado", value: formatBRL(resultado) },
+                    { label: "Comissões", value: formatBRL(totalCom) },
+                  ],
+                  sections: [
+                    {
+                      title: "Receitas por categoria",
+                      head: ["Categoria", "Valor"],
+                      body: recCategoria.map((c) => [c.name, formatBRL(c.value)]),
+                      columnStyles: { 1: { halign: "right" } },
+                    },
+                    {
+                      title: "Despesas por categoria",
+                      head: ["Categoria", "Valor"],
+                      body: despCategoria.map((c) => [c.nome, formatBRL(c.valor)]),
+                      columnStyles: { 1: { halign: "right" } },
+                    },
+                    {
+                      title: "Comissões por corretor",
+                      head: ["Corretor", "Pagas", "Pendentes"],
+                      body: comCorretor.map((c) => [c.nome, formatBRL(c.pagas), formatBRL(c.pendentes)]),
+                      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
+                    },
+                    {
+                      title: "Receita por banco",
+                      head: ["Banco", "Valor"],
+                      body: recBanco.map((b) => [b.nome, formatBRL(b.valor)]),
+                      columnStyles: { 1: { halign: "right" } },
+                    },
+                    {
+                      title: "Catálogo de relatórios disponíveis",
+                      body: RELATORIOS.map((r, i) => [String(i + 1), r]),
+                      head: ["#", "Relatório"],
+                    },
+                  ],
+                  fileName: "agilliza-financeiro-relatorios",
+                })
+              }
+            >
+              <Download className="h-4 w-4 mr-1" />Exportar PDF
+            </Button>
           </div>
         }
       />
