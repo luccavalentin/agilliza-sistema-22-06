@@ -7,14 +7,24 @@ import type { Lancamento, Comissao } from "@/lib/financeiro/types";
 import type { Proposta } from "@/lib/operacional/types";
 
 // ============================== Seletores básicos ==============================
+// Selecionamos slices crus (referência estável enquanto não mutam) e
+// derivamos arrays filtrados via useMemo no consumidor — evita re-render em
+// cascata quando outros slices do store mudam.
 export const usePropostas = () => useDB((s) => s.propostas);
 export const useClientes = () => useDB((s) => s.clientes);
 export const useLancamentos = () => useDB((s) => s.lancamentos);
-export const useReceber = () => useDB((s) => s.lancamentos.filter((l) => l.tipo === "receber"));
-export const usePagar = () => useDB((s) => s.lancamentos.filter((l) => l.tipo === "pagar"));
+export const useReceber = () => {
+  const lanc = useLancamentos();
+  return useMemo(() => lanc.filter((l) => l.tipo === "receber"), [lanc]);
+};
+export const usePagar = () => {
+  const lanc = useLancamentos();
+  return useMemo(() => lanc.filter((l) => l.tipo === "pagar"), [lanc]);
+};
 export const useComissoes = () => useDB((s) => s.comissoes);
 export const useTarefas = () => useDB((s) => s.tarefas);
 export const useNotificacoes = () => useDB((s) => s.notificacoes);
+
 
 // ============================== Formatters ==============================
 const fmtBRL = (n: number) =>
@@ -151,53 +161,54 @@ export function useDashboardKpis(): DashboardKpis {
   const contas = useDB((s) => s.contas);
 
   return useMemo(() => {
-    const ativas = propostas.filter(
-      (p) => !["Aprovada", "Reprovada", "Finalizada"].includes(p.status),
-    ).length;
-    const aprovadas = propostas.filter((p) => p.status === "Aprovada" || p.status === "Contrato emitido").length;
-    const reprovadas = propostas.filter((p) => p.status === "Reprovada").length;
-    const docPend = propostas.filter((p) => p.status === "Documentação pendente").length;
-
-    const receber = lancamentos.filter((l) => l.tipo === "receber");
-    const pagar = lancamentos.filter((l) => l.tipo === "pagar");
-    const totalAReceber = receber
-      .filter((l) => l.status !== "Recebido" && l.status !== "Cancelado")
-      .reduce((a, l) => a + l.valor, 0);
-    const totalRecebido = receber
-      .filter((l) => l.status === "Recebido" || l.status === "Recebido parcialmente")
-      .reduce((a, l) => a + (l.valorPago ?? l.valor), 0);
-    const totalAPagar = pagar
-      .filter((l) => l.status !== "Pago" && l.status !== "Cancelado")
-      .reduce((a, l) => a + l.valor, 0);
-    const totalPago = pagar
-      .filter((l) => l.status === "Pago" || l.status === "Pago parcialmente")
-      .reduce((a, l) => a + (l.valorPago ?? l.valor), 0);
-
-    const comissoesPrevistas = comissoes
-      .filter((c) => c.status === "Prevista" || c.status === "Aguardando aprovação" || c.status === "Liberada")
-      .reduce((a, c) => a + c.valor, 0);
-    const comissoesPagas = comissoes.filter((c) => c.status === "Paga").reduce((a, c) => a + c.valor, 0);
-    const saldoCaixa = contas.reduce((a, c) => a + c.saldoAtual, 0);
-
+    // Uma única passagem em propostas
+    let ativas = 0, aprovadas = 0, reprovadas = 0, docPend = 0, slaVencidos = 0;
     const ANCHOR = new Date("2026-06-21T12:00:00.000Z").getTime();
-    const slaVencidos = propostas.filter((p) => new Date(p.slaPrazo).getTime() < ANCHOR).length;
+    for (const p of propostas) {
+      if (p.status === "Aprovada" || p.status === "Contrato emitido") aprovadas++;
+      else if (p.status === "Reprovada") reprovadas++;
+      else if (p.status === "Documentação pendente") { docPend++; ativas++; }
+      else if (p.status !== "Finalizada") ativas++;
+      if (new Date(p.slaPrazo).getTime() < ANCHOR) slaVencidos++;
+    }
+
+    // Uma única passagem em lancamentos
+    let totalAReceber = 0, totalRecebido = 0, totalAPagar = 0, totalPago = 0;
+    for (const l of lancamentos) {
+      const pago = l.valorPago ?? l.valor;
+      if (l.tipo === "receber") {
+        if (l.status === "Recebido" || l.status === "Recebido parcialmente") totalRecebido += pago;
+        else if (l.status !== "Cancelado") totalAReceber += l.valor;
+      } else if (l.tipo === "pagar") {
+        if (l.status === "Pago" || l.status === "Pago parcialmente") totalPago += pago;
+        else if (l.status !== "Cancelado") totalAPagar += l.valor;
+      }
+    }
+
+    // Uma única passagem em comissoes
+    let comissoesPrevistas = 0, comissoesPagas = 0;
+    for (const c of comissoes) {
+      if (c.status === "Paga") comissoesPagas += c.valor;
+      else if (c.status === "Prevista" || c.status === "Aguardando aprovação" || c.status === "Liberada") {
+        comissoesPrevistas += c.valor;
+      }
+    }
+
+    let saldoCaixa = 0;
+    for (const c of contas) saldoCaixa += c.saldoAtual;
 
     return {
       propostasAtivas: ativas,
       propostasAprovadas: aprovadas,
       propostasReprovadas: reprovadas,
       propostasDocPendente: docPend,
-      totalAReceber,
-      totalRecebido,
-      totalAPagar,
-      totalPago,
-      comissoesPrevistas,
-      comissoesPagas,
-      saldoCaixa,
-      slaVencidos,
+      totalAReceber, totalRecebido, totalAPagar, totalPago,
+      comissoesPrevistas, comissoesPagas,
+      saldoCaixa, slaVencidos,
     };
   }, [propostas, lancamentos, comissoes, contas]);
 }
+
 
 // ============================== Funil Kanban ==============================
 export function useFunilEtapas() {
