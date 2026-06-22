@@ -243,14 +243,42 @@ export async function generateBrandedPdf(opts: BrandedPdfOptions): Promise<jsPDF
 }
 
 export async function downloadBrandedPdf(opts: BrandedPdfOptions) {
-  const doc = await generateBrandedPdf(opts);
-  const name = sanitizeFile(opts.fileName ?? opts.title) || "relatorio";
-  doc.save(`${name}.pdf`);
-  return doc;
+  try {
+    const doc = await generateBrandedPdf(opts);
+    const name = sanitizeFile(opts.fileName ?? opts.title) || "relatorio";
+    doc.save(`${name}.pdf`);
+    return doc;
+  } catch (err) {
+    console.error("[pdf-export] downloadBrandedPdf falhou", err);
+    const { toast } = await import("sonner");
+    try {
+      toast.error("Não foi possível gerar o PDF.", {
+        description: "Tente novamente. Se o problema persistir, atualize a página.",
+      });
+    } catch { /* sonner não montado */ }
+    throw err;
+  }
 }
 
 export async function openBrandedPdf(opts: BrandedPdfOptions) {
-  const doc = await generateBrandedPdf(opts);
-  const url = doc.output("bloburl");
-  window.open(url, "_blank", "noopener,noreferrer");
+  try {
+    const doc = await generateBrandedPdf(opts);
+    const url = doc.output("bloburl");
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) {
+      const { toast } = await import("sonner");
+      toast.warning("Bloqueio de pop-up detectado.", {
+        description: "Permita pop-ups deste site para visualizar o PDF.",
+      });
+    }
+  } catch (err) {
+    console.error("[pdf-export] openBrandedPdf falhou", err);
+    const { toast } = await import("sonner");
+    try {
+      toast.error("Não foi possível abrir o PDF.", {
+        description: "Tente novamente em instantes.",
+      });
+    } catch { /* */ }
+    throw err;
+  }
 }
