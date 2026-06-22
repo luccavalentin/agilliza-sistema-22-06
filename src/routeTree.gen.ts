@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CorretorIndexRouteImport } from './routes/corretor.index'
 import { Route as CorrespondenteIndexRouteImport } from './routes/correspondente.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as CorretorRelatoriosRouteImport } from './routes/corretor.relatorios'
 import { Route as CorretorOperacionalRouteImport } from './routes/corretor.operacional'
 import { Route as CorretorFinanceiroRouteImport } from './routes/corretor.financeiro'
 import { Route as CorretorCrmRouteImport } from './routes/corretor.crm'
@@ -58,6 +59,11 @@ const ClienteIndexRoute = ClienteIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ClienteRoute,
+} as any)
+const CorretorRelatoriosRoute = CorretorRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => CorretorRoute,
 } as any)
 const CorretorOperacionalRoute = CorretorOperacionalRouteImport.update({
   id: '/operacional',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/corretor/crm': typeof CorretorCrmRoute
   '/corretor/financeiro': typeof CorretorFinanceiroRoute
   '/corretor/operacional': typeof CorretorOperacionalRoute
+  '/corretor/relatorios': typeof CorretorRelatoriosRoute
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/corretor/crm': typeof CorretorCrmRoute
   '/corretor/financeiro': typeof CorretorFinanceiroRoute
   '/corretor/operacional': typeof CorretorOperacionalRoute
+  '/corretor/relatorios': typeof CorretorRelatoriosRoute
   '/cliente': typeof ClienteIndexRoute
   '/correspondente': typeof CorrespondenteIndexRoute
   '/corretor': typeof CorretorIndexRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/corretor/crm': typeof CorretorCrmRoute
   '/corretor/financeiro': typeof CorretorFinanceiroRoute
   '/corretor/operacional': typeof CorretorOperacionalRoute
+  '/corretor/relatorios': typeof CorretorRelatoriosRoute
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/corretor/crm'
     | '/corretor/financeiro'
     | '/corretor/operacional'
+    | '/corretor/relatorios'
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/corretor/crm'
     | '/corretor/financeiro'
     | '/corretor/operacional'
+    | '/corretor/relatorios'
     | '/cliente'
     | '/correspondente'
     | '/corretor'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/corretor/crm'
     | '/corretor/financeiro'
     | '/corretor/operacional'
+    | '/corretor/relatorios'
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cliente/'
       preLoaderRoute: typeof ClienteIndexRouteImport
       parentRoute: typeof ClienteRoute
+    }
+    '/corretor/relatorios': {
+      id: '/corretor/relatorios'
+      path: '/relatorios'
+      fullPath: '/corretor/relatorios'
+      preLoaderRoute: typeof CorretorRelatoriosRouteImport
+      parentRoute: typeof CorretorRoute
     }
     '/corretor/operacional': {
       id: '/corretor/operacional'
@@ -336,6 +355,7 @@ interface CorretorRouteChildren {
   CorretorCrmRoute: typeof CorretorCrmRoute
   CorretorFinanceiroRoute: typeof CorretorFinanceiroRoute
   CorretorOperacionalRoute: typeof CorretorOperacionalRoute
+  CorretorRelatoriosRoute: typeof CorretorRelatoriosRoute
   CorretorIndexRoute: typeof CorretorIndexRoute
 }
 
@@ -343,6 +363,7 @@ const CorretorRouteChildren: CorretorRouteChildren = {
   CorretorCrmRoute: CorretorCrmRoute,
   CorretorFinanceiroRoute: CorretorFinanceiroRoute,
   CorretorOperacionalRoute: CorretorOperacionalRoute,
+  CorretorRelatoriosRoute: CorretorRelatoriosRoute,
   CorretorIndexRoute: CorretorIndexRoute,
 }
 
