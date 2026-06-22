@@ -40,6 +40,14 @@ export const bancos: Banco[] = [
   { id: "b-inter", nome: "Banco Inter", sigla: "INTER" },
 ];
 
+export type Imobiliaria = { id: string; nome: string; corretoresIds: string[] };
+export const imobiliarias: Imobiliaria[] = [
+  { id: "imob-1", nome: "Prime Imóveis", corretoresIds: ["u-cor-1", "u-cor-2"] },
+  { id: "imob-2", nome: "Urbana Negócios Imobiliários", corretoresIds: ["u-cor-2", "u-cor-3"] },
+  { id: "imob-3", nome: "Lar & Cia Imobiliária", corretoresIds: ["u-cor-1", "u-cor-3"] },
+  { id: "imob-4", nome: "Capital Realty", corretoresIds: ["u-cor-1", "u-cor-2", "u-cor-3"] },
+];
+
 export const clientes: Cliente[] = [
   { id: "c-1", nome: "João da Silva", cpf: "12345678900", email: "joao@email.com", telefone: "11987654321", corretorId: "u-cor-1" },
   { id: "c-2", nome: "Maria Oliveira", cpf: "98765432100", email: "maria@email.com", telefone: "21987651234", corretorId: "u-cor-2" },
