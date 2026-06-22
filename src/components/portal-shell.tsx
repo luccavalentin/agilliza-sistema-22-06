@@ -282,7 +282,7 @@ export function PortalShell({
             title="Sair"
           >
             <LogOut className="h-4 w-4" />
-            {!collapsed && <span>Sair com segurança</span>}
+            {!collapsed && <span>Sair</span>}
           </Link>
         </div>
       </aside>
