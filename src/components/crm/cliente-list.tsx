@@ -187,11 +187,6 @@ export function CrmClientesList({ scope }: { scope: Scope }) {
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-graphite">
               Clientes
             </h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Cadastro central de participantes do ecossistema — espelhado no
-              contrato HomeFin (Participante / Oportunidade / Simulação /
-              Proposta / Documentos / Follow-up).
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button className="inline-flex items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-brand-foreground hover:opacity-95">
