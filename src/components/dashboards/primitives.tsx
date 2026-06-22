@@ -1,4 +1,11 @@
 import type { ComponentType, ReactNode } from "react";
+import { ShieldCheck } from "lucide-react";
+
+function splitFirstWord(s: string): [string, string] {
+  const i = s.indexOf(" ");
+  if (i < 0) return [s, ""];
+  return [s.slice(0, i), s.slice(i)];
+}
 
 export function PanelHeader({
   eyebrow,
@@ -11,23 +18,54 @@ export function PanelHeader({
   subtitle?: string;
   right?: ReactNode;
 }) {
+  const [firstWord, rest] = splitFirstWord(title);
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {eyebrow}
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-graphite sm:text-[34px]">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{subtitle}</p>
-        )}
+    <header className="relative overflow-hidden rounded-xl border-b border-[#E2E8F0] bg-gradient-to-br from-brand/[0.06] via-brand/[0.02] to-transparent px-6 py-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/70" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            {eyebrow}
+          </span>
+          <h1 className="mt-3 truncate text-2xl font-black tracking-tight text-graphite sm:text-[28px]">
+            <span className="text-brand">{firstWord}</span>
+            {rest}
+          </h1>
+          {subtitle && (
+            <p className="mt-1 max-w-2xl text-[13px] text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+        {right && <div className="shrink-0">{right}</div>}
       </div>
-      {right}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-brand via-brand/30 to-transparent"
+      />
     </header>
   );
 }
+
+export function StatusBadge({
+  label,
+  tooltip,
+}: {
+  label: string;
+  tooltip?: string;
+}) {
+  return (
+    <span
+      title={tooltip}
+      className="inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white/70 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-brand shadow-sm backdrop-blur-sm"
+    >
+      <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
+      {label}
+    </span>
+  );
+}
+
 
 export type FilterBarItem = {
   label: string;
