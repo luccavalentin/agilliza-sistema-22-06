@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  DollarSign,
   Filter,
   Layers,
   LineChart as LineChartIcon,
