@@ -123,6 +123,8 @@ function NavBranch({
           anyActive ? "text-white" : "text-white/85 hover:bg-white/10 hover:text-white",
         ].join(" ")}
         title={collapsed ? item.label : undefined}
+        aria-expanded={open}
+        aria-label={item.label}
       >
         <Icon className="h-4 w-4 shrink-0" strokeWidth={anyActive ? 2.5 : 2} />
         {!collapsed && (
@@ -130,6 +132,7 @@ function NavBranch({
             <span className="truncate">{item.label}</span>
             <ChevronDown
               className={`ml-auto h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden
             />
           </>
         )}
