@@ -15,6 +15,7 @@ import { ETAPAS_PROPOSTA } from "@/lib/operacional/types";
 import { formatBRL, formatDataHora } from "@/lib/operacional/formatters";
 import { useGlobalSearch } from "@/components/portal/global-search";
 import { useDashboardFilters, PERIODOS } from "@/hooks/use-dashboard-filters";
+import { BankLogo } from "@/components/operacional/bank-logo";
 
 type Aba = "propostas" | "simulacoes" | "demandas";
 
