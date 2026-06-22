@@ -135,6 +135,168 @@ const fmtBRL = (v: number) =>
     ? `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")} mi`
     : `R$ ${(v / 1_000).toFixed(0)} mil`;
 
+/* ---------- Alertas operacionais ---------- */
+
+type AlertaSeveridade = "critico" | "atencao" | "info";
+
+type Alerta = {
+  id: string;
+  severidade: AlertaSeveridade;
+  badge: string;
+  label: string;
+  qtd: number;
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  acao: string;
+  /** Deadline em ms para countdown — quando presente, renderiza relógio */
+  deadlineInMs?: number;
+};
+
+const alertasOperacionais: Alerta[] = [
+  {
+    id: "sla-estourado",
+    severidade: "critico",
+    badge: "URGENTE",
+    label: "SLA estourado em propostas ativas",
+    qtd: 7,
+    icon: AlertCircle,
+    acao: "Ver propostas",
+    deadlineInMs: 3 * 60 * 60 * 1000 + 27 * 60 * 1000,
+  },
+  {
+    id: "docs-pendentes",
+    severidade: "critico",
+    badge: "URGENTE",
+    label: "Documentos pendentes de envio",
+    qtd: 12,
+    icon: FileWarning,
+    acao: "Ver pendências",
+  },
+  {
+    id: "paradas",
+    severidade: "atencao",
+    badge: "ATENÇÃO",
+    label: "Simulações paradas há +10 dias",
+    qtd: 61,
+    icon: AlertTriangle,
+    acao: "Ver simulações",
+  },
+  {
+    id: "retornos",
+    severidade: "info",
+    badge: "INFO",
+    label: "Novos retornos dos bancos hoje",
+    qtd: 18,
+    icon: Bell,
+    acao: "Abrir caixa de retornos",
+  },
+];
+
+const severidadeStyles: Record<
+  AlertaSeveridade,
+  {
+    card: string;
+    border: string;
+    iconWrap: string;
+    iconColor: string;
+    badge: string;
+    button: string;
+    pulse: boolean;
+  }
+> = {
+  critico: {
+    card: "bg-rose-50",
+    border: "border-l-rose-500",
+    iconWrap: "bg-rose-100",
+    iconColor: "text-rose-600",
+    badge: "bg-rose-100 text-rose-700",
+    button: "text-rose-700 hover:text-rose-900",
+    pulse: true,
+  },
+  atencao: {
+    card: "bg-amber-50",
+    border: "border-l-amber-400",
+    iconWrap: "bg-amber-100",
+    iconColor: "text-amber-600",
+    badge: "bg-amber-100 text-amber-700",
+    button: "text-amber-700 hover:text-amber-900",
+    pulse: false,
+  },
+  info: {
+    card: "bg-sky-50",
+    border: "border-l-sky-400",
+    iconWrap: "bg-sky-100",
+    iconColor: "text-sky-600",
+    badge: "bg-sky-100 text-sky-700",
+    button: "text-sky-700 hover:text-sky-900",
+    pulse: false,
+  },
+};
+
+function Countdown({ initialMs }: { initialMs: number }) {
+  const [remaining, setRemaining] = useState(initialMs);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setRemaining((r) => (r > 1000 ? r - 1000 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+  const total = Math.max(0, Math.floor(remaining / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, "0");
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+  const s = String(total % 60).padStart(2, "0");
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-white/70 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-rose-700">
+      <Clock className="h-3 w-3" strokeWidth={2.5} />
+      {h}:{m}:{s}
+    </span>
+  );
+}
+
+function AlertaCard({ alerta }: { alerta: Alerta }) {
+  const s = severidadeStyles[alerta.severidade];
+  const Icon = alerta.icon;
+  return (
+    <article
+      className={`relative flex flex-col rounded-xl border border-border border-l-4 p-4 shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-md ${s.card} ${s.border}`}
+    >
+      {s.pulse && (
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-y-0 left-0 w-1 animate-pulse rounded-l-xl ${s.border.replace("border-l-", "bg-")}`}
+        />
+      )}
+      <div className="flex items-start justify-between gap-2">
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${s.iconWrap} ${s.iconColor}`}>
+          <Icon className="h-5 w-5" strokeWidth={2.25} />
+        </span>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${s.badge}`}>
+          {alerta.badge}
+        </span>
+      </div>
+      <p className="mt-3 text-3xl font-black leading-none tracking-tight text-graphite">
+        {alerta.qtd}
+      </p>
+      <p className="mt-1.5 text-[12px] font-medium text-graphite/80">
+        {alerta.label}
+      </p>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${s.button}`}
+        >
+          {alerta.acao}
+          <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+        {alerta.deadlineInMs !== undefined && (
+          <Countdown initialMs={alerta.deadlineInMs} />
+        )}
+      </div>
+    </article>
+  );
+}
+
+
+
 function PainelCorrespondente() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
