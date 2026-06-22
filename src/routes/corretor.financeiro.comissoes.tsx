@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Banknote } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { ComissoesView } from "@/components/financeiro/comissoes-view";
 
 export const Route = createFileRoute("/corretor/financeiro/comissoes")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Corretor · Financeiro"
-      title="Minhas Comissões"
-      description="Apuração das comissões do corretor."
-      icon={Banknote}
-    />
-  ),
+  component: () => <div className="p-6"><ComissoesView escopo="corretor" /></div>,
 });

@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RefreshCw } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { RecorrenciasView } from "@/components/financeiro/recorrencias-view";
 
 export const Route = createFileRoute("/correspondente/financeiro/recorrencias")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Correspondente · Financeiro"
-      title="Recorrências"
-      description="Gestão de lançamentos recorrentes."
-      icon={RefreshCw}
-    />
-  ),
+  component: () => <div className="p-6"><RecorrenciasView escopo="correspondente" /></div>,
 });
