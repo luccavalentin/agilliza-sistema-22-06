@@ -22,6 +22,10 @@ export type Banco = {
   id: string;
   nome: string;
   sigla: string;
+  /** simple-icons slug (https://cdn.simpleicons.org/{slug}) */
+  logoSlug?: string;
+  /** brand color (hex without #) */
+  brandColor?: string;
 };
 
 export type Prioridade = "Baixa" | "Média" | "Alta" | "Urgente" | "Crítica";
