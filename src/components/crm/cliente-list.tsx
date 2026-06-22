@@ -194,42 +194,16 @@ export function CrmClientesList({ scope }: { scope: Scope }) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setMascarar((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-graphite hover:border-brand/40"
-              title={mascarar ? "Mostrar CPF/CNPJ" : "Mascarar CPF/CNPJ"}
-            >
-              {mascarar ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              {mascarar ? "Mostrar dados" : "Mascarar"}
-            </button>
             <button className="inline-flex items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-brand-foreground hover:opacity-95">
               <Plus className="h-3.5 w-3.5" />
               Novo cliente
             </button>
           </div>
         </div>
-
-        {/* KPIs */}
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { l: "Clientes",    v: totais.total.toString(),       i: Users,         tone: "brand" },
-            { l: "Ativos",      v: totais.ativos.toString(),      i: CheckCircle2,  tone: "success" },
-            { l: "Com proposta",v: totais.comProposta.toString(), i: FileText,      tone: "info" },
-            { l: "Pendências",  v: totais.pendentes.toString(),   i: AlertTriangle, tone: "warning" },
-            { l: "Volume financiado", v: fmtBRL(totais.vgv),      i: Wallet,        tone: "brand" },
-          ].map((k) => (
-            <div key={k.l} className="rounded-md border border-border bg-card p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                  {k.l}
-                </span>
-                <k.i className="h-3.5 w-3.5 text-brand" />
-              </div>
-              <p className="mt-1 text-lg font-bold tracking-tight text-graphite">{k.v}</p>
-            </div>
-          ))}
-        </div>
       </header>
+
+      {/* Painel de Monitoramento */}
+      <ClientesMonitoringDashboard clientes={clientes} />
 
       {/* Filtros */}
       <section className="rounded-md border border-border bg-card p-3">
