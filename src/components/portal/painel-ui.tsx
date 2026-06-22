@@ -139,6 +139,16 @@ const toneMap: Record<
   },
 };
 
+const kpiIconTone: Record<Tone, { bg: string; text: string; line: string }> = {
+  brand: { bg: "bg-brand/10", text: "text-brand", line: "bg-brand/40" },
+  success: { bg: "bg-emerald-50", text: "text-emerald-600", line: "bg-emerald-500" },
+  direction: { bg: "bg-rose-50", text: "text-rose-600", line: "bg-rose-500" },
+  warning: { bg: "bg-orange-50", text: "text-orange-500", line: "bg-orange-400" },
+  info: { bg: "bg-sky-50", text: "text-sky-600", line: "bg-sky-500" },
+  amber: { bg: "bg-amber-50", text: "text-amber-600", line: "bg-amber-500" },
+  neutral: { bg: "bg-slate-100", text: "text-slate-600", line: "bg-slate-300" },
+};
+
 export function KpiCard({
   label,
   value,
@@ -146,6 +156,7 @@ export function KpiCard({
   tone = "brand",
   icon: Icon,
   breakdown,
+  trend,
   onClickHint = "Clique para detalhar",
 }: {
   label: string;
@@ -154,29 +165,50 @@ export function KpiCard({
   tone?: Tone;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   breakdown?: { label: string; value: string; tone?: Tone }[];
+  trend?: { dir: "up" | "down"; value: string };
   onClickHint?: string;
 }) {
   const t = toneMap[tone];
+  const it = kpiIconTone[tone];
+  const trendUp = trend?.dir === "up";
+  const trendColor = trend ? (trendUp ? "text-emerald-600" : "text-rose-600") : "";
+  const baseLine = trend
+    ? trendUp
+      ? "bg-emerald-500"
+      : "bg-rose-500"
+    : it.line;
   return (
     <button
       type="button"
-      className={`group relative flex h-full w-full flex-col rounded-md border border-border bg-card p-4 text-left transition hover:border-brand/40 hover:shadow-sm focus:outline-none focus-visible:ring-2 ${t.ring}`}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm transition-transform duration-200 will-change-transform hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus:outline-none focus-visible:ring-2 ${t.ring}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          {label}
+      <div className="flex items-start gap-3">
+        <span
+          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${it.bg} ${it.text}`}
+        >
+          <Icon className="h-5 w-5" strokeWidth={2.25} />
         </span>
-        <span className={`grid h-7 w-7 place-items-center rounded-sm ${t.chip}`}>
-          <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
-        </span>
-      </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-[26px] font-bold leading-none tracking-tight text-graphite">
-          {value}
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {label}
+            </p>
+            {trend && (
+              <span
+                className={`inline-flex shrink-0 items-center gap-0.5 text-[11px] font-bold ${trendColor}`}
+              >
+                <span aria-hidden>{trendUp ? "▲" : "▼"}</span>
+                {trend.value}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-3xl font-black leading-none tracking-tight text-graphite">
+            {value}
+          </p>
+        </div>
       </div>
       {hint && (
-        <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
+        <p className="mt-2.5 text-xs text-muted-foreground">{hint}</p>
       )}
       {breakdown && (
         <ul className="mt-3 grid grid-cols-2 gap-1.5 border-t border-border pt-2.5">
@@ -199,6 +231,10 @@ export function KpiCard({
       <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 opacity-0 transition group-hover:opacity-100">
         {onClickHint} →
       </span>
+      <span
+        className={`pointer-events-none absolute inset-x-0 bottom-0 h-[3px] ${baseLine}`}
+        aria-hidden
+      />
     </button>
   );
 }
