@@ -959,7 +959,9 @@ function ResultadosStep({
                     <input type="checkbox" checked={selecionados.has(c.id)} onChange={() => toggleSel(c.id)}
                       className="h-3.5 w-3.5 accent-[color:var(--brand)]" />
                   </td>
-                  <td className="px-3 py-2 font-semibold text-graphite">{banco?.sigla}</td>
+                  <td className="px-3 py-2 font-semibold text-graphite">
+                    <BankLogo banco={banco} size="sm" showName />
+                  </td>
                   <td className="px-3 py-2 text-graphite">{c.prazoMeses}m</td>
                   <td className="px-3 py-2"><span className="rounded bg-secondary px-1.5 py-0.5 font-bold text-graphite">{c.tabela}</span></td>
                   <td className="px-3 py-2 text-graphite">{formatPercent(c.taxaAaPercent)}</td>
