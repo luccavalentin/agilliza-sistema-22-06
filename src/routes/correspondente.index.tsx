@@ -429,65 +429,122 @@ function PainelCorrespondente() {
         </Card>
       </section>
 
-      {/* SLA por banco + Funil */}
-      <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-4 lg:col-span-2">
+      {/* Funil operacional + SLA por banco */}
+      <section className="space-y-4">
+        <Card className="p-4">
           <SectionTitle
             icon={Layers}
             title="Funil operacional"
-            description="Da simulação à formalização."
+            description="Da simulação à formalização — cada etapa mostra a conversão acumulada."
           />
-          <ul className="space-y-2">
-            {funil.map((f, i) => (
-              <li key={f.etapa}>
-                <div className="flex items-center justify-between text-[12px] text-graphite">
-                  <span className="font-medium">
-                    {i + 1}. {f.etapa}
-                  </span>
-                  <span className="font-semibold">
-                    {f.qtd.toLocaleString("pt-BR")}{" "}
-                    <span className="text-muted-foreground font-normal">· {f.pct}%</span>
-                  </span>
-                </div>
-                <div className="mt-1 h-2 w-full overflow-hidden rounded-sm bg-secondary">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+            {funil.map((f, i) => {
+              const isLast = i === funil.length - 1;
+              return (
+                <div key={f.etapa} className="flex flex-1 items-stretch gap-2">
                   <div
-                    className="h-full rounded-sm bg-brand"
-                    style={{ width: `${f.pct}%` }}
-                  />
+                    className={`relative flex flex-1 flex-col justify-between rounded-xl border p-4 transition-transform hover:-translate-y-0.5 ${
+                      isLast
+                        ? "border-brand bg-brand text-white shadow-md"
+                        : "border-brand/15 bg-gradient-to-br from-brand/5 to-brand/15"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`text-[11px] font-bold uppercase tracking-[0.14em] ${
+                          isLast ? "text-white/90" : "text-brand"
+                        }`}
+                      >
+                        {i + 1}. {f.etapa}
+                      </span>
+                      <span
+                        className={`inline-grid h-7 min-w-7 place-items-center rounded-full px-1.5 text-[10px] font-bold ${
+                          isLast
+                            ? "bg-white text-brand"
+                            : "bg-brand text-white"
+                        }`}
+                      >
+                        {f.pct}%
+                      </span>
+                    </div>
+                    <p
+                      className={`mt-3 text-4xl font-black tracking-tight ${
+                        isLast ? "text-white" : "text-graphite"
+                      }`}
+                    >
+                      {f.qtd.toLocaleString("pt-BR")}
+                    </p>
+                  </div>
+                  {!isLast && (
+                    <div className="hidden items-center lg:flex" aria-hidden>
+                      <ChevronRight className="h-6 w-6 text-brand/40" strokeWidth={2.5} />
+                    </div>
+                  )}
                 </div>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         </Card>
 
         <Card className="p-4">
           <SectionTitle
             icon={Timer}
-            title="SLA médio por banco"
-            description="Tempo médio de resposta (dias úteis)."
+            title="SLA por banco"
+            description="Tempo médio de resposta (dias úteis) — verde < 3d · amarelo 3-7d · vermelho > 7d."
           />
-          <ul className="divide-y divide-border">
-            {bancosTaxas
-              .slice()
-              .sort((a, b) => a.slaDias - b.slaDias)
-              .map((b) => {
-                const tone =
-                  b.slaDias <= 3
-                    ? "text-[var(--success)]"
-                    : b.slaDias <= 5
-                    ? "text-[var(--warning)]"
-                    : "text-direction";
-                return (
-                  <li key={b.nome} className="flex items-center gap-3 py-2 text-[12px]">
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="font-medium text-graphite">{b.nome}</span>
-                    <span className={`ml-auto font-bold ${tone}`}>
-                      {b.slaDias.toFixed(1).replace(".", ",")}d
-                    </span>
-                  </li>
-                );
-              })}
-          </ul>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-[12px]">
+              <thead className="bg-secondary text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold">Banco</th>
+                  <th className="px-3 py-2 text-left font-semibold">SLA médio</th>
+                  <th className="px-3 py-2 text-right font-semibold">Dias</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-card">
+                {bancosTaxas
+                  .slice()
+                  .sort((a, b) => a.slaDias - b.slaDias)
+                  .map((b) => {
+                    const maxSla = 10;
+                    const pct = Math.min(100, (b.slaDias / maxSla) * 100);
+                    const barColor =
+                      b.slaDias < 3
+                        ? "bg-emerald-500"
+                        : b.slaDias <= 7
+                        ? "bg-amber-400"
+                        : "bg-rose-500";
+                    const textColor =
+                      b.slaDias < 3
+                        ? "text-emerald-600"
+                        : b.slaDias <= 7
+                        ? "text-amber-600"
+                        : "text-rose-600";
+                    return (
+                      <tr key={b.nome}>
+                        <td className="px-3 py-2.5">
+                          <span className="inline-flex items-center gap-2 font-medium text-graphite">
+                            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            {b.nome}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                              className={`h-full rounded-full ${barColor} transition-[width]`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </td>
+                        <td className={`px-3 py-2.5 text-right font-bold tabular-nums ${textColor}`}>
+                          {b.slaDias.toFixed(1).replace(".", ",")}d
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </section>
 
