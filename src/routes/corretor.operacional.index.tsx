@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Activity } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { PainelOperacional } from "@/components/operacional/painel-operacional";
 
 export const Route = createFileRoute("/corretor/operacional/")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Corretor · Operacional"
-      title="Painel"
-      description="Painel operacional do corretor."
-      icon={Activity}
-    />
-  ),
+  component: () => <div className="p-6"><PainelOperacional escopo="corretor" /></div>,
 });

@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { MinhasSimulacoes } from "@/components/operacional/minhas-simulacoes";
 
 export const Route = createFileRoute("/correspondente/operacional/minhas-simulacoes")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Correspondente · Operacional"
-      title="Minhas Simulações"
-      description="Simulações criadas pelo usuário logado."
-      icon={Sparkles}
-    />
-  ),
+  component: () => <div className="p-6"><MinhasSimulacoes escopo="correspondente" /></div>,
 });
