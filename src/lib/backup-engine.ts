@@ -1,402 +1,480 @@
 /**
- * backup-engine.ts — Motor de exportação XLSX para o sistema Agilliza.
+ * backup-engine.ts — Motor de exportação XLSX (Agilliza).
  *
- * Gera um arquivo .xlsx com múltiplas abas, cada uma cobrindo um módulo
- * completo do sistema. Nenhum dado é omitido — inclui registros concluídos,
- * cancelados, arquivados e histórico.
+ * Gera planilha .xlsx profissionalmente formatada usando ExcelJS:
+ *  • Cabeçalho em negrito com fundo brand e texto branco
+ *  • Freeze pane na linha 1
+ *  • AutoFilter ativado em todas as abas
+ *  • Larguras de coluna calculadas
+ *  • Tipos nativos: número (BRL), data (DD/MM/AAAA), percentual, boolean
+ *  • Bordas leves, zebra striping discreto
+ *  • Aba "Resumo" com totais consolidados
  *
- * Quando integrado ao Supabase: substitua os arrays de mock pelas queries
- * reais. A estrutura de colunas e formatação permanecem idênticas.
+ * Nenhum registro é omitido — inclui finalizados, cancelados, arquivados,
+ * históricos. Nunca exporta senhas/tokens.
  */
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
-// -- Dados mock (trocar por queries Supabase quando integrar BD) --
-import { clientes, propostas, simulacoes, demandas, tarefas, bancos, usuarios } from "@/lib/operacional/mock-data";
-import { contasReceber, contasPagar, comissoes, recorrencias, categorias, centrosCusto, contas, itensConciliacao } from "@/lib/financeiro/mock-data";
+import {
+  clientes, propostas, simulacoes, demandas, tarefas, bancos, usuarios,
+} from "@/lib/operacional/mock-data";
+import {
+  contasReceber, contasPagar, comissoes, recorrencias,
+  categorias, centrosCusto, contas, itensConciliacao,
+} from "@/lib/financeiro/mock-data";
 
-// -- Helpers --
-const fmt = (v: unknown): string => {
-  if (v === undefined || v === null) return "";
-  if (typeof v === "boolean") return v ? "Sim" : "Não";
-  if (typeof v === "number") return String(v);
-  if (typeof v === "string") {
-    // ISO date → DD/MM/AAAA HH:MM
-    if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
-      const d = new Date(v);
-      return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-      const [y, m, d] = v.split("-");
-      return `${d}/${m}/${y}`;
-    }
-    return v;
+// ---------------------------------------------------------------------------
+// Tipos do DSL de coluna
+// ---------------------------------------------------------------------------
+type ColType = "text" | "number" | "money" | "percent" | "date" | "datetime" | "bool" | "int";
+interface ColSpec {
+  header: string;
+  key: string;
+  type?: ColType;
+  width?: number;
+}
+interface SheetSpec {
+  name: string;
+  cols: ColSpec[];
+  rows: Record<string, unknown>[];
+}
+
+// Tokens visuais (alinhados ao tema brand)
+const BRAND = "FF000F9F";
+const BRAND_FG = "FFFFFFFF";
+const ZEBRA = "FFF8FAFC";
+const BORDER = "FFE5E7EB";
+const RESUMO_FILL = "FFFEF3C7";
+
+const NUMFMT = {
+  money: '"R$" #,##0.00;[Red]-"R$" #,##0.00;"-"',
+  percent: "0.00%",
+  date: "DD/MM/YYYY",
+  datetime: "DD/MM/YYYY HH:MM",
+  int: "#,##0",
+  number: "#,##0.00",
+} as const;
+
+// ---------------------------------------------------------------------------
+// Helpers de lookup
+// ---------------------------------------------------------------------------
+const uName = (id?: string) => usuarios.find((u) => u.id === id)?.nome ?? "";
+const cName = (id?: string) => clientes.find((c) => c.id === id)?.nome ?? "";
+const bName = (id?: string) => bancos.find((b) => b.id === id)?.nome ?? "";
+const catName = (id?: string) => categorias.find((c) => c.id === id)?.nome ?? "";
+const ccName = (id?: string) => centrosCusto.find((c) => c.id === id)?.nome ?? "";
+const acctName = (id?: string) => contas.find((c) => c.id === id)?.nome ?? "";
+
+function toDate(v: unknown): Date | string {
+  if (!v) return "";
+  if (v instanceof Date) return v;
+  if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? v : d;
   }
-  if (Array.isArray(v)) return v.join(", ");
-  return JSON.stringify(v);
-};
-
-const brl = (n: number | undefined): string =>
-  n === undefined ? "" : n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const pct = (n: number | undefined): string =>
-  n === undefined ? "" : `${n.toFixed(4).replace(".", ",")}%`;
-
-const usuarioNome = (id?: string) => usuarios.find((u) => u.id === id)?.nome ?? id ?? "";
-const clienteNome = (id?: string) => clientes.find((c) => c.id === id)?.nome ?? id ?? "";
-const bancoNome = (id?: string) => bancos.find((b) => b.id === id)?.nome ?? id ?? "";
-const categoriaNome = (id?: string) => categorias.find((c) => c.id === id)?.nome ?? id ?? "";
-const centroCustoNome = (id?: string) => centrosCusto.find((c) => c.id === id)?.nome ?? id ?? "";
-const contaNome = (id?: string) => contas.find((c) => c.id === id)?.nome ?? id ?? "";
-
-// ---------------------------------------------------------------------------
-// 1 — CLIENTES
-// ---------------------------------------------------------------------------
-function abaClientes(): any[][] {
-  const header = [
-    "ID", "Nome", "CPF", "CNPJ", "E-mail", "Telefone",
-    "Corretor responsável", "Tipo",
-  ];
-  const rows = clientes.map((c) => [
-    c.id, c.nome, fmt(c.cpf), fmt(c.cnpj ?? ""), fmt(c.email), fmt(c.telefone),
-    usuarioNome(c.corretorId),
-    c.cnpj ? "Pessoa Jurídica" : "Pessoa Física",
-  ]);
-  return [header, ...rows];
+  return String(v);
 }
 
 // ---------------------------------------------------------------------------
-// 2 — SIMULAÇÕES
+// Especificações por aba
 // ---------------------------------------------------------------------------
-function abaSimulacoes(): (string | number)[][] {
-  const header = [
-    "ID", "Status", "Produto", "Cliente", "Corretor", "Criada em", "Atualizada em",
-    "Valor do imóvel", "Valor entrada", "Valor financiado", "Valor solicitado (HE)",
-    "LTV %", "Prazo (meses)", "Renda bruta", "Observações",
+function buildSheets(): SheetSpec[] {
+  return [
+    {
+      name: "Clientes",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Nome", key: "nome", width: 32 },
+        { header: "Tipo", key: "tipo", width: 16 },
+        { header: "CPF", key: "cpf", width: 16 },
+        { header: "CNPJ", key: "cnpj", width: 20 },
+        { header: "E-mail", key: "email", width: 30 },
+        { header: "Telefone", key: "telefone", width: 18 },
+        { header: "Corretor responsável", key: "corretor", width: 26 },
+      ],
+      rows: clientes.map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        tipo: c.cnpj ? "Pessoa Jurídica" : "Pessoa Física",
+        cpf: c.cpf ?? "",
+        cnpj: c.cnpj ?? "",
+        email: c.email ?? "",
+        telefone: c.telefone ?? "",
+        corretor: uName(c.corretorId),
+      })),
+    },
+    {
+      name: "Simulações",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Produto", key: "produto", width: 22 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Corretor", key: "corretor", width: 24 },
+        { header: "Criada em", key: "criada", type: "datetime", width: 18 },
+        { header: "Atualizada em", key: "atualizada", type: "datetime", width: 18 },
+        { header: "Valor do imóvel", key: "vImovel", type: "money", width: 18 },
+        { header: "Valor entrada", key: "vEntrada", type: "money", width: 18 },
+        { header: "Valor financiado", key: "vFin", type: "money", width: 18 },
+        { header: "Valor solicitado (HE)", key: "vHE", type: "money", width: 20 },
+        { header: "LTV", key: "ltv", type: "percent", width: 10 },
+        { header: "Prazo (meses)", key: "prazo", type: "int", width: 14 },
+        { header: "Renda bruta", key: "renda", type: "money", width: 16 },
+        { header: "Observações", key: "obs", width: 40 },
+      ],
+      rows: simulacoes.map((s) => ({
+        id: s.id,
+        status: s.status,
+        produto: s.produto,
+        cliente: cName(s.clienteId),
+        corretor: uName(s.corretorId),
+        criada: toDate(s.criadaEm),
+        atualizada: toDate(s.atualizadaEm),
+        vImovel: s.valorImovel ?? "",
+        vEntrada: s.valorEntrada ?? "",
+        vFin: s.valorFinanciado ?? "",
+        vHE: s.valorSolicitado ?? "",
+        ltv: s.ltvPercent != null ? s.ltvPercent / 100 : "",
+        prazo: s.prazoMesesBase ?? "",
+        renda: s.rendaBruta ?? "",
+        obs: s.observacoes ?? "",
+      })),
+    },
+    {
+      name: "Propostas (Kanban)",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Número", key: "numero", width: 16 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Etapa (Kanban)", key: "etapa", width: 22 },
+        { header: "Produto", key: "produto", width: 20 },
+        { header: "Banco", key: "banco", width: 22 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Corretor", key: "corretor", width: 24 },
+        { header: "Responsável", key: "resp", width: 24 },
+        { header: "Valor", key: "valor", type: "money", width: 18 },
+        { header: "Prioridade", key: "prio", width: 14 },
+        { header: "SLA prazo", key: "sla", type: "date", width: 14 },
+        { header: "Pendências", key: "pend", type: "int", width: 12 },
+        { header: "Documentos", key: "docs", type: "int", width: 12 },
+        { header: "Transferida", key: "transf", type: "bool", width: 12 },
+        { header: "Criada em", key: "criada", type: "datetime", width: 18 },
+        { header: "Atualizada em", key: "atualizada", type: "datetime", width: 18 },
+      ],
+      rows: propostas.map((p) => ({
+        id: p.id, numero: p.numero, status: p.status, etapa: p.etapa,
+        produto: p.produto, banco: bName(p.bancoId), cliente: cName(p.clienteId),
+        corretor: uName(p.corretorId), resp: uName(p.responsavelId),
+        valor: p.valor ?? "", prio: p.prioridade, sla: toDate(p.slaPrazo),
+        pend: p.pendencias ?? 0, docs: p.documentos ?? 0, transf: !!p.transferida,
+        criada: toDate(p.criadaEm), atualizada: toDate(p.atualizadaEm),
+      })),
+    },
+    {
+      name: "Histórico de propostas",
+      cols: [
+        { header: "Proposta ID", key: "pid", width: 14 },
+        { header: "Número", key: "numero", width: 16 },
+        { header: "Data", key: "data", type: "datetime", width: 18 },
+        { header: "Usuário", key: "usuario", width: 24 },
+        { header: "Ação", key: "acao", width: 60 },
+      ],
+      rows: propostas.flatMap((p) =>
+        (p.historico ?? []).map((h) => ({
+          pid: p.id, numero: p.numero, data: toDate(h.data),
+          usuario: uName(h.usuarioId), acao: h.acao,
+        })),
+      ),
+    },
+    {
+      name: "Demandas - SLA",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Título", key: "titulo", width: 38 },
+        { header: "Tipo", key: "tipo", width: 18 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Prioridade", key: "prio", width: 14 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Proposta vinculada", key: "pid", width: 18 },
+        { header: "Responsável", key: "resp", width: 24 },
+        { header: "Criado por", key: "criadoPor", width: 24 },
+        { header: "SLA prazo", key: "sla", type: "date", width: 14 },
+        { header: "Transferida", key: "transf", type: "bool", width: 12 },
+        { header: "Criada em", key: "criada", type: "datetime", width: 18 },
+      ],
+      rows: demandas.map((d) => ({
+        id: d.id, titulo: d.titulo, tipo: d.tipo, status: d.status, prio: d.prioridade,
+        cliente: cName(d.clienteId), pid: d.propostaId ?? "",
+        resp: uName(d.responsavelId), criadoPor: uName(d.criadoPorId),
+        sla: toDate(d.slaPrazo), transf: !!d.transferida, criada: toDate(d.criadaEm),
+      })),
+    },
+    {
+      name: "Tarefas",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Título", key: "titulo", width: 40 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Prioridade", key: "prio", width: 14 },
+        { header: "Usuário", key: "usuario", width: 24 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Proposta vinculada", key: "pid", width: 18 },
+        { header: "Prazo", key: "prazo", type: "date", width: 14 },
+      ],
+      rows: tarefas.map((t) => ({
+        id: t.id, titulo: t.titulo, status: t.status, prio: t.prioridade,
+        usuario: uName(t.usuarioId), cliente: cName(t.clienteId),
+        pid: t.propostaId ?? "", prazo: toDate(t.prazo),
+      })),
+    },
+    {
+      name: "Contas a receber",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Descrição", key: "desc", width: 38 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Natureza", key: "nat", width: 14 },
+        { header: "Produto", key: "prod", width: 18 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Corretor", key: "corretor", width: 24 },
+        { header: "Proposta", key: "pid", width: 14 },
+        { header: "Categoria", key: "cat", width: 22 },
+        { header: "Centro de custo", key: "cc", width: 18 },
+        { header: "Conta financeira", key: "conta", width: 22 },
+        { header: "Forma de pagamento", key: "forma", width: 18 },
+        { header: "Valor", key: "valor", type: "money", width: 16 },
+        { header: "Valor pago", key: "vPago", type: "money", width: 16 },
+        { header: "Saldo", key: "saldo", type: "money", width: 16 },
+        { header: "Emissão", key: "emissao", type: "date", width: 14 },
+        { header: "Vencimento", key: "vencimento", type: "date", width: 14 },
+        { header: "Liquidação", key: "liquidacao", type: "date", width: 14 },
+        { header: "Parcela atual", key: "parcAtual", type: "int", width: 12 },
+        { header: "Total parcelas", key: "parcTotal", type: "int", width: 12 },
+      ],
+      rows: contasReceber.map((r) => ({
+        id: r.id, desc: r.descricao, status: r.status, nat: r.natureza,
+        prod: r.produto ?? "", cliente: cName(r.clienteId), corretor: uName(r.corretorId),
+        pid: r.propostaId ?? "", cat: catName(r.categoriaId), cc: ccName(r.centroCustoId),
+        conta: acctName(r.contaId), forma: r.forma ?? "",
+        valor: r.valor ?? 0, vPago: r.valorPago ?? 0,
+        saldo: (r.valor ?? 0) - (r.valorPago ?? 0),
+        emissao: toDate(r.emissao), vencimento: toDate(r.vencimento), liquidacao: toDate(r.liquidacao),
+        parcAtual: r.parcelamento?.parcelaAtual ?? "",
+        parcTotal: r.parcelamento?.totalParcelas ?? "",
+      })),
+    },
+    {
+      name: "Contas a pagar",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Descrição", key: "desc", width: 38 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Natureza", key: "nat", width: 14 },
+        { header: "Fornecedor", key: "forn", width: 24 },
+        { header: "Beneficiário", key: "ben", width: 24 },
+        { header: "Categoria", key: "cat", width: 22 },
+        { header: "Centro de custo", key: "cc", width: 18 },
+        { header: "Conta financeira", key: "conta", width: 22 },
+        { header: "Forma de pagamento", key: "forma", width: 18 },
+        { header: "Valor", key: "valor", type: "money", width: 16 },
+        { header: "Valor pago", key: "vPago", type: "money", width: 16 },
+        { header: "Saldo", key: "saldo", type: "money", width: 16 },
+        { header: "Emissão", key: "emissao", type: "date", width: 14 },
+        { header: "Vencimento", key: "vencimento", type: "date", width: 14 },
+        { header: "Liquidação", key: "liquidacao", type: "date", width: 14 },
+        { header: "Parcela atual", key: "parcAtual", type: "int", width: 12 },
+        { header: "Total parcelas", key: "parcTotal", type: "int", width: 12 },
+      ],
+      rows: contasPagar.map((p) => ({
+        id: p.id, desc: p.descricao, status: p.status, nat: p.natureza,
+        forn: p.fornecedor ?? "", ben: p.beneficiario ?? "",
+        cat: catName(p.categoriaId), cc: ccName(p.centroCustoId),
+        conta: acctName(p.contaId), forma: p.forma ?? "",
+        valor: p.valor ?? 0, vPago: p.valorPago ?? 0,
+        saldo: (p.valor ?? 0) - (p.valorPago ?? 0),
+        emissao: toDate(p.emissao), vencimento: toDate(p.vencimento), liquidacao: toDate(p.liquidacao),
+        parcAtual: p.parcelamento?.parcelaAtual ?? "",
+        parcTotal: p.parcelamento?.totalParcelas ?? "",
+      })),
+    },
+    {
+      name: "Comissões",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Produto", key: "prod", width: 22 },
+        { header: "Banco", key: "banco", width: 22 },
+        { header: "Corretor", key: "corretor", width: 24 },
+        { header: "Cliente", key: "cliente", width: 28 },
+        { header: "Proposta", key: "pid", width: 14 },
+        { header: "Base de cálculo", key: "base", type: "money", width: 18 },
+        { header: "Percentual", key: "pct", type: "percent", width: 12 },
+        { header: "Valor comissão", key: "valor", type: "money", width: 16 },
+        { header: "Data prevista", key: "prev", type: "date", width: 14 },
+        { header: "Data liberação", key: "lib", type: "date", width: 14 },
+        { header: "Data pagamento", key: "pago", type: "date", width: 14 },
+        { header: "Forma", key: "forma", width: 16 },
+        { header: "Bloqueada", key: "bloq", type: "bool", width: 12 },
+        { header: "Motivo bloqueio", key: "motivo", width: 32 },
+      ],
+      rows: comissoes.map((c) => ({
+        id: c.id, status: c.status, prod: c.produto, banco: bName(c.bancoId),
+        corretor: uName(c.corretorId), cliente: cName(c.clienteId), pid: c.propostaId,
+        base: c.baseCalculo ?? 0, pct: (c.percentual ?? 0) / 100, valor: c.valor ?? 0,
+        prev: toDate(c.dataPrevista), lib: toDate(c.dataLiberacao), pago: toDate(c.dataPagamento),
+        forma: c.forma ?? "", bloq: !!c.bloqueada, motivo: c.motivoBloqueio ?? "",
+      })),
+    },
+    {
+      name: "Recorrências",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Descrição", key: "desc", width: 36 },
+        { header: "Tipo", key: "tipo", width: 12 },
+        { header: "Status", key: "status", width: 14 },
+        { header: "Frequência", key: "freq", width: 16 },
+        { header: "Dia vencimento", key: "dia", type: "int", width: 14 },
+        { header: "Data inicial", key: "ini", type: "date", width: 14 },
+        { header: "Indefinido", key: "indef", type: "bool", width: 12 },
+        { header: "Valor", key: "valor", type: "money", width: 16 },
+        { header: "Valor variável", key: "vvar", type: "bool", width: 14 },
+        { header: "Conta financeira", key: "conta", width: 22 },
+        { header: "Categoria", key: "cat", width: 22 },
+        { header: "Próxima geração", key: "prox", type: "date", width: 16 },
+        { header: "Última geração", key: "ult", type: "date", width: 16 },
+      ],
+      rows: recorrencias.map((r) => ({
+        id: r.id, desc: r.descricao, tipo: r.tipo === "pagar" ? "Pagar" : "Receber",
+        status: r.status, freq: r.frequencia, dia: r.diaVencimento,
+        ini: toDate(r.dataInicial), indef: !!r.indefinido,
+        valor: r.valor ?? 0, vvar: !!r.valorVariavel,
+        conta: acctName(r.contaId), cat: catName(r.categoriaId),
+        prox: toDate(r.proximaGeracao), ult: toDate(r.ultimaGeracao),
+      })),
+    },
+    {
+      name: "Conciliação bancária",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Data", key: "data", type: "date", width: 14 },
+        { header: "Conta", key: "conta", width: 22 },
+        { header: "Descrição", key: "desc", width: 36 },
+        { header: "Categoria", key: "cat", width: 22 },
+        { header: "Valor", key: "valor", type: "money", width: 16 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "Origem", key: "origem", width: 16 },
+      ],
+      rows: itensConciliacao.map((i) => ({
+        id: i.id, data: toDate(i.data), conta: acctName(i.contaId),
+        desc: i.descricao, cat: catName(i.categoriaId),
+        valor: i.valor ?? 0, status: i.status, origem: i.origem,
+      })),
+    },
+    {
+      name: "Contas financeiras",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Nome", key: "nome", width: 28 },
+        { header: "Banco", key: "banco", width: 22 },
+        { header: "Agência", key: "agencia", width: 12 },
+        { header: "Conta", key: "conta", width: 16 },
+        { header: "Saldo atual", key: "saldo", type: "money", width: 18 },
+      ],
+      rows: contas.map((c) => ({
+        id: c.id, nome: c.nome, banco: c.banco, agencia: c.agencia ?? "",
+        conta: c.conta ?? "", saldo: c.saldoAtual ?? 0,
+      })),
+    },
+    {
+      name: "Usuários - Equipe",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Nome", key: "nome", width: 28 },
+        { header: "E-mail", key: "email", width: 32 },
+        { header: "Papel", key: "papel", width: 22 },
+      ],
+      rows: usuarios.map((u) => ({
+        id: u.id, nome: u.nome, email: u.email, papel: u.papel,
+      })),
+    },
+    {
+      name: "Bancos parceiros",
+      cols: [
+        { header: "ID", key: "id", width: 14 },
+        { header: "Nome", key: "nome", width: 28 },
+        { header: "Sigla", key: "sigla", width: 10 },
+      ],
+      rows: bancos.map((b) => ({ id: b.id, nome: b.nome, sigla: b.sigla })),
+    },
+    {
+      name: "Categorias financeiras",
+      cols: [
+        { header: "ID", key: "id", width: 18 },
+        { header: "Nome", key: "nome", width: 28 },
+        { header: "Tipo", key: "tipo", width: 18 },
+        { header: "Centro de custo", key: "cc", width: 22 },
+        { header: "Ativa", key: "ativa", type: "bool", width: 10 },
+        { header: "Cor", key: "cor", width: 12 },
+      ],
+      rows: categorias.map((c) => ({
+        id: c.id, nome: c.nome, tipo: c.tipo, cc: ccName(c.centroCustoId),
+        ativa: !!c.ativa, cor: c.cor,
+      })),
+    },
   ];
-  const rows = simulacoes.map((s) => [
-    s.id,
-    s.status,
-    s.produto,
-    clienteNome(s.clienteId),
-    usuarioNome(s.corretorId),
-    fmt(s.criadaEm),
-    fmt(s.atualizadaEm),
-    brl(s.valorImovel),
-    brl(s.valorEntrada),
-    brl(s.valorFinanciado),
-    brl(s.valorSolicitado),
-    pct(s.ltvPercent),
-    s.prazoMesesBase,
-    brl(s.rendaBruta),
-    s.observacoes ?? "",
-  ]);
-  return [header, ...rows];
 }
 
 // ---------------------------------------------------------------------------
-// 3 — PROPOSTAS (Kanban)
+// Aba RESUMO (visão consolidada)
 // ---------------------------------------------------------------------------
-function abaPropostas(): (string | number)[][] {
-  const header = [
-    "ID", "Número", "Status", "Etapa (Kanban)", "Produto", "Banco",
-    "Cliente", "Corretor", "Responsável", "Valor", "Prioridade",
-    "SLA prazo", "Pendências", "Documentos", "Transferida",
-    "Criada em", "Atualizada em",
+function addResumoSheet(wb: ExcelJS.Workbook, geradoEm: Date) {
+  const ws = wb.addWorksheet("Resumo", { views: [{ state: "frozen", ySplit: 1 }] });
+  ws.columns = [
+    { key: "a", width: 36 },
+    { key: "b", width: 24 },
+    { key: "c", width: 40 },
   ];
-  const rows = propostas.map((p) => [
-    p.id,
-    p.numero,
-    p.status,
-    p.etapa,
-    p.produto,
-    bancoNome(p.bancoId),
-    clienteNome(p.clienteId),
-    usuarioNome(p.corretorId),
-    usuarioNome(p.responsavelId),
-    brl(p.valor),
-    p.prioridade,
-    fmt(p.slaPrazo),
-    p.pendencias,
-    p.documentos,
-    p.transferida ? "Sim" : "Não",
-    fmt(p.criadaEm),
-    fmt(p.atualizadaEm),
-  ]);
-  return [header, ...rows];
-}
 
-// ---------------------------------------------------------------------------
-// 4 — HISTÓRICO DAS PROPOSTAS
-// ---------------------------------------------------------------------------
-function abaHistoricoPropostas(): (string | number)[][] {
-  const header = ["Proposta ID", "Número", "Data", "Usuário", "Ação"];
-  const rows: (string | number)[][] = [];
-  for (const p of propostas) {
-    for (const h of p.historico ?? []) {
-      rows.push([p.id, p.numero, fmt(h.data), usuarioNome(h.usuarioId), h.acao]);
-    }
-  }
-  return [header, ...rows];
-}
+  const titleRow = ws.addRow(["AGILLIZA — BACKUP COMPLETO DO SISTEMA"]);
+  ws.mergeCells(titleRow.number, 1, titleRow.number, 3);
+  titleRow.font = { bold: true, color: { argb: BRAND_FG }, size: 14 };
+  titleRow.alignment = { vertical: "middle", horizontal: "center" };
+  titleRow.height = 26;
+  titleRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND } };
 
-// ---------------------------------------------------------------------------
-// 5 — DEMANDAS / SLA
-// ---------------------------------------------------------------------------
-function abaDemandas(): (string | number)[][] {
-  const header = [
-    "ID", "Título", "Tipo", "Status", "Prioridade",
-    "Cliente", "Proposta vinculada", "Responsável", "Criado por",
-    "SLA prazo", "Transferida", "Criada em",
+  const meta = ws.addRow(["Gerado em:", geradoEm, ""]);
+  meta.getCell(2).numFmt = NUMFMT.datetime;
+  meta.font = { italic: true, color: { argb: "FF374151" } };
+  ws.addRow([]);
+
+  const h1 = ws.addRow(["Módulo", "Registros", "Observação"]);
+  styleHeader(h1);
+  const modCount: Array<[string, number, string]> = [
+    ["Clientes", clientes.length, ""],
+    ["Simulações", simulacoes.length, "Inclui arquivadas"],
+    ["Propostas (Kanban)", propostas.length, "Inclui finalizadas, canceladas e arquivadas"],
+    ["Histórico de propostas", propostas.reduce((s, p) => s + (p.historico?.length ?? 0), 0), "Log completo de transições"],
+    ["Demandas - SLA", demandas.length, "Inclui concluídas e vencidas"],
+    ["Tarefas", tarefas.length, "Inclui concluídas"],
+    ["Contas a receber", contasReceber.length, ""],
+    ["Contas a pagar", contasPagar.length, ""],
+    ["Comissões", comissoes.length, ""],
+    ["Recorrências", recorrencias.length, ""],
+    ["Conciliação bancária", itensConciliacao.length, ""],
+    ["Contas financeiras", contas.length, ""],
+    ["Usuários - Equipe", usuarios.length, "Sem senhas/tokens"],
+    ["Bancos parceiros", bancos.length, ""],
+    ["Categorias financeiras", categorias.length, ""],
   ];
-  const rows = demandas.map((d) => [
-    d.id,
-    d.titulo,
-    d.tipo,
-    d.status,
-    d.prioridade,
-    clienteNome(d.clienteId),
-    d.propostaId ?? "",
-    usuarioNome(d.responsavelId),
-    usuarioNome(d.criadoPorId),
-    fmt(d.slaPrazo),
-    d.transferida ? "Sim" : "Não",
-    fmt(d.criadaEm),
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 6 — TAREFAS
-// ---------------------------------------------------------------------------
-function abaTarefas(): (string | number)[][] {
-  const header = [
-    "ID", "Título", "Status", "Prioridade",
-    "Usuário", "Cliente", "Proposta vinculada", "Prazo",
-  ];
-  const rows = tarefas.map((t) => [
-    t.id,
-    t.titulo,
-    t.status,
-    t.prioridade,
-    usuarioNome(t.usuarioId),
-    clienteNome(t.clienteId),
-    t.propostaId ?? "",
-    fmt(t.prazo),
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 7 — CONTAS A RECEBER
-// ---------------------------------------------------------------------------
-function abaContasReceber(): (string | number)[][] {
-  const header = [
-    "ID", "Descrição", "Status", "Natureza", "Produto",
-    "Cliente", "Corretor", "Proposta", "Categoria", "Centro de custo",
-    "Conta financeira", "Forma de pagamento",
-    "Valor", "Valor pago", "Saldo",
-    "Emissão", "Vencimento", "Liquidação",
-    "Parcela atual", "Total parcelas",
-  ];
-  const rows = contasReceber.map((r) => {
-    const saldo = r.valor - (r.valorPago ?? 0);
-    return [
-      r.id,
-      r.descricao,
-      r.status,
-      r.natureza,
-      r.produto ?? "",
-      clienteNome(r.clienteId),
-      usuarioNome(r.corretorId),
-      r.propostaId ?? "",
-      categoriaNome(r.categoriaId),
-      centroCustoNome(r.centroCustoId),
-      contaNome(r.contaId),
-      r.forma ?? "",
-      brl(r.valor),
-      brl(r.valorPago),
-      brl(saldo),
-      fmt(r.emissao),
-      fmt(r.vencimento),
-      fmt(r.liquidacao),
-      r.parcelamento?.parcelaAtual ?? "",
-      r.parcelamento?.totalParcelas ?? "",
-    ];
+  modCount.forEach((r, i) => {
+    const row = ws.addRow(r);
+    row.getCell(2).numFmt = NUMFMT.int;
+    if (i % 2 === 1) zebra(row, 3);
   });
-  return [header, ...rows];
-}
 
-// ---------------------------------------------------------------------------
-// 8 — CONTAS A PAGAR
-// ---------------------------------------------------------------------------
-function abaContasPagar(): (string | number)[][] {
-  const header = [
-    "ID", "Descrição", "Status", "Natureza",
-    "Fornecedor", "Beneficiário", "Categoria", "Centro de custo",
-    "Conta financeira", "Forma de pagamento",
-    "Valor", "Valor pago", "Saldo",
-    "Emissão", "Vencimento", "Liquidação",
-    "Parcela atual", "Total parcelas",
-  ];
-  const rows = contasPagar.map((p) => {
-    const saldo = p.valor - (p.valorPago ?? 0);
-    return [
-      p.id,
-      p.descricao,
-      p.status,
-      p.natureza,
-      p.fornecedor ?? "",
-      p.beneficiario ?? "",
-      categoriaNome(p.categoriaId),
-      centroCustoNome(p.centroCustoId),
-      contaNome(p.contaId),
-      p.forma ?? "",
-      brl(p.valor),
-      brl(p.valorPago),
-      brl(saldo),
-      fmt(p.emissao),
-      fmt(p.vencimento),
-      fmt(p.liquidacao),
-      p.parcelamento?.parcelaAtual ?? "",
-      p.parcelamento?.totalParcelas ?? "",
-    ];
-  });
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 9 — COMISSÕES
-// ---------------------------------------------------------------------------
-function abaComissoes(): (string | number)[][] {
-  const header = [
-    "ID", "Status", "Produto", "Banco",
-    "Corretor", "Cliente", "Proposta",
-    "Base de cálculo", "Percentual (%)", "Valor comissão",
-    "Data prevista", "Data liberação", "Data pagamento",
-    "Forma", "Bloqueada", "Motivo bloqueio",
-  ];
-  const rows = comissoes.map((c) => [
-    c.id,
-    c.status,
-    c.produto,
-    bancoNome(c.bancoId),
-    usuarioNome(c.corretorId),
-    clienteNome(c.clienteId),
-    c.propostaId,
-    brl(c.baseCalculo),
-    pct(c.percentual),
-    brl(c.valor),
-    fmt(c.dataPrevista),
-    fmt(c.dataLiberacao),
-    fmt(c.dataPagamento),
-    c.forma ?? "",
-    c.bloqueada ? "Sim" : "Não",
-    c.motivoBloqueio ?? "",
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 10 — RECORRÊNCIAS
-// ---------------------------------------------------------------------------
-function abaRecorrencias(): (string | number)[][] {
-  const header = [
-    "ID", "Descrição", "Tipo", "Status", "Frequência",
-    "Dia vencimento", "Data inicial", "Indefinido",
-    "Valor", "Valor variável",
-    "Conta financeira", "Categoria",
-    "Próxima geração", "Última geração",
-  ];
-  const rows = recorrencias.map((r) => [
-    r.id,
-    r.descricao,
-    r.tipo === "pagar" ? "Pagar" : "Receber",
-    r.status,
-    r.frequencia,
-    r.diaVencimento,
-    fmt(r.dataInicial),
-    r.indefinido ? "Sim" : "Não",
-    brl(r.valor),
-    r.valorVariavel ? "Sim" : "Não",
-    contaNome(r.contaId),
-    categoriaNome(r.categoriaId),
-    fmt(r.proximaGeracao),
-    fmt(r.ultimaGeracao),
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 11 — CONCILIAÇÃO BANCÁRIA
-// ---------------------------------------------------------------------------
-function abaConciliacao(): (string | number)[][] {
-  const header = [
-    "ID", "Data", "Conta", "Descrição", "Categoria",
-    "Valor", "Status", "Origem",
-  ];
-  const rows = itensConciliacao.map((i) => [
-    i.id,
-    fmt(i.data),
-    contaNome(i.contaId),
-    i.descricao,
-    categoriaNome(i.categoriaId),
-    brl(i.valor),
-    i.status,
-    i.origem,
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 12 — CONTAS FINANCEIRAS
-// ---------------------------------------------------------------------------
-function abaContasFinanceiras(): (string | number)[][] {
-  const header = ["ID", "Nome", "Banco", "Agência", "Conta", "Saldo atual"];
-  const rows = contas.map((c) => [
-    c.id,
-    c.nome,
-    c.banco,
-    c.agencia ?? "",
-    c.conta ?? "",
-    brl(c.saldoAtual),
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 13 — USUÁRIOS / EQUIPE
-// ---------------------------------------------------------------------------
-function abaUsuarios(): (string | number)[][] {
-  const header = ["ID", "Nome", "E-mail", "Papel"];
-  const rows = usuarios.map((u) => [u.id, u.nome, u.email, u.papel]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 14 — BANCOS PARCEIROS
-// ---------------------------------------------------------------------------
-function abaBancos(): (string | number)[][] {
-  const header = ["ID", "Nome", "Sigla"];
-  const rows = bancos.map((b) => [b.id, b.nome, b.sigla]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// 15 — CATEGORIAS
-// ---------------------------------------------------------------------------
-function abaCategorias(): (string | number)[][] {
-  const header = ["ID", "Nome", "Tipo", "Centro de custo", "Ativa", "Cor"];
-  const rows = categorias.map((c) => [
-    c.id, c.nome, c.tipo, centroCustoNome(c.centroCustoId),
-    c.ativa ? "Sim" : "Não", c.cor,
-  ]);
-  return [header, ...rows];
-}
-
-// ---------------------------------------------------------------------------
-// RESUMO EXECUTIVO
-// ---------------------------------------------------------------------------
-function abaResumo(geradoEm: string): (string | number)[][] {
+  ws.addRow([]);
+  const h2 = ws.addRow(["Financeiro", "Valor", ""]);
+  styleHeader(h2);
   const totalReceber = contasReceber.reduce((s, r) => s + r.valor, 0);
   const totalRecebido = contasReceber.filter((r) => r.status === "Recebido").reduce((s, r) => s + r.valor, 0);
   const totalPagar = contasPagar.reduce((s, r) => s + r.valor, 0);
@@ -405,89 +483,153 @@ function abaResumo(geradoEm: string): (string | number)[][] {
   const comissoesPagas = comissoes.filter((c) => c.status === "Paga").reduce((s, c) => s + c.valor, 0);
   const saldoTotal = contas.reduce((s, c) => s + c.saldoAtual, 0);
 
-  return [
-    ["AGILLIZA — BACKUP COMPLETO DO SISTEMA"],
-    ["Gerado em:", geradoEm],
-    [""],
-    ["MÓDULO", "TOTAL DE REGISTROS", "OBSERVAÇÃO"],
-    ["Clientes", clientes.length, ""],
-    ["Simulações", simulacoes.length, "Incluindo arquivadas"],
-    ["Propostas", propostas.length, "Incluindo finalizadas e reprovadas"],
-    ["Demandas / SLA", demandas.length, "Incluindo concluídas"],
-    ["Tarefas", tarefas.length, "Incluindo concluídas"],
-    ["Contas a receber", contasReceber.length, ""],
-    ["Contas a pagar", contasPagar.length, ""],
-    ["Comissões", comissoes.length, ""],
-    ["Recorrências", recorrencias.length, ""],
-    ["Itens conciliação", itensConciliacao.length, ""],
-    ["Contas financeiras", contas.length, ""],
-    ["Usuários / Equipe", usuarios.length, ""],
-    ["Bancos parceiros", bancos.length, ""],
-    [""],
-    ["FINANCEIRO", "VALOR", ""],
-    ["Saldo total contas", brl(saldoTotal), ""],
-    ["Total a receber (em aberto)", brl(totalReceber - totalRecebido), ""],
-    ["Total recebido", brl(totalRecebido), ""],
-    ["Total a pagar (em aberto)", brl(totalPagar - totalPago), ""],
-    ["Total pago", brl(totalPago), ""],
-    ["Total comissões previstas", brl(totalComissoes), ""],
-    ["Total comissões pagas", brl(comissoesPagas), ""],
+  const fin: Array<[string, number, string]> = [
+    ["Saldo total das contas", saldoTotal, ""],
+    ["Total a receber (em aberto)", totalReceber - totalRecebido, ""],
+    ["Total recebido", totalRecebido, ""],
+    ["Total a pagar (em aberto)", totalPagar - totalPago, ""],
+    ["Total pago", totalPago, ""],
+    ["Total comissões previstas", totalComissoes, ""],
+    ["Total comissões pagas", comissoesPagas, ""],
   ];
+  fin.forEach((r, i) => {
+    const row = ws.addRow(r);
+    row.getCell(2).numFmt = NUMFMT.money;
+    if (i % 2 === 1) zebra(row, 3);
+  });
 }
 
 // ---------------------------------------------------------------------------
-// FUNÇÃO PRINCIPAL — gera e baixa o arquivo
+// Estilização compartilhada
 // ---------------------------------------------------------------------------
-export function gerarBackupXLSX(): void {
-  const agora = new Date();
-  const geradoEm = agora.toLocaleString("pt-BR");
-  const dataArquivo = agora.toISOString().slice(0, 10).replace(/-/g, "");
-  const nomeArquivo = `agilliza-backup-${dataArquivo}.xlsx`;
+function styleHeader(row: ExcelJS.Row) {
+  row.height = 22;
+  row.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: BRAND_FG }, size: 11 };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND } };
+    cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+    cell.border = {
+      top: { style: "thin", color: { argb: BORDER } },
+      bottom: { style: "thin", color: { argb: BORDER } },
+      left: { style: "thin", color: { argb: BORDER } },
+      right: { style: "thin", color: { argb: BORDER } },
+    };
+  });
+}
 
-  const wb = XLSX.utils.book_new();
-
-  const abas: { nome: string; dados: (string | number)[][] }[] = [
-    { nome: "📊 Resumo", dados: abaResumo(geradoEm) },
-    { nome: "👥 Clientes", dados: abaClientes() },
-    { nome: "🔢 Simulações", dados: abaSimulacoes() },
-    { nome: "📋 Propostas", dados: abaPropostas() },
-    { nome: "🔄 Hist. Propostas", dados: abaHistoricoPropostas() },
-    { nome: "🎯 Demandas SLA", dados: abaDemandas() },
-    { nome: "✅ Tarefas", dados: abaTarefas() },
-    { nome: "💚 Contas a Receber", dados: abaContasReceber() },
-    { nome: "💸 Contas a Pagar", dados: abaContasPagar() },
-    { nome: "🤝 Comissões", dados: abaComissoes() },
-    { nome: "🔁 Recorrências", dados: abaRecorrencias() },
-    { nome: "🏦 Conciliação", dados: abaConciliacao() },
-    { nome: "🏧 Contas Financeiras", dados: abaContasFinanceiras() },
-    { nome: "👤 Equipe", dados: abaUsuarios() },
-    { nome: "🏛 Bancos Parceiros", dados: abaBancos() },
-    { nome: "🏷 Categorias", dados: abaCategorias() },
-  ];
-
-  for (const { nome, dados } of abas) {
-    const ws = XLSX.utils.aoa_to_sheet(dados);
-
-    // Largura automática das colunas (estimada pelo conteúdo)
-    const colWidths: { wch: number }[] = [];
-    for (const row of dados.slice(0, 3)) {
-      row.forEach((cell, ci) => {
-        const len = String(cell).length + 2;
-        if (!colWidths[ci] || colWidths[ci].wch < len) {
-          colWidths[ci] = { wch: Math.min(len, 50) };
-        }
-      });
-    }
-    ws["!cols"] = colWidths;
-
-    XLSX.utils.book_append_sheet(wb, ws, nome);
+function zebra(row: ExcelJS.Row, lastCol: number, color = ZEBRA) {
+  for (let i = 1; i <= lastCol; i++) {
+    row.getCell(i).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
   }
+}
 
-  XLSX.writeFile(wb, nomeArquivo);
+function applySheet(wb: ExcelJS.Workbook, spec: SheetSpec) {
+  // Excel sheet name: ≤31 chars; chars proibidos: \ / ? * [ ]
+  const safe = spec.name.replace(/[\\/?*[\]]/g, "-").slice(0, 31);
+  const ws = wb.addWorksheet(safe, {
+    views: [{ state: "frozen", ySplit: 1 }],
+  });
+
+  ws.columns = spec.cols.map((c) => ({ header: c.header, key: c.key, width: c.width ?? 16 }));
+
+  // Cabeçalho
+  styleHeader(ws.getRow(1));
+
+  // Linhas
+  spec.rows.forEach((rowObj, idx) => {
+    const row = ws.addRow(rowObj);
+    spec.cols.forEach((col, ci) => {
+      const cell = row.getCell(ci + 1);
+      switch (col.type) {
+        case "money": cell.numFmt = NUMFMT.money; break;
+        case "percent": cell.numFmt = NUMFMT.percent; break;
+        case "date": cell.numFmt = NUMFMT.date; break;
+        case "datetime": cell.numFmt = NUMFMT.datetime; break;
+        case "int": cell.numFmt = NUMFMT.int; break;
+        case "number": cell.numFmt = NUMFMT.number; break;
+        case "bool":
+          cell.value = rowObj[col.key] ? "Sim" : "Não";
+          cell.alignment = { horizontal: "center" };
+          break;
+        default: break;
+      }
+      cell.border = {
+        top: { style: "hair", color: { argb: BORDER } },
+        bottom: { style: "hair", color: { argb: BORDER } },
+        left: { style: "hair", color: { argb: BORDER } },
+        right: { style: "hair", color: { argb: BORDER } },
+      };
+    });
+    if (idx % 2 === 1) zebra(row, spec.cols.length);
+  });
+
+  // AutoFilter na linha 1, todas as colunas
+  ws.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: spec.cols.length },
+  };
+
+  // Linha de totais para abas com valor monetário
+  const moneyCols = spec.cols
+    .map((c, i) => ({ ...c, idx: i + 1 }))
+    .filter((c) => c.type === "money");
+  if (moneyCols.length > 0 && spec.rows.length > 0) {
+    const totalRow = ws.addRow({});
+    totalRow.getCell(1).value = "TOTAL";
+    totalRow.getCell(1).font = { bold: true };
+    moneyCols.forEach((c) => {
+      const colLetter = ws.getColumn(c.idx).letter;
+      const cell = totalRow.getCell(c.idx);
+      cell.value = { formula: `SUBTOTAL(9,${colLetter}2:${colLetter}${spec.rows.length + 1})` };
+      cell.numFmt = NUMFMT.money;
+      cell.font = { bold: true };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: RESUMO_FILL } };
+    });
+    totalRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: "medium", color: { argb: BRAND } },
+        bottom: { style: "thin", color: { argb: BORDER } },
+        left: { style: "hair", color: { argb: BORDER } },
+        right: { style: "hair", color: { argb: BORDER } },
+      };
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Metadados do backup para exibição na UI
+// Função principal — gera e baixa o arquivo
+// ---------------------------------------------------------------------------
+export async function gerarBackupXLSX(): Promise<void> {
+  const agora = new Date();
+  const stamp =
+    agora.toISOString().slice(0, 10).replace(/-/g, "") +
+    "-" + String(agora.getHours()).padStart(2, "0") + String(agora.getMinutes()).padStart(2, "0");
+  const nomeArquivo = `agilliza-backup-${stamp}.xlsx`;
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Agilliza";
+  wb.created = agora;
+  wb.lastModifiedBy = "Agilliza Backup Engine";
+
+  addResumoSheet(wb, agora);
+  for (const spec of buildSheets()) applySheet(wb, spec);
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------------------------------------------------------------------------
+// Metadados do backup (UI)
 // ---------------------------------------------------------------------------
 export interface BackupMetadata {
   geradoEm: string;
@@ -503,11 +645,13 @@ export interface BackupMetadata {
 
 export function getBackupMetadata(): BackupMetadata {
   const agora = new Date();
-  const dataArquivo = agora.toISOString().slice(0, 10).replace(/-/g, "");
+  const stamp =
+    agora.toISOString().slice(0, 10).replace(/-/g, "") +
+    "-" + String(agora.getHours()).padStart(2, "0") + String(agora.getMinutes()).padStart(2, "0");
 
   return {
     geradoEm: agora.toLocaleString("pt-BR"),
-    nomeArquivo: `agilliza-backup-${dataArquivo}.xlsx`,
+    nomeArquivo: `agilliza-backup-${stamp}.xlsx`,
     modulos: [
       { nome: "Clientes", registros: clientes.length },
       { nome: "Simulações", registros: simulacoes.length },
