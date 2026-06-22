@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
 import { gerarBackupXLSX, getBackupMetadata, type BackupMetadata } from "@/lib/backup-engine";
+import { safeGet, safeGetJSON, safeSet, safeSetJSON } from "@/lib/safe-storage";
+import { handleError } from "@/lib/error-handler";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -67,32 +70,33 @@ export function BackupModule() {
 
   // Carrega histórico e config do localStorage
   useEffect(() => {
-    try {
-      const hist = localStorage.getItem(STORAGE_KEY_HISTORICO);
-      if (hist) {
-        const parsed: BackupEntry[] = JSON.parse(hist);
-        setHistorico(parsed);
-        if (parsed.length > 0) setUltimoBackup(parsed[0]);
-      }
-      const auto = localStorage.getItem(STORAGE_KEY_AUTO);
-      if (auto) setAutoBackup(auto === "true");
-      const horario = localStorage.getItem(STORAGE_KEY_HORARIO);
-      if (horario) setHorarioAuto(horario);
-    } catch {/* */}
+    const parsed = safeGetJSON<BackupEntry[]>(STORAGE_KEY_HISTORICO, []);
+    if (parsed.length > 0) {
+      setHistorico(parsed);
+      setUltimoBackup(parsed[0]);
+    }
+    const auto = safeGet(STORAGE_KEY_AUTO);
+    if (auto) setAutoBackup(auto === "true");
+    const horario = safeGet(STORAGE_KEY_HORARIO);
+    if (typeof horario === "string" && horario) setHorarioAuto(horario);
   }, []);
 
   // Verifica backup automático diário
   useEffect(() => {
     if (!autoBackup) return;
     const checarHorario = () => {
-      const agora = new Date();
-      const horaAtual = `${String(agora.getHours()).padStart(2, "0")}:${String(agora.getMinutes()).padStart(2, "0")}`;
-      const hoje = agora.toDateString();
-      const ultimoAuto = localStorage.getItem("agilliza:backup:ultimoAuto");
+      try {
+        const agora = new Date();
+        const horaAtual = `${String(agora.getHours()).padStart(2, "0")}:${String(agora.getMinutes()).padStart(2, "0")}`;
+        const hoje = agora.toDateString();
+        const ultimoAuto = safeGet("agilliza:backup:ultimoAuto");
 
-      if (horaAtual === horarioAuto && ultimoAuto !== hoje) {
-        localStorage.setItem("agilliza:backup:ultimoAuto", hoje);
-        executarBackup("automatico");
+        if (horaAtual === horarioAuto && ultimoAuto !== hoje) {
+          safeSet("agilliza:backup:ultimoAuto", hoje);
+          executarBackup("automatico");
+        }
+      } catch (err) {
+        handleError(err, { message: "Falha ao verificar o agendamento de backup.", context: "backup-auto", silent: true });
       }
     };
     const interval = setInterval(checarHorario, 60_000); // checa a cada 1 min
@@ -101,13 +105,14 @@ export function BackupModule() {
   }, [autoBackup, horarioAuto]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const executarBackup = useCallback(async (tipo: "manual" | "automatico" = "manual") => {
+    if (gerando) return;
     setGerando(true);
+    const toastId = tipo === "manual" ? toast.loading("Gerando planilha de backup...") : undefined;
     try {
       await Promise.all([
         new Promise((r) => setTimeout(r, 800)), // animação mínima
         gerarBackupXLSX(),
       ]);
-
 
       const totalReg = meta.modulos.reduce((s, m) => s + m.registros, 0);
       const entrada: BackupEntry = {
@@ -120,26 +125,50 @@ export function BackupModule() {
 
       setHistorico((prev) => {
         const novo = [entrada, ...prev].slice(0, 30); // mantém os últimos 30
-        localStorage.setItem(STORAGE_KEY_HISTORICO, JSON.stringify(novo));
+        safeSetJSON(STORAGE_KEY_HISTORICO, novo);
         return novo;
       });
       setUltimoBackup(entrada);
       setSuccessAnim(true);
       setTimeout(() => setSuccessAnim(false), 3000);
+
+      if (toastId !== undefined) {
+        toast.success("Backup gerado com sucesso", {
+          id: toastId,
+          description: `${meta.nomeArquivo} · ${totalReg.toLocaleString("pt-BR")} registros`,
+        });
+      } else if (tipo === "automatico") {
+        toast.success("Backup automático concluído", {
+          description: meta.nomeArquivo,
+        });
+      }
+    } catch (err) {
+      if (toastId !== undefined) {
+        toast.error("Não foi possível gerar o backup", {
+          id: toastId,
+          description: err instanceof Error ? err.message : "Tente novamente em instantes.",
+        });
+      } else {
+        handleError(err, {
+          message: "Backup automático falhou.",
+          context: "backup-engine",
+        });
+      }
     } finally {
       setGerando(false);
     }
-  }, [meta]);
+  }, [meta, gerando]);
 
   function toggleAutoBackup() {
     const novo = !autoBackup;
     setAutoBackup(novo);
-    localStorage.setItem(STORAGE_KEY_AUTO, String(novo));
+    safeSet(STORAGE_KEY_AUTO, String(novo));
+    toast.success(novo ? "Backup automático ativado" : "Backup automático desativado");
   }
 
   function salvarHorario(h: string) {
     setHorarioAuto(h);
-    localStorage.setItem(STORAGE_KEY_HORARIO, h);
+    safeSet(STORAGE_KEY_HORARIO, h);
   }
 
   const totalRegistros = meta.modulos.reduce((s, m) => s + m.registros, 0);
