@@ -1,11 +1,15 @@
 // Minhas Simulações — lista e ações sobre simulações do usuário/escopo.
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ArrowRightLeft, Copy, Download, Eye, History, Pencil, Search, Send, Share2, Star } from "lucide-react";
 import { PanelHeader, FilterBar } from "@/components/dashboards/primitives";
-import { simulacoes, clienteById, usuarioById, bancos, clientes } from "@/lib/operacional/mock-data";
-import { formatBRL, formatDataHora } from "@/lib/operacional/formatters";
+import { simulacoes, clienteById, usuarioById, bancos, clientes, bancoById } from "@/lib/operacional/mock-data";
+import { formatBRL, formatDataHora, formatPercent } from "@/lib/operacional/formatters";
 import { useDashboardFilters, PERIODOS } from "@/hooks/use-dashboard-filters";
+import { BankLogo } from "@/components/operacional/bank-logo";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
+import type { Simulacao } from "@/lib/operacional/types";
 
 export function MinhasSimulacoes({
   escopo, usuarioAtualId = "u-cor-1",
