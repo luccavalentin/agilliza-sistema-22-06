@@ -1,19 +1,20 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, FileSearch } from "lucide-react";
 import { PortalShell, type PortalNavGroup } from "@/components/portal-shell";
 
 const groups: PortalNavGroup[] = [
   {
-    label: "Principal",
+    label: "Visão Geral",
     items: [
-      { label: "Visão Geral", to: "/cliente", icon: LayoutDashboard },
+      { label: "Painel de Monitoramento", to: "/cliente", icon: LayoutDashboard },
+      { label: "Acompanhar Minha Proposta", to: "/cliente/proposta", icon: FileSearch },
     ],
   },
 ];
 
 export const Route = createFileRoute("/cliente")({
   head: () => ({
-    meta: [{ title: "Cliente — Plataforma de Crédito" }],
+    meta: [{ title: "Cliente — Plataforma Agilliza" }],
   }),
   component: () => (
     <PortalShell kind="cliente" groups={groups}>

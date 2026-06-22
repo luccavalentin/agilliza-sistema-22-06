@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Database } from "lucide-react";
 import { SectionPlaceholder } from "@/components/portal/section-placeholder";
 
-export const Route = createFileRoute("/correspondente/gestao")({
+export const Route = createFileRoute("/correspondente/backup")({
   component: () => (
     <SectionPlaceholder
-      eyebrow="Correspondente · Administrativa"
-      title="Cadastros Gerais"
-      description="Cadastros estruturais, corretores, clientes e parâmetros do sistema."
+      eyebrow="Correspondente"
+      title="Backup do Sistema"
+      description="Rotinas de backup e proteção dos dados do ecossistema."
       icon={Database}
     />
   ),

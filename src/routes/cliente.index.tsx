@@ -6,8 +6,8 @@ export const Route = createFileRoute("/cliente/")({
   component: () => (
     <SectionPlaceholder
       eyebrow="Portal do Cliente"
-      title="Visão Geral"
-      description="Acesso simplificado e seguro do cliente ao acompanhamento do seu processo de crédito."
+      title="Painel de Monitoramento"
+      description="Acesso simplificado e seguro para acompanhar o seu processo de crédito."
       icon={LayoutDashboard}
     />
   ),
