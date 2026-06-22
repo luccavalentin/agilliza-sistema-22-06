@@ -1,111 +1,209 @@
-// Simulação multicenário: wizard com modos rápida/vinculada,
-// suporta Financiamento Imobiliário e Home Equity,
-// gera cenários (banco × prazo × tabela), exibe resultados comparativos.
+// Simulação multicenário — Wizard refinado com:
+// - Imobiliária + Corretor responsável
+// - Modo Simulação Genérica (CPF/CNPJ) ou Completa (cliente cadastrado / novo)
+// - Modalidade: Com entrada / Sem entrada / Sem entrada com custas
+// - Cálculo automático de C&V, financiamento, entrada (% editável), renda mín.
+// - Prazo limitado pela idade (regra CEF 80a6m) com diálogo amigável
+// - Sistema de amortização SAC / PRICE / AMBOS (comparativo)
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
-  ArrowLeft, ArrowRight, BarChart3, Building2, Calculator,
-  CheckCircle2, Copy, Download, Home, Loader2, Send, Share2, Sparkles,
-  Star, User, Users, Wallet, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BarChart3, Building2, Calculator,
+  CheckCircle2, Copy, Download, Home, Loader2, Search, Send, Share2, Sparkles,
+  Star, User, UserPlus, Users, Wallet, X,
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
-import { bancos, clientes } from "@/lib/operacional/mock-data";
-import type { Cenario, Produto, Tabela } from "@/lib/operacional/types";
+import { bancos, clientes as clientesMock, imobiliarias, usuarios } from "@/lib/operacional/mock-data";
+import type { Cenario, Cliente, Tabela } from "@/lib/operacional/types";
 import { gerarCenarios } from "@/lib/operacional/simulador";
 import {
-  formatBRL, formatPercent, formatPrazoMeses, formatCpf,
+  formatBRL, formatPercent, formatCpf, formatCnpj, onlyDigits,
 } from "@/lib/operacional/formatters";
 import {
-  TIPOS_IMOVEL_OPTIONS, USOS_IMOVEL_OPTIONS, SITUACOES_IMOVEL_OPTIONS,
-  ESTADOS_CIVIS_OPTIONS, REGIMES_CASAMENTO_OPTIONS, TIPOS_RENDA_OPTIONS,
-  type TipoImovelHomeFin, type UsoImovelHomeFin, type SituacaoImovelHomeFin,
-  type EstadoCivilHomeFin, type RegimeCasamentoHomeFin, type TipoRendaHomeFin,
-} from "@/lib/operacional/homefin-mappers";
+  prazoMaxPorIdade, formatIdadeAnos, PRAZO_MAX_ABSOLUTO,
+} from "@/lib/operacional/prazo-idade";
 
-type Modo = "rapida" | "vinculada";
-type Step = "modo" | "dados" | "cenarios" | "resumo" | "processando" | "resultados";
+type TipoSimulacao = "generica" | "completa";
+type Modalidade = "com_entrada" | "sem_entrada" | "sem_entrada_custas";
+type SistemaAmort = "SAC" | "PRICE" | "AMBOS";
+type IdentTipo = "cpf" | "cnpj";
+type Step = "inicio" | "dados" | "cenarios" | "resumo" | "processando" | "resultados";
 
-// Taxas padrão estimadas por banco (mock — futura integração trará taxas reais)
 const taxaPadraoPorBanco: Record<string, number> = {
-  "b-itau": 10.5,
-  "b-bb": 10.2,
-  "b-cef": 9.8,
-  "b-santander": 10.7,
-  "b-bradesco": 10.6,
-  "b-inter": 11.0,
+  "b-itau": 10.5, "b-bb": 10.2, "b-cef": 9.8,
+  "b-santander": 10.7, "b-bradesco": 10.6, "b-inter": 11.0,
 };
 
 const PRAZOS_SUGERIDOS = [120, 180, 240, 300, 360, 420];
 
 export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" | "corretor" }) {
-  const [step, setStep] = useState<Step>("modo");
-  const [modo, setModo] = useState<Modo>("rapida");
-  const [produto, setProduto] = useState<Produto>("Financiamento Imobiliário");
+  const [step, setStep] = useState<Step>("inicio");
 
-  // dados financeiros
-  const [clienteId, setClienteId] = useState<string>("");
-  const [valorImovel, setValorImovel] = useState(500_000);
-  const [valorEntrada, setValorEntrada] = useState(150_000);
-  const [valorSolicitado, setValorSolicitado] = useState(250_000);
+  // ── Início: imobiliária / corretor / tipo de simulação / cliente ──
+  const [imobiliariaId, setImobiliariaId] = useState("");
+  const [corretorRespId, setCorretorRespId] = useState("");
+  const [tipoSimulacao, setTipoSimulacao] = useState<TipoSimulacao>("generica");
+
+  // simulação completa - cliente
+  const [clienteId, setClienteId] = useState("");
+  const [novoClienteAberto, setNovoClienteAberto] = useState(false);
+  const [novoCliente, setNovoCliente] = useState<{ nome: string; cpfCnpj: string; tipo: IdentTipo; email: string; telefone: string; dataNasc: string }>({
+    nome: "", cpfCnpj: "", tipo: "cpf", email: "", telefone: "", dataNasc: "",
+  });
+  const [clientesLocais, setClientesLocais] = useState<Cliente[]>(clientesMock);
+  const [buscaCliente, setBuscaCliente] = useState("");
+
+  // simulação genérica - identificador rápido
+  const [identTipo, setIdentTipo] = useState<IdentTipo>("cpf");
+  const [identNumero, setIdentNumero] = useState("");
+  const [dataNascGenerica, setDataNascGenerica] = useState("");
+
+  // ── Imóvel & Financiamento ──
+  const [modalidade, setModalidade] = useState<Modalidade>("com_entrada");
+  const [valorImovel, setValorImovel] = useState(300_000);
+  const [entradaPercent, setEntradaPercent] = useState(20);
+  const [entradaManual, setEntradaManual] = useState(false);
+  const [valorEntrada, setValorEntrada] = useState(60_000);
+  const [custasPercent, setCustasPercent] = useState(5);
+  const [prazoMeses, setPrazoMeses] = useState(360);
   const [rendaBruta, setRendaBruta] = useState(15_000);
   const [comprometimento, setComprometimento] = useState(30);
+  const [sistema, setSistema] = useState<SistemaAmort>("AMBOS");
 
-  // dados do proponente — campos obrigatórios API HomeFin
-  // TODO: integrar com dados do cliente selecionado quando vier do Supabase
-  const [tipoEstadoCivil, setTipoEstadoCivil] = useState<EstadoCivilHomeFin>("S");
-  const [regimeCasamento, setRegimeCasamento] = useState<RegimeCasamentoHomeFin>("CP");
-  const [tipoRenda, setTipoRenda] = useState<TipoRendaHomeFin>("F");
-  const [usarFGTS, setUsarFGTS] = useState(false);
-  const [saldoFGTS, setSaldoFGTS] = useState(0);
-  const [possuiCompositor, setPossuiCompositor] = useState(false);
-
-  // dados do imóvel — campos obrigatórios API HomeFin
-  const [tipoImovel, setTipoImovel] = useState<TipoImovelHomeFin>("AP");
-  const [usoImovel, setUsoImovel] = useState<UsoImovelHomeFin>("R");
-  const [situacaoImovel, setSituacaoImovel] = useState<SituacaoImovelHomeFin>("N");
-
-  // cenários
+  // ── Cenários ──
   const [bancosSelecionados, setBancosSelecionados] = useState<string[]>(["b-itau", "b-cef", "b-santander"]);
   const [prazosSelecionados, setPrazosSelecionados] = useState<number[]>([240, 360]);
   const [prazoCustom, setPrazoCustom] = useState("");
-  const [tabelasSelecionadas, setTabelasSelecionadas] = useState<Tabela[]>(["SAC", "PRICE"]);
 
-  // resultados
+  // ── Resultados ──
   const [cenarios, setCenarios] = useState<Cenario[]>([]);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [cenSelecionados, setCenSelecionados] = useState<Set<string>>(new Set());
 
-  const principal = produto === "Financiamento Imobiliário"
-    ? Math.max(0, valorImovel - valorEntrada)
-    : valorSolicitado;
+  // ── Dialog prazo excedido ──
+  const [prazoDialog, setPrazoDialog] = useState<{ tentado: number; permitido: number } | null>(null);
 
-  const totalCenarios = bancosSelecionados.length * prazosSelecionados.length * tabelasSelecionadas.length;
+  // Cliente atualmente selecionado
+  const clienteSelecionado = useMemo(
+    () => clientesLocais.find((c) => c.id === clienteId),
+    [clientesLocais, clienteId],
+  );
 
-  const podeAvancarDados = produto === "Financiamento Imobiliário"
-    ? valorImovel > 0 && valorEntrada >= 0 && valorEntrada < valorImovel
-    : valorSolicitado > 0;
+  // Data de nascimento efetiva (cliente completo > genérica)
+  const dataNascimentoEfetiva = useMemo(() => {
+    if (tipoSimulacao === "completa") {
+      // clientes mock não têm dataNasc, mas novos clientes têm
+      const novo = clientesLocais.find((c) => c.id === clienteId) as (Cliente & { dataNasc?: string }) | undefined;
+      return novo?.dataNasc ?? "";
+    }
+    return dataNascGenerica;
+  }, [tipoSimulacao, clienteId, clientesLocais, dataNascGenerica]);
 
-  const podeProcessar = totalCenarios > 0;
+  const prazoMaximoIdade = useMemo(
+    () => prazoMaxPorIdade(dataNascimentoEfetiva) ?? PRAZO_MAX_ABSOLUTO,
+    [dataNascimentoEfetiva],
+  );
+
+  // Cálculos derivados de modalidade
+  const calc = useMemo(() => {
+    let compraVenda = valorImovel;
+    let entrada = 0;
+    let financiado = 0;
+    if (modalidade === "com_entrada") {
+      compraVenda = valorImovel;
+      entrada = entradaManual ? valorEntrada : Math.round((entradaPercent / 100) * valorImovel);
+      financiado = Math.max(0, valorImovel - entrada);
+    } else if (modalidade === "sem_entrada") {
+      // C&V inflado para liberar 100% do imóvel desejado: imóvel ÷ 0,8
+      compraVenda = Math.round(valorImovel / 0.8);
+      entrada = 0;
+      financiado = valorImovel; // libera exatamente o valor desejado
+    } else {
+      // sem_entrada_custas: imóvel ÷ 0,75 (libera imóvel + custas embutidas)
+      compraVenda = Math.round(valorImovel / 0.75);
+      entrada = 0;
+      financiado = valorImovel;
+    }
+    const custas = Math.round((custasPercent / 100) * valorImovel);
+    return { compraVenda, entrada, financiado, custas };
+  }, [modalidade, valorImovel, entradaPercent, entradaManual, valorEntrada, custasPercent]);
+
+  // Sincroniza entrada absoluta quando percent muda
+  useEffect(() => {
+    if (!entradaManual && modalidade === "com_entrada") {
+      setValorEntrada(Math.round((entradaPercent / 100) * valorImovel));
+    }
+  }, [entradaPercent, valorImovel, entradaManual, modalidade]);
+
+  // Tabelas selecionadas derivadas do sistema
+  const tabelasFromSistema: Tabela[] = sistema === "AMBOS" ? ["SAC", "PRICE"] : [sistema];
+
+  const totalCenarios = bancosSelecionados.length * prazosSelecionados.length * tabelasFromSistema.length;
+  const podeProcessar = totalCenarios > 0 && calc.financiado > 0;
+
+  // Validações
+  const podeAvancarInicio = !!corretorRespId && (
+    tipoSimulacao === "completa"
+      ? !!clienteId
+      : (identNumero.length >= (identTipo === "cpf" ? 11 : 14))
+  );
+
+  const podeAvancarDados = valorImovel > 0 && calc.financiado > 0 && prazoMeses > 0;
+
+  function tentarSetPrazo(n: number) {
+    if (n > prazoMaximoIdade) {
+      setPrazoDialog({ tentado: n, permitido: prazoMaximoIdade });
+      setPrazoMeses(prazoMaximoIdade);
+      return;
+    }
+    setPrazoMeses(n);
+  }
+
+  function corretoresDaImobiliaria() {
+    const imob = imobiliarias.find((i) => i.id === imobiliariaId);
+    const ids = imob?.corretoresIds ?? usuarios.filter((u) => u.papel === "corretor").map((u) => u.id);
+    return usuarios.filter((u) => ids.includes(u.id));
+  }
+
+  function adicionarNovoCliente() {
+    if (!novoCliente.nome.trim() || !novoCliente.cpfCnpj) {
+      toast.error("Preencha nome e CPF/CNPJ do novo cliente.");
+      return;
+    }
+    const id = `c-novo-${Date.now()}`;
+    const cliente: Cliente & { dataNasc?: string } = {
+      id, nome: novoCliente.nome.trim(),
+      cpf: novoCliente.tipo === "cpf" ? onlyDigits(novoCliente.cpfCnpj) : undefined,
+      cnpj: novoCliente.tipo === "cnpj" ? onlyDigits(novoCliente.cpfCnpj) : undefined,
+      email: novoCliente.email || undefined,
+      telefone: novoCliente.telefone ? onlyDigits(novoCliente.telefone) : undefined,
+      corretorId: corretorRespId || undefined,
+      dataNasc: novoCliente.dataNasc || undefined,
+    };
+    setClientesLocais((prev) => [cliente, ...prev]);
+    setClienteId(id);
+    setNovoClienteAberto(false);
+    toast.success(`${cliente.nome} adicionado.`);
+  }
 
   function processar() {
     setStep("processando");
     setTimeout(() => {
       const gerados = gerarCenarios({
-        principal,
-        bancos: bancosSelecionados.map((id) => ({
-          id, taxaAaPercent: taxaPadraoPorBanco[id] ?? 10.5,
-        })),
+        principal: calc.financiado,
+        bancos: bancosSelecionados.map((id) => ({ id, taxaAaPercent: taxaPadraoPorBanco[id] ?? 10.5 })),
         prazos: prazosSelecionados,
-        tabelas: tabelasSelecionadas,
+        tabelas: tabelasFromSistema,
         comprometimentoRendaMaxPercent: comprometimento,
       });
       setCenarios(gerados);
       setStep("resultados");
-    }, 1800);
+    }, 1500);
   }
 
   function reiniciar() {
-    setStep("modo");
+    setStep("inicio");
     setCenarios([]);
     setFavoritos(new Set());
     setCenSelecionados(new Set());
@@ -116,9 +214,9 @@ export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" 
       <PanelHeader
         eyebrow="OPERACIONAL"
         title="Nova Simulação"
-        subtitle="Crie cenários multicenário combinando bancos, prazos e tabelas de amortização."
+        subtitle="Cenários multicenário (banco × prazo × tabela) com regras brasileiras de financiamento habitacional."
         right={
-          step !== "modo" && step !== "processando" && (
+          step !== "inicio" && step !== "processando" && (
             <button
               onClick={reiniciar}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-semibold text-graphite hover:border-brand/40 hover:text-brand"
@@ -129,36 +227,44 @@ export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" 
         }
       />
 
-      {/* Stepper */}
       <Stepper step={step} />
 
-      {step === "modo" && (
-        <ModoStep
-          modo={modo} setModo={setModo}
-          produto={produto} setProduto={setProduto}
+      {step === "inicio" && (
+        <InicioStep
+          imobiliariaId={imobiliariaId} setImobiliariaId={(v) => { setImobiliariaId(v); setCorretorRespId(""); }}
+          corretorRespId={corretorRespId} setCorretorRespId={setCorretorRespId}
+          corretores={corretoresDaImobiliaria()}
+          tipoSimulacao={tipoSimulacao} setTipoSimulacao={setTipoSimulacao}
           clienteId={clienteId} setClienteId={setClienteId}
+          clientes={clientesLocais}
+          buscaCliente={buscaCliente} setBuscaCliente={setBuscaCliente}
+          novoClienteAberto={novoClienteAberto} setNovoClienteAberto={setNovoClienteAberto}
+          novoCliente={novoCliente} setNovoCliente={setNovoCliente}
+          adicionarNovoCliente={adicionarNovoCliente}
+          identTipo={identTipo} setIdentTipo={setIdentTipo}
+          identNumero={identNumero} setIdentNumero={setIdentNumero}
+          dataNascGenerica={dataNascGenerica} setDataNascGenerica={setDataNascGenerica}
           onNext={() => setStep("dados")}
+          podeAvancar={podeAvancarInicio}
         />
       )}
 
       {step === "dados" && (
         <DadosStep
-          produto={produto}
+          modalidade={modalidade} setModalidade={setModalidade}
           valorImovel={valorImovel} setValorImovel={setValorImovel}
-          valorEntrada={valorEntrada} setValorEntrada={setValorEntrada}
-          valorSolicitado={valorSolicitado} setValorSolicitado={setValorSolicitado}
+          entradaPercent={entradaPercent} setEntradaPercent={(n) => { setEntradaPercent(n); setEntradaManual(false); }}
+          entradaManual={entradaManual} setEntradaManual={setEntradaManual}
+          valorEntrada={valorEntrada} setValorEntrada={(n) => { setValorEntrada(n); setEntradaManual(true); }}
+          custasPercent={custasPercent} setCustasPercent={setCustasPercent}
+          prazoMeses={prazoMeses} tentarSetPrazo={tentarSetPrazo}
+          prazoMaximoIdade={prazoMaximoIdade}
+          dataNascimentoEfetiva={dataNascimentoEfetiva}
           rendaBruta={rendaBruta} setRendaBruta={setRendaBruta}
           comprometimento={comprometimento} setComprometimento={setComprometimento}
-          tipoEstadoCivil={tipoEstadoCivil} setTipoEstadoCivil={setTipoEstadoCivil}
-          regimeCasamento={regimeCasamento} setRegimeCasamento={setRegimeCasamento}
-          tipoRenda={tipoRenda} setTipoRenda={setTipoRenda}
-          usarFGTS={usarFGTS} setUsarFGTS={setUsarFGTS}
-          saldoFGTS={saldoFGTS} setSaldoFGTS={setSaldoFGTS}
-          possuiCompositor={possuiCompositor} setPossuiCompositor={setPossuiCompositor}
-          tipoImovel={tipoImovel} setTipoImovel={setTipoImovel}
-          usoImovel={usoImovel} setUsoImovel={setUsoImovel}
-          situacaoImovel={situacaoImovel} setSituacaoImovel={setSituacaoImovel}
-          onBack={() => setStep("modo")}
+          sistema={sistema} setSistema={setSistema}
+          calc={calc}
+          onBack={() => setStep("inicio")}
           onNext={() => setStep("cenarios")}
           podeAvancar={podeAvancarDados}
         />
@@ -169,7 +275,9 @@ export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" 
           bancosSel={bancosSelecionados} setBancosSel={setBancosSelecionados}
           prazosSel={prazosSelecionados} setPrazosSel={setPrazosSelecionados}
           prazoCustom={prazoCustom} setPrazoCustom={setPrazoCustom}
-          tabelasSel={tabelasSelecionadas} setTabelasSel={setTabelasSelecionadas}
+          sistema={sistema}
+          prazoMaximoIdade={prazoMaximoIdade}
+          onPrazoExcedido={(n) => setPrazoDialog({ tentado: n, permitido: prazoMaximoIdade })}
           onBack={() => setStep("dados")}
           onNext={() => setStep("resumo")}
         />
@@ -177,12 +285,14 @@ export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" 
 
       {step === "resumo" && (
         <ResumoStep
-          produto={produto}
-          clienteId={clienteId}
+          clienteNome={clienteSelecionado?.nome ?? (tipoSimulacao === "generica" ? `${identTipo.toUpperCase()} ${identTipo === "cpf" ? formatCpf(identNumero) : formatCnpj(identNumero)}` : "—")}
+          corretorNome={usuarios.find((u) => u.id === corretorRespId)?.nome ?? "—"}
+          imobiliariaNome={imobiliarias.find((i) => i.id === imobiliariaId)?.nome}
+          calc={calc}
+          prazoMeses={prazoMeses}
+          sistema={sistema}
           bancosSel={bancosSelecionados}
           prazosSel={prazosSelecionados}
-          tabelasSel={tabelasSelecionadas}
-          principal={principal}
           totalCenarios={totalCenarios}
           onBack={() => setStep("cenarios")}
           onProcessar={processar}
@@ -195,20 +305,29 @@ export function SimulacaoWizard({ escopo: _escopo }: { escopo: "correspondente" 
       {step === "resultados" && (
         <ResultadosStep
           cenarios={cenarios}
-          favoritos={favoritos}
-          setFavoritos={setFavoritos}
-          selecionados={cenSelecionados}
-          setSelecionados={setCenSelecionados}
+          favoritos={favoritos} setFavoritos={setFavoritos}
+          selecionados={cenSelecionados} setSelecionados={setCenSelecionados}
+        />
+      )}
+
+      {prazoDialog && (
+        <PrazoExcedidoDialog
+          tentado={prazoDialog.tentado}
+          permitido={prazoDialog.permitido}
+          idadeMostrar={formatIdadeAnos(dataNascimentoEfetiva)}
+          onClose={() => setPrazoDialog(null)}
         />
       )}
     </div>
   );
 }
 
+// ───────────────────────── Stepper ─────────────────────────
+
 function Stepper({ step }: { step: Step }) {
   const steps: { id: Step; label: string }[] = [
-    { id: "modo", label: "Modo" },
-    { id: "dados", label: "Dados" },
+    { id: "inicio", label: "Início" },
+    { id: "dados", label: "Imóvel & Financiamento" },
     { id: "cenarios", label: "Cenários" },
     { id: "resumo", label: "Resumo" },
     { id: "resultados", label: "Resultados" },
@@ -232,6 +351,8 @@ function Stepper({ step }: { step: Step }) {
     </ol>
   );
 }
+
+// ───────────────────────── UI Primitives ─────────────────────────
 
 function Box({ children }: { children: React.ReactNode }) {
   return <section className="rounded-lg border border-border bg-card p-5">{children}</section>;
@@ -260,90 +381,55 @@ function NavBtns({ onBack, onNext, podeAvancar = true, nextLabel = "Avançar" }:
   );
 }
 
-function ModoStep({
-  modo, setModo, produto, setProduto, clienteId, setClienteId, onNext,
-}: {
-  modo: Modo; setModo: (m: Modo) => void;
-  produto: Produto; setProduto: (p: Produto) => void;
-  clienteId: string; setClienteId: (s: string) => void;
-  onNext: () => void;
-}) {
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
-    <Box>
-      <h2 className="mb-3 text-sm font-bold text-graphite">Modo de simulação</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <ModoCard
-          ativo={modo === "rapida"}
-          onClick={() => setModo("rapida")}
-          icon={Sparkles}
-          titulo="Simulação rápida (sem cliente)"
-          desc="Simule cenários sem selecionar cliente. Pode converter em cadastro depois."
-        />
-        <ModoCard
-          ativo={modo === "vinculada"}
-          onClick={() => setModo("vinculada")}
-          icon={Users}
-          titulo="Simulação vinculada a cliente"
-          desc="Selecione um cliente existente ou crie um básico para seguir até a proposta."
-        />
-      </div>
-
-      <h2 className="mt-5 mb-3 text-sm font-bold text-graphite">Produto</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        <ModoCard
-          ativo={produto === "Financiamento Imobiliário"}
-          onClick={() => setProduto("Financiamento Imobiliário")}
-          icon={Building2}
-          titulo="Financiamento Imobiliário"
-          desc="Aquisição de imóvel, com valor de entrada e financiado."
-        />
-        <ModoCard
-          ativo={produto === "Home Equity"}
-          onClick={() => setProduto("Home Equity")}
-          icon={Calculator}
-          titulo="Home Equity"
-          desc="Crédito com garantia de imóvel já existente."
-        />
-      </div>
-
-      {modo === "vinculada" && (
-        <div className="mt-5">
-          <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            Cliente <span className="text-direction">*</span>
-          </label>
-          <select
-            value={clienteId}
-            onChange={(e) => setClienteId(e.target.value)}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-          >
-            <option value="">Selecione um cliente</option>
-            {clientes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome} {c.cpf ? `— ${formatCpf(c.cpf)}` : c.cnpj ? `— ${c.cnpj}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <NavBtns onNext={onNext} podeAvancar={modo === "rapida" || !!clienteId} />
-    </Box>
+    <div>
+      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label} {required && <span className="text-direction">*</span>}
+      </label>
+      {children}
+      {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
-function ModoCard({
-  ativo, onClick, icon: Icon, titulo, desc,
-}: {
-  ativo: boolean; onClick: () => void;
-  icon: typeof Sparkles; titulo: string; desc: string;
+function MoedaInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">R$</span>
+      <input type="number" min={0} value={value} onChange={(e) => onChange(Number(e.target.value) || 0)}
+        className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+    </div>
+  );
+}
+
+function PercentInput({ value, onChange, step = 0.5 }: { value: number; onChange: (n: number) => void; step?: number }) {
+  return (
+    <div className="relative">
+      <input type="number" min={0} max={100} step={step} value={value} onChange={(e) => onChange(Number(e.target.value) || 0)}
+        className="h-10 w-full rounded-md border border-input bg-background pl-3 pr-9 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">%</span>
+    </div>
+  );
+}
+
+function ChipBtn({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+        ativo ? "border-brand bg-brand text-brand-foreground" : "border-border bg-background text-graphite hover:border-brand/40"
+      }`}>{children}</button>
+  );
+}
+
+function ModoCard({ ativo, onClick, icon: Icon, titulo, desc }: {
+  ativo: boolean; onClick: () => void; icon: typeof Sparkles; titulo: string; desc: string;
 }) {
   return (
-    <button
-      onClick={onClick}
+    <button onClick={onClick}
       className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-all ${
         ativo ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40"
-      }`}
-    >
+      }`}>
       <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-md ${ativo ? "bg-brand text-brand-foreground" : "bg-secondary text-graphite"}`}>
         <Icon className="h-4 w-4" strokeWidth={2.5} />
       </div>
@@ -356,226 +442,296 @@ function ModoCard({
   );
 }
 
-function CampoMoeda({
-  label, value, onChange, required = false, hint,
-}: {
-  label: string; value: number; onChange: (n: number) => void;
-  required?: boolean; hint?: string;
+// ───────────────────────── Início ─────────────────────────
+
+function InicioStep(p: {
+  imobiliariaId: string; setImobiliariaId: (v: string) => void;
+  corretorRespId: string; setCorretorRespId: (v: string) => void;
+  corretores: { id: string; nome: string }[];
+  tipoSimulacao: TipoSimulacao; setTipoSimulacao: (v: TipoSimulacao) => void;
+  clienteId: string; setClienteId: (v: string) => void;
+  clientes: Cliente[];
+  buscaCliente: string; setBuscaCliente: (v: string) => void;
+  novoClienteAberto: boolean; setNovoClienteAberto: (v: boolean) => void;
+  novoCliente: { nome: string; cpfCnpj: string; tipo: IdentTipo; email: string; telefone: string; dataNasc: string };
+  setNovoCliente: (v: { nome: string; cpfCnpj: string; tipo: IdentTipo; email: string; telefone: string; dataNasc: string }) => void;
+  adicionarNovoCliente: () => void;
+  identTipo: IdentTipo; setIdentTipo: (v: IdentTipo) => void;
+  identNumero: string; setIdentNumero: (v: string) => void;
+  dataNascGenerica: string; setDataNascGenerica: (v: string) => void;
+  onNext: () => void; podeAvancar: boolean;
 }) {
-  return (
-    <div>
-      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-        {label} {required && <span className="text-direction">*</span>}
-      </label>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">R$</span>
-        <input
-          type="number"
-          min={0}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
-          className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-        />
-      </div>
-      {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
+  const clientesFiltrados = p.clientes.filter((c) => {
+    if (!p.buscaCliente) return true;
+    const q = p.buscaCliente.toLowerCase();
+    return c.nome.toLowerCase().includes(q) || (c.cpf ?? "").includes(p.buscaCliente) || (c.cnpj ?? "").includes(p.buscaCliente);
+  }).slice(0, 6);
 
-function CampoPercent({
-  label, value, onChange, hint,
-}: { label: string; value: number; onChange: (n: number) => void; hint?: string }) {
-  return (
-    <div>
-      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</label>
-      <div className="relative">
-        <input
-          type="number" min={0} max={100} step={0.5}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
-          className="h-10 w-full rounded-md border border-input bg-background pr-9 pl-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-        />
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">%</span>
-      </div>
-      {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
-function CampoSelect<T extends string>({
-  label, value, onChange, options, required, hint,
-}: {
-  label: string;
-  value: T;
-  onChange: (v: T) => void;
-  options: readonly { value: T; label: string }[];
-  required?: boolean;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-        {label} {required && <span className="text-direction">*</span>}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
-function SectionSubtitle({ icon: Icon, label }: { icon: typeof Home; label: string }) {
-  return (
-    <div className="col-span-full flex items-center gap-2 border-b border-border pb-2 pt-2">
-      <Icon className="h-4 w-4 text-brand" strokeWidth={2.5} />
-      <p className="text-xs font-bold uppercase tracking-wider text-brand">{label}</p>
-      <span className="ml-2 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">Obrigatório HomeFin</span>
-    </div>
-  );
-}
-
-function DadosStep(p: {
-  produto: Produto;
-  valorImovel: number; setValorImovel: (n: number) => void;
-  valorEntrada: number; setValorEntrada: (n: number) => void;
-  valorSolicitado: number; setValorSolicitado: (n: number) => void;
-  rendaBruta: number; setRendaBruta: (n: number) => void;
-  comprometimento: number; setComprometimento: (n: number) => void;
-  // campos HomeFin proponente
-  tipoEstadoCivil: EstadoCivilHomeFin; setTipoEstadoCivil: (v: EstadoCivilHomeFin) => void;
-  regimeCasamento: RegimeCasamentoHomeFin; setRegimeCasamento: (v: RegimeCasamentoHomeFin) => void;
-  tipoRenda: TipoRendaHomeFin; setTipoRenda: (v: TipoRendaHomeFin) => void;
-  usarFGTS: boolean; setUsarFGTS: (v: boolean) => void;
-  saldoFGTS: number; setSaldoFGTS: (n: number) => void;
-  possuiCompositor: boolean; setPossuiCompositor: (v: boolean) => void;
-  // campos HomeFin imóvel
-  tipoImovel: TipoImovelHomeFin; setTipoImovel: (v: TipoImovelHomeFin) => void;
-  usoImovel: UsoImovelHomeFin; setUsoImovel: (v: UsoImovelHomeFin) => void;
-  situacaoImovel: SituacaoImovelHomeFin; setSituacaoImovel: (v: SituacaoImovelHomeFin) => void;
-  onBack: () => void; onNext: () => void; podeAvancar: boolean;
-}) {
-  const isFin = p.produto === "Financiamento Imobiliário";
-  const precisaRegime = p.tipoEstadoCivil === "CA" || p.tipoEstadoCivil === "UE";
-  const ltv = isFin
-    ? ((p.valorImovel - p.valorEntrada) / p.valorImovel) * 100
-    : (p.valorSolicitado / Math.max(1, p.valorImovel)) * 100;
   return (
     <Box>
-      <h2 className="mb-4 text-sm font-bold text-graphite">Dados da simulação — {p.produto}</h2>
+      {/* Imobiliária + Corretor */}
+      <h2 className="mb-3 text-sm font-bold text-graphite">Responsáveis</h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Imobiliária" hint="Filtra os corretores disponíveis.">
+          <select value={p.imobiliariaId} onChange={(e) => p.setImobiliariaId(e.target.value)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15">
+            <option value="">Todas as imobiliárias</option>
+            {imobiliarias.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}
+          </select>
+        </Field>
+        <Field label="Corretor responsável" required>
+          <select value={p.corretorRespId} onChange={(e) => p.setCorretorRespId(e.target.value)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15">
+            <option value="">Selecione um corretor</option>
+            {p.corretores.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+        </Field>
+      </div>
 
-      {/* ── Valores financeiros ── */}
+      {/* Tipo de simulação */}
+      <h2 className="mt-6 mb-3 text-sm font-bold text-graphite">Tipo de simulação</h2>
+      <div className="grid gap-3 md:grid-cols-2">
+        <ModoCard ativo={p.tipoSimulacao === "generica"} onClick={() => p.setTipoSimulacao("generica")}
+          icon={Sparkles} titulo="Simulação Genérica"
+          desc="Apenas CPF ou CNPJ — siga direto para a simulação sem cadastrar o cliente." />
+        <ModoCard ativo={p.tipoSimulacao === "completa"} onClick={() => p.setTipoSimulacao("completa")}
+          icon={Users} titulo="Simulação Completa"
+          desc="Selecione um cliente cadastrado ou cadastre um novo agora." />
+      </div>
+
+      {/* Identificação por CPF/CNPJ */}
+      {p.tipoSimulacao === "generica" && (
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <Field label="Tipo de identificação" required>
+            <div className="flex gap-2">
+              <ChipBtn ativo={p.identTipo === "cpf"} onClick={() => p.setIdentTipo("cpf")}>CPF</ChipBtn>
+              <ChipBtn ativo={p.identTipo === "cnpj"} onClick={() => p.setIdentTipo("cnpj")}>CNPJ</ChipBtn>
+            </div>
+          </Field>
+          <Field label={p.identTipo === "cpf" ? "CPF" : "CNPJ"} required>
+            <input value={p.identTipo === "cpf" ? formatCpf(p.identNumero) : formatCnpj(p.identNumero)}
+              onChange={(e) => p.setIdentNumero(onlyDigits(e.target.value))}
+              placeholder={p.identTipo === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+          </Field>
+          {p.identTipo === "cpf" && (
+            <Field label="Data de nascimento" hint="Valida prazo máximo permitido por idade.">
+              <input type="date" value={p.dataNascGenerica} onChange={(e) => p.setDataNascGenerica(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+            </Field>
+          )}
+        </div>
+      )}
+
+      {/* Busca / cadastro de cliente */}
+      {p.tipoSimulacao === "completa" && (
+        <div className="mt-5 space-y-3">
+          <Field label="Buscar cliente cadastrado" required>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input value={p.buscaCliente} onChange={(e) => p.setBuscaCliente(e.target.value)}
+                placeholder="Buscar por nome, CPF ou CNPJ…"
+                className="h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+            </div>
+          </Field>
+          <div className="grid gap-2 md:grid-cols-2">
+            {clientesFiltrados.map((c) => {
+              const ativo = p.clienteId === c.id;
+              return (
+                <button key={c.id} onClick={() => p.setClienteId(c.id)}
+                  className={`flex items-center gap-3 rounded-md border p-3 text-left transition-all ${
+                    ativo ? "border-brand bg-brand/5" : "border-border bg-background hover:border-brand/40"
+                  }`}>
+                  <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold ${ativo ? "bg-brand text-brand-foreground" : "bg-secondary text-graphite"}`}>
+                    {c.nome.slice(0, 1)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-graphite">{c.nome}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {c.cpf ? formatCpf(c.cpf) : c.cnpj ? formatCnpj(c.cnpj) : ""}
+                    </p>
+                  </div>
+                  {ativo && <CheckCircle2 className="ml-auto h-4 w-4 text-brand" />}
+                </button>
+              );
+            })}
+          </div>
+
+          <button onClick={() => p.setNovoClienteAberto(!p.novoClienteAberto)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-brand/40 bg-brand/5 px-3 py-2 text-xs font-semibold text-brand hover:bg-brand/10">
+            <UserPlus className="h-3.5 w-3.5" /> {p.novoClienteAberto ? "Cancelar cadastro" : "Cadastrar novo cliente"}
+          </button>
+
+          {p.novoClienteAberto && (
+            <div className="rounded-lg border border-brand/20 bg-brand/5 p-4">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand">Novo cliente</h3>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <Field label="Nome completo" required>
+                  <input value={p.novoCliente.nome} onChange={(e) => p.setNovoCliente({ ...p.novoCliente, nome: e.target.value })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand" />
+                </Field>
+                <Field label="Tipo">
+                  <div className="flex gap-2">
+                    <ChipBtn ativo={p.novoCliente.tipo === "cpf"} onClick={() => p.setNovoCliente({ ...p.novoCliente, tipo: "cpf" })}>CPF</ChipBtn>
+                    <ChipBtn ativo={p.novoCliente.tipo === "cnpj"} onClick={() => p.setNovoCliente({ ...p.novoCliente, tipo: "cnpj" })}>CNPJ</ChipBtn>
+                  </div>
+                </Field>
+                <Field label={p.novoCliente.tipo === "cpf" ? "CPF" : "CNPJ"} required>
+                  <input value={p.novoCliente.tipo === "cpf" ? formatCpf(p.novoCliente.cpfCnpj) : formatCnpj(p.novoCliente.cpfCnpj)}
+                    onChange={(e) => p.setNovoCliente({ ...p.novoCliente, cpfCnpj: onlyDigits(e.target.value) })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand" />
+                </Field>
+                {p.novoCliente.tipo === "cpf" && (
+                  <Field label="Data de nascimento">
+                    <input type="date" value={p.novoCliente.dataNasc} onChange={(e) => p.setNovoCliente({ ...p.novoCliente, dataNasc: e.target.value })}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand" />
+                  </Field>
+                )}
+                <Field label="E-mail">
+                  <input type="email" value={p.novoCliente.email} onChange={(e) => p.setNovoCliente({ ...p.novoCliente, email: e.target.value })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand" />
+                </Field>
+                <Field label="Telefone">
+                  <input value={p.novoCliente.telefone} onChange={(e) => p.setNovoCliente({ ...p.novoCliente, telefone: e.target.value })}
+                    placeholder="(00) 00000-0000"
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand" />
+                </Field>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button onClick={p.adicionarNovoCliente}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-foreground hover:bg-brand/90">
+                  <UserPlus className="h-3.5 w-3.5" /> Cadastrar e selecionar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <NavBtns onNext={p.onNext} podeAvancar={p.podeAvancar} />
+    </Box>
+  );
+}
+
+// ───────────────────────── Imóvel & Financiamento ─────────────────────────
+
+function DadosStep(p: {
+  modalidade: Modalidade; setModalidade: (m: Modalidade) => void;
+  valorImovel: number; setValorImovel: (n: number) => void;
+  entradaPercent: number; setEntradaPercent: (n: number) => void;
+  entradaManual: boolean; setEntradaManual: (v: boolean) => void;
+  valorEntrada: number; setValorEntrada: (n: number) => void;
+  custasPercent: number; setCustasPercent: (n: number) => void;
+  prazoMeses: number; tentarSetPrazo: (n: number) => void;
+  prazoMaximoIdade: number;
+  dataNascimentoEfetiva: string;
+  rendaBruta: number; setRendaBruta: (n: number) => void;
+  comprometimento: number; setComprometimento: (n: number) => void;
+  sistema: SistemaAmort; setSistema: (s: SistemaAmort) => void;
+  calc: { compraVenda: number; entrada: number; financiado: number; custas: number };
+  onBack: () => void; onNext: () => void; podeAvancar: boolean;
+}) {
+  // Renda mínima estimada (sugestão): parcela média estimada / comprometimento.
+  // Estimativa rápida: parcela ≈ financiado × 0.011 (≈ SAC inicial @10%/30a).
+  const parcelaEst = p.calc.financiado * 0.011;
+  const rendaMinima = parcelaEst / (Math.max(p.comprometimento, 1) / 100);
+
+  return (
+    <Box>
+      <h2 className="mb-3 text-sm font-bold text-graphite">Modalidade</h2>
+      <div className="grid gap-3 md:grid-cols-3">
+        <ModoCard ativo={p.modalidade === "com_entrada"} onClick={() => p.setModalidade("com_entrada")}
+          icon={Wallet} titulo="Com entrada"
+          desc="Entrada padrão 20% (editável). Financia o saldo restante." />
+        <ModoCard ativo={p.modalidade === "sem_entrada"} onClick={() => p.setModalidade("sem_entrada")}
+          icon={Building2} titulo="Sem entrada"
+          desc="C&V inflado (÷0,8) para liberar 100% do imóvel desejado." />
+        <ModoCard ativo={p.modalidade === "sem_entrada_custas"} onClick={() => p.setModalidade("sem_entrada_custas")}
+          icon={Calculator} titulo="Sem entrada + custas"
+          desc="C&V inflado (÷0,75) para liberar imóvel + custas (~5%)." />
+      </div>
+
+      <h2 className="mt-6 mb-3 text-sm font-bold text-graphite">Imóvel & Financiamento</h2>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {isFin ? (
+        <Field label="Valor do imóvel" required>
+          <MoedaInput value={p.valorImovel} onChange={p.setValorImovel} />
+        </Field>
+
+        {p.modalidade === "com_entrada" ? (
           <>
-            <CampoMoeda label="Valor do imóvel" value={p.valorImovel} onChange={p.setValorImovel} required />
-            <CampoMoeda label="Valor de entrada" value={p.valorEntrada} onChange={p.setValorEntrada} required />
-            <CampoMoeda label="Valor financiado" value={p.valorImovel - p.valorEntrada} onChange={() => {}}
-              hint="Calculado automaticamente" />
+            <Field label="Entrada (%)" hint="Padrão 20%. Edite o % ou o valor diretamente.">
+              <PercentInput value={p.entradaPercent} onChange={p.setEntradaPercent} step={1} />
+            </Field>
+            <Field label="Entrada (R$)">
+              <MoedaInput value={p.calc.entrada} onChange={p.setValorEntrada} />
+            </Field>
+            <Field label="Compra e Venda" hint="Igual ao valor do imóvel nesta modalidade.">
+              <div className="flex h-10 items-center rounded-md border border-input bg-secondary px-3 text-sm font-bold text-graphite">{formatBRL(p.calc.compraVenda)}</div>
+            </Field>
           </>
         ) : (
           <>
-            <CampoMoeda label="Valor estimado do imóvel (garantia)" value={p.valorImovel} onChange={p.setValorImovel} required />
-            <CampoMoeda label="Valor solicitado" value={p.valorSolicitado} onChange={p.setValorSolicitado} required />
-            <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">LTV</label>
-              <div className="flex h-10 items-center rounded-md border border-input bg-secondary px-3 text-sm font-bold text-graphite">
-                {formatPercent(ltv)}
-              </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">Loan-to-Value calculado.</p>
-            </div>
+            <Field label="Compra e Venda" hint={p.modalidade === "sem_entrada" ? "Inflado automaticamente (÷ 0,8)" : "Inflado automaticamente (÷ 0,75) incluindo custas"}>
+              <div className="flex h-10 items-center rounded-md border border-brand/30 bg-brand/5 px-3 text-sm font-bold text-brand">{formatBRL(p.calc.compraVenda)}</div>
+            </Field>
+            <Field label="Entrada">
+              <div className="flex h-10 items-center rounded-md border border-input bg-secondary px-3 text-sm font-semibold text-muted-foreground">Sem entrada</div>
+            </Field>
           </>
         )}
-        <CampoMoeda label="Renda bruta mensal" value={p.rendaBruta} onChange={p.setRendaBruta}
-          hint="Usada para sugerir comprometimento e calcular parcela máxima." />
-        <CampoPercent label="Comprometimento de renda máx." value={p.comprometimento} onChange={p.setComprometimento}
-          hint="Padrão: 30%." />
+
+        <Field label="Despesas cartorárias (%)" hint="% sobre o valor do imóvel. Padrão 5%.">
+          <PercentInput value={p.custasPercent} onChange={p.setCustasPercent} step={0.5} />
+        </Field>
+        <Field label="Custas (R$)" hint="Calculadas automaticamente.">
+          <div className="flex h-10 items-center rounded-md border border-input bg-secondary px-3 text-sm font-bold text-graphite">{formatBRL(p.calc.custas)}</div>
+        </Field>
+        <Field label="Valor financiado" hint="Calculado automaticamente conforme modalidade.">
+          <div className="flex h-10 items-center rounded-md border border-brand/30 bg-brand/5 px-3 text-sm font-bold text-brand">{formatBRL(p.calc.financiado)}</div>
+        </Field>
       </div>
 
-      {/* ── Dados do imóvel — HomeFin obrigatórios ── */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <SectionSubtitle icon={Home} label="Imóvel" />
-        <CampoSelect
-          label="Tipo de imóvel" value={p.tipoImovel} onChange={p.setTipoImovel}
-          options={TIPOS_IMOVEL_OPTIONS} required
-          hint="Código enviado à API HomeFin (AP, CS, GA, TE, TC)"
-        />
-        <CampoSelect
-          label="Uso do imóvel" value={p.usoImovel} onChange={p.setUsoImovel}
-          options={USOS_IMOVEL_OPTIONS} required
-          hint="Residencial (R) ou Comercial (C)"
-        />
-        <CampoSelect
-          label="Situação do imóvel" value={p.situacaoImovel} onChange={p.setSituacaoImovel}
-          options={SITUACOES_IMOVEL_OPTIONS} required
-          hint="Novo (N) ou Usado (U)"
-        />
+      <h2 className="mt-6 mb-3 text-sm font-bold text-graphite">Prazo & Amortização</h2>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Field
+          label="Prazo (meses)"
+          required
+          hint={
+            p.dataNascimentoEfetiva
+              ? `Idade: ${formatIdadeAnos(p.dataNascimentoEfetiva)} • Máx. permitido: ${p.prazoMaximoIdade}m`
+              : `Sem data de nascimento informada — usando teto SFH (${PRAZO_MAX_ABSOLUTO}m).`
+          }
+        >
+          <input type="number" min={12} max={PRAZO_MAX_ABSOLUTO} step={12}
+            value={p.prazoMeses}
+            onChange={(e) => p.tentarSetPrazo(Number(e.target.value) || 0)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" />
+        </Field>
+        <Field label="Renda bruta mensal">
+          <MoedaInput value={p.rendaBruta} onChange={p.setRendaBruta} />
+        </Field>
+        <Field label="Comprometimento máx. (%)" hint="Padrão 30%.">
+          <PercentInput value={p.comprometimento} onChange={p.setComprometimento} step={1} />
+        </Field>
+        <Field label="Renda mínima estimada" hint="Sugestão calculada com base no comprometimento.">
+          <div className="flex h-10 items-center rounded-md border border-input bg-secondary px-3 text-sm font-bold text-graphite">{formatBRL(rendaMinima)}</div>
+        </Field>
       </div>
 
-      {/* ── Dados do proponente — HomeFin obrigatórios ── */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <SectionSubtitle icon={User} label="Proponente" />
-        <CampoSelect
-          label="Estado civil" value={p.tipoEstadoCivil} onChange={p.setTipoEstadoCivil}
-          options={ESTADOS_CIVIS_OPTIONS} required
-        />
-        {precisaRegime && (
-          <CampoSelect
-            label="Regime de casamento" value={p.regimeCasamento} onChange={p.setRegimeCasamento}
-            options={REGIMES_CASAMENTO_OPTIONS} required
-          />
-        )}
-        <CampoSelect
-          label="Tipo de renda" value={p.tipoRenda} onChange={p.setTipoRenda}
-          options={TIPOS_RENDA_OPTIONS} required
-        />
-      </div>
-
-      {/* ── FGTS ── */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <SectionSubtitle icon={Wallet} label="FGTS" />
-        <div className="col-span-full">
-          <label className="inline-flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium text-graphite hover:border-brand/40">
-            <input
-              type="checkbox"
-              checked={p.usarFGTS}
-              onChange={(e) => p.setUsarFGTS(e.target.checked)}
-              className="h-4 w-4 accent-[color:var(--brand)]"
-            />
-            Utilizar FGTS nesta simulação
-          </label>
+      <div className="mt-4">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Sistema de amortização</p>
+        <div className="flex flex-wrap gap-2">
+          {(["SAC", "PRICE", "AMBOS"] as SistemaAmort[]).map((s) => (
+            <ChipBtn key={s} ativo={p.sistema === s} onClick={() => p.setSistema(s)}>
+              {s === "AMBOS" ? "Ambos (comparativo)" : s}
+            </ChipBtn>
+          ))}
         </div>
-        {p.usarFGTS && (
-          <CampoMoeda label="Saldo aproximado de FGTS" value={p.saldoFGTS} onChange={p.setSaldoFGTS}
-            hint="Valor aproximado para abatimento ou entrada." />
+        {p.sistema === "AMBOS" && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Cada banco × prazo será calculado em SAC e PRICE para comparação lado a lado.
+          </p>
         )}
-      </div>
-
-      {/* ── Composição de renda ── */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <SectionSubtitle icon={Users} label="Composição de renda" />
-        <div className="col-span-full">
-          <label className="inline-flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium text-graphite hover:border-brand/40">
-            <input
-              type="checkbox"
-              checked={p.possuiCompositor}
-              onChange={(e) => p.setPossuiCompositor(e.target.checked)}
-              className="h-4 w-4 accent-[color:var(--brand)]"
-            />
-            Incluir cônjuge / compositor de renda na simulação
-          </label>
-          {p.possuiCompositor && (
-            <p className="mt-2 rounded-md border border-brand/20 bg-brand/5 px-3 py-2 text-xs font-medium text-brand">
-              Os dados do compositor serão informados no cadastro completo do cliente antes de enviar ao banco.
-            </p>
-          )}
-        </div>
       </div>
 
       <NavBtns onBack={p.onBack} onNext={p.onNext} podeAvancar={p.podeAvancar} />
@@ -583,25 +739,31 @@ function DadosStep(p: {
   );
 }
 
+// ───────────────────────── Cenários (bancos × prazos) ─────────────────────────
+
 function CenariosStep(p: {
   bancosSel: string[]; setBancosSel: (a: string[]) => void;
   prazosSel: number[]; setPrazosSel: (a: number[]) => void;
   prazoCustom: string; setPrazoCustom: (s: string) => void;
-  tabelasSel: Tabela[]; setTabelasSel: (a: Tabela[]) => void;
+  sistema: SistemaAmort;
+  prazoMaximoIdade: number;
+  onPrazoExcedido: (n: number) => void;
   onBack: () => void; onNext: () => void;
 }) {
   const toggleBanco = (id: string) => p.setBancosSel(
     p.bancosSel.includes(id) ? p.bancosSel.filter((x) => x !== id) : [...p.bancosSel, id],
   );
-  const togglePrazo = (n: number) => p.setPrazosSel(
-    p.prazosSel.includes(n) ? p.prazosSel.filter((x) => x !== n) : [...p.prazosSel, n].sort((a, b) => a - b),
-  );
-  const toggleTabela = (t: Tabela) => p.setTabelasSel(
-    p.tabelasSel.includes(t) ? p.tabelasSel.filter((x) => x !== t) : [...p.tabelasSel, t],
-  );
+  const togglePrazo = (n: number) => {
+    if (n > p.prazoMaximoIdade) { p.onPrazoExcedido(n); return; }
+    p.setPrazosSel(
+      p.prazosSel.includes(n) ? p.prazosSel.filter((x) => x !== n) : [...p.prazosSel, n].sort((a, b) => a - b),
+    );
+  };
   const addPrazoCustom = () => {
     const n = Number(p.prazoCustom);
-    if (n > 0 && !p.prazosSel.includes(n)) {
+    if (n <= 0) return;
+    if (n > p.prazoMaximoIdade) { p.onPrazoExcedido(n); return; }
+    if (!p.prazosSel.includes(n)) {
       p.setPrazosSel([...p.prazosSel, n].sort((a, b) => a - b));
       p.setPrazoCustom("");
     }
@@ -614,47 +776,34 @@ function CenariosStep(p: {
           <h3 className="mb-2 text-sm font-bold text-graphite">Bancos</h3>
           <div className="mb-2 flex gap-2 text-[11px]">
             <button onClick={() => p.setBancosSel(bancos.map((b) => b.id))}
-              className="rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">Todos os bancos</button>
+              className="rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">Todos</button>
             <button onClick={() => p.setBancosSel([])}
               className="rounded border border-border bg-background px-2 py-1 font-semibold text-muted-foreground hover:border-brand/40">Limpar</button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {bancos.map((b) => {
-              const ativo = p.bancosSel.includes(b.id);
-              return (
-                <button key={b.id} onClick={() => toggleBanco(b.id)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    ativo ? "border-brand bg-brand text-brand-foreground" : "border-border bg-background text-graphite hover:border-brand/40"
-                  }`}>{b.sigla} — {b.nome}</button>
-              );
-            })}
+            {bancos.map((b) => (
+              <ChipBtn key={b.id} ativo={p.bancosSel.includes(b.id)} onClick={() => toggleBanco(b.id)}>
+                {b.sigla} — {b.nome}
+              </ChipBtn>
+            ))}
           </div>
         </div>
 
         <div>
-          <h3 className="mb-2 text-sm font-bold text-graphite">Prazos (meses)</h3>
+          <h3 className="mb-2 text-sm font-bold text-graphite">
+            Prazos (meses) <span className="ml-2 text-[11px] font-normal text-muted-foreground">máx. permitido: {p.prazoMaximoIdade}m</span>
+          </h3>
           <div className="flex flex-wrap gap-2">
-            {PRAZOS_SUGERIDOS.map((n) => {
-              const ativo = p.prazosSel.includes(n);
-              return (
-                <button key={n} onClick={() => togglePrazo(n)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    ativo ? "border-brand bg-brand text-brand-foreground" : "border-border bg-background text-graphite hover:border-brand/40"
-                  }`}>{n}m</button>
-              );
-            })}
+            {PRAZOS_SUGERIDOS.filter((n) => n <= p.prazoMaximoIdade).map((n) => (
+              <ChipBtn key={n} ativo={p.prazosSel.includes(n)} onClick={() => togglePrazo(n)}>{n}m</ChipBtn>
+            ))}
             {p.prazosSel.filter((n) => !PRAZOS_SUGERIDOS.includes(n)).map((n) => (
-              <button key={n} onClick={() => togglePrazo(n)}
-                className="rounded-full border border-brand bg-brand px-3 py-1.5 text-xs font-semibold text-brand-foreground">{n}m ×</button>
+              <ChipBtn key={n} ativo onClick={() => togglePrazo(n)}>{n}m ×</ChipBtn>
             ))}
             <div className="flex items-center gap-1">
-              <input
-                value={p.prazoCustom}
-                onChange={(e) => p.setPrazoCustom(e.target.value)}
-                placeholder="Prazo custom"
-                type="number"
-                className="h-8 w-28 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-brand"
-              />
+              <input value={p.prazoCustom} onChange={(e) => p.setPrazoCustom(e.target.value)}
+                placeholder="Prazo custom" type="number"
+                className="h-8 w-28 rounded-md border border-input bg-background px-2 text-xs outline-none focus:border-brand" />
               <button onClick={addPrazoCustom}
                 className="h-8 rounded-md bg-graphite px-3 text-xs font-semibold text-white hover:bg-graphite/90">+</button>
             </div>
@@ -662,43 +811,39 @@ function CenariosStep(p: {
         </div>
 
         <div>
-          <h3 className="mb-2 text-sm font-bold text-graphite">Sistemas de amortização</h3>
-          <div className="flex gap-2">
-            {(["SAC", "PRICE"] as Tabela[]).map((t) => {
-              const ativo = p.tabelasSel.includes(t);
-              return (
-                <button key={t} onClick={() => toggleTabela(t)}
-                  className={`rounded-md border px-4 py-2 text-xs font-bold ${
-                    ativo ? "border-brand bg-brand text-brand-foreground" : "border-border bg-background text-graphite hover:border-brand/40"
-                  }`}>{t}</button>
-              );
-            })}
-          </div>
+          <h3 className="mb-2 text-sm font-bold text-graphite">Sistema de amortização escolhido</h3>
+          <p className="text-xs text-muted-foreground">
+            {p.sistema === "AMBOS" ? "Cada cenário será gerado em SAC e PRICE." : p.sistema}
+          </p>
         </div>
       </div>
       <NavBtns onBack={p.onBack} onNext={p.onNext}
-        podeAvancar={p.bancosSel.length > 0 && p.prazosSel.length > 0 && p.tabelasSel.length > 0} />
+        podeAvancar={p.bancosSel.length > 0 && p.prazosSel.length > 0} />
     </Box>
   );
 }
 
+// ───────────────────────── Resumo / Processando / Resultados ─────────────────────────
+
 function ResumoStep(p: {
-  produto: Produto; clienteId: string;
-  bancosSel: string[]; prazosSel: number[]; tabelasSel: Tabela[];
-  principal: number; totalCenarios: number;
+  clienteNome: string; corretorNome: string; imobiliariaNome?: string;
+  calc: { compraVenda: number; entrada: number; financiado: number; custas: number };
+  prazoMeses: number; sistema: SistemaAmort;
+  bancosSel: string[]; prazosSel: number[]; totalCenarios: number;
   onBack: () => void; onProcessar: () => void; podeProcessar: boolean;
 }) {
-  const cliente = clientes.find((c) => c.id === p.clienteId);
   return (
     <Box>
       <h2 className="mb-3 text-sm font-bold text-graphite">Resumo antes de processar</h2>
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        <ResumoItem icon={Building2} k="Produto" v={p.produto} />
-        <ResumoItem icon={User} k="Cliente" v={cliente?.nome ?? "Sem cliente (simulação rápida)"} />
-        <ResumoItem icon={Calculator} k="Principal" v={formatBRL(p.principal)} />
+        <ResumoItem icon={User} k="Cliente" v={p.clienteNome} />
+        <ResumoItem icon={Users} k="Corretor" v={p.corretorNome} sub={p.imobiliariaNome} />
+        <ResumoItem icon={Calculator} k="Financiado" v={formatBRL(p.calc.financiado)} sub={`C&V: ${formatBRL(p.calc.compraVenda)}`} />
+        <ResumoItem icon={Wallet} k="Entrada" v={p.calc.entrada > 0 ? formatBRL(p.calc.entrada) : "Sem entrada"} />
+        <ResumoItem icon={Home} k="Custas" v={formatBRL(p.calc.custas)} />
+        <ResumoItem icon={Calculator} k="Prazo" v={`${p.prazoMeses}m`} sub={p.sistema} />
         <ResumoItem icon={Building2} k="Bancos" v={`${p.bancosSel.length}`} sub={p.bancosSel.map((id) => bancos.find((b) => b.id === id)?.sigla).join(", ")} />
         <ResumoItem icon={Calculator} k="Prazos" v={`${p.prazosSel.length}`} sub={p.prazosSel.map((n) => `${n}m`).join(", ")} />
-        <ResumoItem icon={Calculator} k="Tabelas" v={`${p.tabelasSel.length}`} sub={p.tabelasSel.join(", ")} />
       </div>
       <div className="mt-4 flex items-center justify-between rounded-md border border-brand/30 bg-brand/5 p-4">
         <div>
@@ -730,9 +875,7 @@ function ProcessandoStep() {
       <div className="flex flex-col items-center gap-4 py-10">
         <div className="relative h-16 w-48 overflow-hidden rounded-md border border-border bg-secondary">
           <div className="absolute inset-y-0 left-0 animate-[loading_1.5s_ease-in-out_infinite] bg-gradient-to-r from-brand via-info to-brand" style={{ width: "60%" }} />
-          <div className="absolute inset-0 grid place-items-center">
-            <Loader2 className="h-6 w-6 animate-spin text-white" />
-          </div>
+          <div className="absolute inset-0 grid place-items-center"><Loader2 className="h-6 w-6 animate-spin text-white" /></div>
         </div>
         <p className="text-sm font-semibold text-graphite">Aguarde enquanto processamos sua solicitação</p>
         <p className="text-xs text-muted-foreground">Calculando cenários nos bancos selecionados…</p>
@@ -804,29 +947,28 @@ function ResultadosStep({
           <tbody>
             {cenarios.map((c) => {
               const banco = bancos.find((b) => b.id === c.bancoId);
-              const sel = selecionados.has(c.id);
-              const fav = favoritos.has(c.id);
-              const melhor = c.parcelaInicial === melhorParcela;
+              const isMelhor = c.parcelaInicial === melhorParcela;
               return (
-                <tr key={c.id} className={`border-b border-border ${sel ? "bg-brand/5" : ""}`}>
-                  <td className="px-2 py-2"><input type="checkbox" checked={sel} onChange={() => toggleSel(c.id)} /></td>
-                  <td className="px-3 py-2 font-bold text-graphite">
-                    {banco?.sigla}
-                    {melhor && <span className="ml-2 rounded bg-success/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-success">Melhor parcela</span>}
+                <tr key={c.id} className={`border-t border-border ${selecionados.has(c.id) ? "bg-brand/5" : ""}`}>
+                  <td className="px-2 py-2">
+                    <input type="checkbox" checked={selecionados.has(c.id)} onChange={() => toggleSel(c.id)}
+                      className="h-3.5 w-3.5 accent-[color:var(--brand)]" />
                   </td>
-                  <td className="px-3 py-2">{formatPrazoMeses(c.prazoMeses)}</td>
-                  <td className="px-3 py-2">{c.tabela}</td>
-                  <td className="px-3 py-2">{formatPercent(c.taxaAaPercent)}</td>
-                  <td className="px-3 py-2 text-right font-bold text-graphite">{formatBRL(c.parcelaInicial)}</td>
-                  <td className="px-3 py-2 text-right">{formatBRL(c.parcelaFinal)}</td>
-                  <td className="px-3 py-2 text-right">{formatBRL(c.totalPago)}</td>
+                  <td className="px-3 py-2 font-semibold text-graphite">{banco?.sigla}</td>
+                  <td className="px-3 py-2 text-graphite">{c.prazoMeses}m</td>
+                  <td className="px-3 py-2"><span className="rounded bg-secondary px-1.5 py-0.5 font-bold text-graphite">{c.tabela}</span></td>
+                  <td className="px-3 py-2 text-graphite">{formatPercent(c.taxaAaPercent)}</td>
+                  <td className="px-3 py-2 text-right font-bold text-graphite">
+                    {formatBRL(c.parcelaInicial)} {isMelhor && <span className="ml-1 rounded bg-success/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-success">Menor</span>}
+                  </td>
+                  <td className="px-3 py-2 text-right text-graphite">{formatBRL(c.parcelaFinal)}</td>
+                  <td className="px-3 py-2 text-right text-graphite">{formatBRL(c.totalPago)}</td>
                   <td className="px-3 py-2 text-right text-muted-foreground">{formatBRL(c.totalJuros)}</td>
-                  <td className="px-3 py-2 text-right">{formatPercent(c.cetPercent)}</td>
-                  <td className="px-3 py-2 text-right">{formatBRL(c.rendaMinima)}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{formatPercent(c.cetPercent)}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-graphite">{formatBRL(c.rendaMinima)}</td>
                   <td className="px-2 py-2 text-right">
-                    <button onClick={() => toggleFav(c.id)} title="Favoritar"
-                      className={`grid h-7 w-7 place-items-center rounded ${fav ? "bg-warning/15 text-warning" : "border border-border bg-background text-muted-foreground hover:text-warning"}`}>
-                      <Star className={`h-3.5 w-3.5 ${fav ? "fill-warning" : ""}`} />
+                    <button onClick={() => toggleFav(c.id)} title="Favoritar">
+                      <Star className={`h-4 w-4 ${favoritos.has(c.id) ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground hover:text-graphite"}`} />
                     </button>
                   </td>
                 </tr>
@@ -839,10 +981,45 @@ function ResultadosStep({
   );
 }
 
-function Acao({ icon: Icon, children }: { icon: typeof Send; children: React.ReactNode }) {
+function Acao({ icon: Icon, children }: { icon: typeof Sparkles; children: React.ReactNode }) {
   return (
-    <button className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold uppercase tracking-wider text-graphite hover:border-brand/40 hover:text-brand">
+    <button className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">
       <Icon className="h-3 w-3" /> {children}
     </button>
+  );
+}
+
+// ───────────────────────── Diálogo: prazo excedido por idade ─────────────────────────
+
+function PrazoExcedidoDialog({ tentado, permitido, idadeMostrar, onClose }: {
+  tentado: number; permitido: number; idadeMostrar: string; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-100 text-amber-600">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <h3 className="text-base font-bold text-graphite">Prazo acima do permitido pela idade</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          O prazo de <strong className="text-graphite">{tentado} meses</strong> excede o limite para esta idade.
+          Conforme a regra brasileira de financiamento habitacional (idade do proponente + prazo ≤ 80 anos e 6 meses),
+          o prazo máximo permitido para um cliente de <strong className="text-graphite">{idadeMostrar}</strong> é
+          de <strong className="text-brand">{permitido} meses</strong>.
+        </p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Ajustamos automaticamente para o máximo permitido. Você pode reduzir o prazo se desejar.
+        </p>
+        <div className="mt-5 flex justify-end">
+          <button onClick={onClose}
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-foreground hover:bg-brand/90">
+            Entendi
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
