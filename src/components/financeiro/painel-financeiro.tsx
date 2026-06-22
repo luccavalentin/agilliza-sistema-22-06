@@ -164,7 +164,7 @@ function PainelFinanceiroInner({ escopo }: { escopo: Escopo }) {
         eyebrow="Gestão Financeira"
         title={escopo === "correspondente" ? "Painel Financeiro" : "Meu Painel Financeiro"}
         subtitle={escopo === "correspondente"
-          ? "Visão geral do ecossistema: receitas, despesas, comissões e fluxo de caixa."
+          ? "Receitas, despesas, comissões e fluxo de caixa."
           : "Acompanhe seus recebíveis, comissões e resultado pessoal."}
         right={
           <div className="flex items-center gap-2">

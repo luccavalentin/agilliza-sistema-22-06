@@ -136,7 +136,7 @@ function PainelCorrespondente() {
       <PainelHeader
         eyebrow="Visão Geral · Correspondente"
         title="Painel de Monitoramento"
-        subtitle="Período: Junho/2026 · Produto: Todos · Banco: Todos · Status: Todos · Visão consolidada do ecossistema"
+        subtitle="Período: Junho/2026 · Produto: Todos · Banco: Todos · Status: Todos"
         badge="Visão Total · Auditoria Ativa"
       />
 

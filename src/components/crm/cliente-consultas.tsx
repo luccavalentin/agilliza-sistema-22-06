@@ -128,10 +128,6 @@ export function ClienteConsultas({ scope }: { scope: ConsultasScope }) {
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-graphite">
               Consultas de Clientes
             </h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Busca avançada sobre {scope === "correspondente" ? "toda a base de participantes" : "a sua carteira"} —
-              filtros combináveis alinhados aos query params da HomeFin.
-            </p>
           </div>
           <div className="flex items-center gap-2 text-[11px]">
             <button className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-2.5 py-1.5 font-semibold uppercase tracking-wider text-graphite hover:border-brand/40">

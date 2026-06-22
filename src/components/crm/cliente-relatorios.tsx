@@ -141,11 +141,6 @@ export function ClienteRelatorios({ scope }: { scope: RelatoriosScope }) {
         {rel === "origem"    && <RelOrigem    base={base} />}
       </section>
 
-      <footer className="text-[11px] text-muted-foreground">
-        {scope === "corretor"
-          ? "Escopo restrito à sua carteira."
-          : "Visão consolidada — base inteira do ecossistema."}
-      </footer>
     </div>
   );
 }

@@ -74,7 +74,7 @@ export function GestaoAdministrativa() {
       <PanelHeader
         eyebrow="GESTÃO ADMINISTRATIVA"
         title="Cadastros Gerais"
-        subtitle="Gerencie todos os parâmetros do ecossistema do correspondente: bancos, imobiliárias, produtos, equipe, usuários e configurações operacionais."
+        subtitle="Bancos, imobiliárias, produtos, equipe, usuários e configurações operacionais."
         right={
           <span className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Database className="h-3.5 w-3.5" />
