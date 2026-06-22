@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BrainCircuit } from "lucide-react";
 import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { IntegrationPendingBanner } from "@/components/portal/integration-pending-banner";
 
 export const Route = createFileRoute("/corretor/crm/flash-ia")({
   component: () => (
-    <SectionPlaceholder
-      eyebrow="Corretor · CRM"
-      title="Flash IA"
-      description="Insights rápidos por IA para apoio comercial."
-      icon={BrainCircuit}
-    />
+    <div>
+      <IntegrationPendingBanner />
+      <SectionPlaceholder
+        eyebrow="Corretor · CRM"
+        title="Flash IA"
+        description="Insights rápidos por IA para apoio comercial."
+        icon={BrainCircuit}
+      />
+    </div>
   ),
 });
