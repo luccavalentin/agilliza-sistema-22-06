@@ -201,7 +201,10 @@ export function PortalShell({
             "linear-gradient(180deg, #001bbf 0%, #000f9f 55%, #000a7a 100%)",
         }}
       >
-        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
+        <div className={[
+          "flex h-16 items-center border-b border-sidebar-border",
+          collapsed ? "justify-center px-2" : "gap-3 px-4",
+        ].join(" ")}>
           <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
             <img src={brandMark} alt="Agilliza" className="h-full w-full object-contain" />
           </div>
@@ -210,6 +213,17 @@ export function PortalShell({
               <p className="truncate text-sm font-bold tracking-tight">Agilliza</p>
               <p className="truncate text-[11px] text-white/65">Crédito Imobiliário</p>
             </div>
+          )}
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={() => setCollapsed(true)}
+              className="ml-auto hidden rounded-md p-1.5 text-white/70 hover:bg-white/10 hover:text-white lg:inline-flex"
+              aria-label="Recolher menu"
+              title="Recolher menu"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
           )}
           <button
             type="button"
@@ -220,6 +234,19 @@ export function PortalShell({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Expand button — visível somente quando recolhido */}
+        {collapsed && (
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            className="mx-2 mt-2 hidden items-center justify-center rounded-md p-1.5 text-white/70 hover:bg-white/10 hover:text-white lg:flex"
+            aria-label="Expandir menu"
+            title="Expandir menu"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </button>
+        )}
 
         <nav className="mt-4 flex-1 space-y-5 overflow-y-auto px-3 pb-4">
           {groups.map((group) => (
