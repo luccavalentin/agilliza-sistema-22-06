@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import {
   User2,
   IdCard,
@@ -18,11 +18,17 @@ import {
   Clock,
   ShieldCheck,
   Zap,
+  Eye,
+  Upload,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { PanelHeader } from "@/components/dashboards/primitives";
 import { MaskedInput } from "@/components/ui/masked-input";
 import type { MaskKind } from "@/lib/formatters";
 import type { CrmScope } from "./crm-dashboard";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /** Dados importados pelo Flash IA via sessionStorage */
 interface FlashIaLead {
@@ -171,11 +177,411 @@ function SectionCard({
   );
 }
 
+/* =========================================================================
+ * Checklist de Documentos (upload real via Supabase Storage)
+ * ========================================================================= */
+
+type DocStatus = "aguardando" | "pendente_analise" | "aprovado" | "reprovado";
+
+type DocumentoRow = {
+  id: string;
+  cliente_id: string;
+  categoria: string;
+  nome_doc: string;
+  storage_path: string;
+  tamanho_bytes: number | null;
+  tipo_mime: string | null;
+  status: DocStatus;
+  motivo_reprovacao: string | null;
+  enviado_por: string;
+  enviado_em: string;
+};
+
+type DocItem = { nome: string; opcional?: boolean };
+type DocGrupo = { categoria: string; itens: DocItem[] };
+
+const CHECKLIST_DOCUMENTOS: DocGrupo[] = [
+  {
+    categoria: "Cliente",
+    itens: [
+      { nome: "RG ou CNH" },
+      { nome: "CPF" },
+      { nome: "Comprovante de renda (3 últimos)" },
+      { nome: "Comprovante de endereço" },
+      { nome: "IR completo + recibo" },
+      { nome: "Extrato FGTS" },
+      { nome: "Autorização de uso de dados (LGPD)" },
+    ],
+  },
+  {
+    categoria: "Cônjuge",
+    itens: [
+      { nome: "RG ou CNH" },
+      { nome: "Comprovante de renda" },
+      { nome: "Comprovante de endereço" },
+    ],
+  },
+  {
+    categoria: "Imóvel",
+    itens: [
+      { nome: "Matrícula atualizada (30 dias)" },
+      { nome: "IPTU" },
+      { nome: "Escritura" },
+      { nome: "Contrato de compra e venda (CVCA)" },
+      { nome: "Certidões do imóvel" },
+    ],
+  },
+  {
+    categoria: "Home Equity",
+    itens: [
+      { nome: "Saldo devedor" },
+      { nome: "Contrato de financiamento atual" },
+      { nome: "Autorização de análise de garantia" },
+    ],
+  },
+  {
+    categoria: "Vendedor",
+    itens: [
+      { nome: "RG ou CNH" },
+      { nome: "Certidão" },
+      { nome: "Comprovante de endereço" },
+      { nome: "Documentos do cônjuge do vendedor" },
+    ],
+  },
+  {
+    categoria: "Adicionais",
+    itens: [{ nome: "Outros documentos", opcional: true }],
+  },
+];
+
+const STORAGE_BUCKET = "documentos-clientes";
+
+function slugify(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function formatBytes(n: number | null | undefined): string {
+  if (!n && n !== 0) return "—";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function formatData(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+const STATUS_META: Record<DocStatus, { label: string; cls: string }> = {
+  aprovado: { label: "Aprovado", cls: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  pendente_analise: { label: "Pendente análise", cls: "bg-amber-50 text-amber-700 border border-amber-200" },
+  reprovado: { label: "Reprovado", cls: "bg-rose-50 text-rose-700 border border-rose-200" },
+  aguardando: { label: "Aguardando envio", cls: "bg-slate-100 text-slate-600 border border-slate-200" },
+};
+
+async function uploadDocumento(
+  clienteId: string,
+  categoria: string,
+  docNome: string,
+  file: File,
+): Promise<DocumentoRow> {
+  const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+  const ext = extMatch ? extMatch[1].toLowerCase() : "bin";
+  const path = `${clienteId}/${slugify(categoria)}/${slugify(docNome)}-${Date.now()}.${ext}`;
+
+  const { error: upErr } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type });
+  if (upErr) throw upErr;
+
+  const { data: userData } = await supabase.auth.getUser();
+  const enviadoPor = userData.user?.id;
+  if (!enviadoPor) throw new Error("Sem sessão autenticada — faça login para enviar documentos.");
+
+  const { data, error: dbErr } = await supabase
+    .from("documentos_cliente")
+    .insert({
+      cliente_id: clienteId,
+      categoria,
+      nome_doc: docNome,
+      storage_path: path,
+      tamanho_bytes: file.size,
+      tipo_mime: file.type,
+      status: "pendente_analise",
+      enviado_por: enviadoPor,
+    })
+    .select()
+    .single();
+  if (dbErr) {
+    // rollback do arquivo se o INSERT falhou
+    await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+    throw dbErr;
+  }
+  return data as unknown as DocumentoRow;
+}
+
+function DocumentoLinha({
+  grupo,
+  item,
+  doc,
+  onUpload,
+  uploading,
+}: {
+  grupo: string;
+  item: DocItem;
+  doc?: DocumentoRow;
+  onUpload: (file: File) => void;
+  uploading: boolean;
+}) {
+  const status: DocStatus = doc?.status ?? "aguardando";
+  const meta = STATUS_META[status];
+  const inputId = `up-${slugify(grupo)}-${slugify(item.nome)}`;
+
+  const verArquivo = useCallback(async () => {
+    if (!doc) return;
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrl(doc.storage_path, 3600);
+    if (error || !data?.signedUrl) {
+      toast.error("Não foi possível gerar o link do arquivo.");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }, [doc]);
+
+  return (
+    <li className="flex flex-wrap items-center gap-3 px-3 py-2.5 text-xs">
+      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium text-graphite">{item.nome}</span>
+          {item.opcional && (
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+              opcional
+            </span>
+          )}
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.cls}`}>
+            {meta.label}
+          </span>
+        </div>
+        {doc && (
+          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+            {doc.storage_path.split("/").pop()} · {formatBytes(doc.tamanho_bytes)} ·{" "}
+            enviado em {formatData(doc.enviado_em)}
+          </p>
+        )}
+        {status === "reprovado" && doc?.motivo_reprovacao && (
+          <p className="mt-1 flex items-start gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-700">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+            <span><strong>Motivo:</strong> {doc.motivo_reprovacao}</span>
+          </p>
+        )}
+      </div>
+
+      <div className="ml-auto flex items-center gap-1.5">
+        {doc && (
+          <button
+            type="button"
+            onClick={verArquivo}
+            className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[10px] font-semibold text-graphite hover:border-brand/40 hover:text-brand"
+          >
+            <Eye className="h-3 w-3" /> Visualizar
+          </button>
+        )}
+        <label
+          htmlFor={inputId}
+          className={`inline-flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-[10px] font-semibold ${
+            uploading
+              ? "border-border bg-secondary text-muted-foreground"
+              : "border-brand/30 text-brand hover:bg-brand/5"
+          }`}
+        >
+          {uploading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Upload className="h-3 w-3" />
+          )}
+          {doc ? "Substituir" : "Upload"}
+        </label>
+        <input
+          id={inputId}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) onUpload(f);
+          }}
+        />
+      </div>
+    </li>
+  );
+}
+
+function DocumentosChecklist({ clienteId }: { clienteId: string }) {
+  const [docs, setDocs] = useState<DocumentoRow[]>([]);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const carregadoRef = useRef(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("documentos_cliente")
+        .select("*")
+        .eq("cliente_id", clienteId)
+        .order("enviado_em", { ascending: false });
+      if (cancelado) return;
+      if (error) {
+        toast.error("Não foi possível carregar os documentos.");
+      } else if (data) {
+        setDocs(data as unknown as DocumentoRow[]);
+      }
+      setLoading(false);
+      carregadoRef.current = true;
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [clienteId]);
+
+  // Para cada item da checklist, pega o doc mais recente (já vem ordenado desc)
+  const docPorChave = useMemo(() => {
+    const m = new Map<string, DocumentoRow>();
+    for (const d of docs) {
+      const k = `${d.categoria}::${d.nome_doc}`;
+      if (!m.has(k)) m.set(k, d);
+    }
+    return m;
+  }, [docs]);
+
+  const { enviados, total } = useMemo(() => {
+    let t = 0;
+    let e = 0;
+    for (const g of CHECKLIST_DOCUMENTOS) {
+      for (const item of g.itens) {
+        if (item.opcional) continue;
+        t += 1;
+        if (docPorChave.has(`${g.categoria}::${item.nome}`)) e += 1;
+      }
+    }
+    return { enviados: e, total: t };
+  }, [docPorChave]);
+
+  const pctConclusao = total === 0 ? 0 : Math.round((enviados / total) * 100);
+
+  const handleUpload = useCallback(
+    async (grupo: string, item: DocItem, file: File) => {
+      const chave = `${grupo}::${item.nome}`;
+      setUploadingKey(chave);
+      try {
+        const novo = await uploadDocumento(clienteId, grupo, item.nome, file);
+        setDocs((prev) => [novo, ...prev]);
+        toast.success(`"${item.nome}" enviado com sucesso.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro no upload";
+        toast.error(msg);
+      } finally {
+        setUploadingKey(null);
+      }
+    },
+    [clienteId],
+  );
+
+  return (
+    <div className="md:col-span-3 space-y-4">
+      {/* Progress bar */}
+      <div className="rounded-lg border border-border bg-card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-graphite">
+            Conclusão do checklist
+          </p>
+          <p className="text-xs font-bold text-brand">
+            {enviados} de {total} documentos enviados
+            <span className="ml-2 text-muted-foreground">({pctConclusao}%)</span>
+          </p>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className={`h-full rounded-full transition-[width] ${
+              pctConclusao === 100
+                ? "bg-emerald-500"
+                : pctConclusao >= 50
+                  ? "bg-brand"
+                  : "bg-amber-400"
+            }`}
+            style={{ width: `${pctConclusao}%` }}
+          />
+        </div>
+        <p className="mt-1.5 text-[10px] text-muted-foreground">
+          Itens marcados como opcionais não entram no cálculo de conclusão.
+        </p>
+      </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Carregando documentos…
+        </div>
+      )}
+
+      {CHECKLIST_DOCUMENTOS.map((g) => (
+        <div key={g.categoria} className="rounded-md border border-border bg-background">
+          <header className="flex items-center justify-between border-b border-border px-3 py-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-brand">{g.categoria}</p>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {g.itens.length} itens
+            </span>
+          </header>
+          <ul className="divide-y divide-border">
+            {g.itens.map((item) => {
+              const chave = `${g.categoria}::${item.nome}`;
+              return (
+                <DocumentoLinha
+                  key={chave}
+                  grupo={g.categoria}
+                  item={item}
+                  doc={docPorChave.get(chave)}
+                  uploading={uploadingKey === chave}
+                  onUpload={(f) => handleUpload(g.categoria, item, f)}
+                />
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function CrmCadastro({ scope }: { scope: CrmScope }) {
   const [active, setActive] = useState<SectionKey>("identificacao");
   const creatorRole = scope === "correspondente" ? "Correspondente" : "Corretor";
   const [lead, setLead] = useState<FlashIaLead | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  // UUID estável para o cadastro em andamento — usado como cliente_id nos uploads
+  // até que o cliente seja persistido no banco.
+  const [clienteId] = useState<string>(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  );
 
   // Lê dados do Flash IA (se vieram via navegação)
   useEffect(() => {
@@ -649,56 +1055,8 @@ export function CrmCadastro({ scope }: { scope: CrmScope }) {
               title="Documentos"
               icon={FileText}
               badge="Checklist por categoria"
-              action={
-                <button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-brand/30 px-3 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/5">
-                  <Paperclip className="h-3.5 w-3.5" /> Anexar
-                </button>
-              }
             >
-              <div className="md:col-span-3 space-y-4">
-                {[
-                  { cat: "Cliente", items: ["Documento de identificação", "Comprovante de renda", "Comprovante de endereço", "Certidão de casamento", "Extrato FGTS", "Imposto de renda"] },
-                  { cat: "Cônjuge", items: ["Documento de identificação", "Comprovante de renda", "Comprovante de endereço"] },
-                  { cat: "Composição de renda", items: ["Documento de identificação", "Comprovante de renda", "Autorização de dados"] },
-                  { cat: "Vendedor", items: ["Documento de identificação", "Certidão do vendedor", "Comprovante de endereço", "Documentos do cônjuge do vendedor", "Documentos societários (PJ)"] },
-                  { cat: "Imóvel", items: ["Matrícula atualizada", "IPTU", "Escritura", "Contrato de compra e venda", "Certidões do imóvel", "Laudo / avaliação"] },
-                  { cat: "Home Equity", items: ["Matrícula atualizada", "IPTU", "Comprovante de propriedade", "Contrato de financiamento atual", "Saldo devedor", "Documentos dos demais proprietários", "Autorização de análise da garantia"] },
-                  { cat: "Adicionais", items: ["Outros documentos"] },
-                ].map((g) => (
-                  <div key={g.cat} className="rounded-md border border-border bg-background">
-                    <header className="flex items-center justify-between border-b border-border px-3 py-2">
-                      <p className="text-xs font-bold uppercase tracking-wider text-brand">{g.cat}</p>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {g.items.length} itens
-                      </span>
-                    </header>
-                    <ul className="divide-y divide-border">
-                      {g.items.map((d, i) => {
-                        const status = i % 4 === 0 ? "Aprovado" : i % 4 === 1 ? "Pendente" : i % 4 === 2 ? "Reprovado" : "Aguardando";
-                        const tone =
-                          status === "Aprovado"
-                            ? "text-emerald-700 bg-emerald-50"
-                            : status === "Reprovado"
-                              ? "text-red-700 bg-red-50"
-                              : status === "Pendente"
-                                ? "text-amber-700 bg-amber-50"
-                                : "text-slate-600 bg-slate-100";
-                        return (
-                          <li key={d} className="flex flex-wrap items-center gap-3 px-3 py-2 text-xs">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium text-graphite">{d}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>{status}</span>
-                            <span className="ml-auto text-[10px] text-muted-foreground">Responsável: —</span>
-                            <button type="button" className="rounded border border-border px-2 py-1 text-[10px] font-semibold text-graphite hover:border-brand/40 hover:text-brand">
-                              <Paperclip className="mr-1 inline h-3 w-3" /> Anexar
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <DocumentosChecklist clienteId={clienteId} />
             </SectionCard>
           )}
 

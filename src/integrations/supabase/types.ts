@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      documentos_cliente: {
+        Row: {
+          categoria: string
+          cliente_id: string
+          created_at: string
+          enviado_em: string
+          enviado_por: string
+          id: string
+          motivo_reprovacao: string | null
+          nome_doc: string
+          status: string
+          storage_path: string
+          tamanho_bytes: number | null
+          tipo_mime: string | null
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          cliente_id: string
+          created_at?: string
+          enviado_em?: string
+          enviado_por?: string
+          id?: string
+          motivo_reprovacao?: string | null
+          nome_doc: string
+          status?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          cliente_id?: string
+          created_at?: string
+          enviado_em?: string
+          enviado_por?: string
+          id?: string
+          motivo_reprovacao?: string | null
+          nome_doc?: string
+          status?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
