@@ -131,6 +131,12 @@ const toneMap: Record<
     text: "text-graphite",
     ring: "ring-border",
   },
+  amber: {
+    dot: "bg-amber-500",
+    chip: "bg-amber-50 text-amber-600",
+    text: "text-amber-600",
+    ring: "ring-amber-500/20",
+  },
 };
 
 export function KpiCard({
