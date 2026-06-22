@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
+import { useDashboardDetailOptional, buildMockRows } from "@/components/dashboards/detail-dialog";
 
 /* =========================================================================
  * Building blocks compartilhados entre os três Painéis de Monitoramento.
@@ -175,6 +176,7 @@ export function KpiCard({
   icon: Icon,
   breakdown,
   trend,
+  onClick,
   onClickHint = "Clique para detalhar",
 }: {
   label: string;
@@ -184,6 +186,7 @@ export function KpiCard({
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   breakdown?: { label: string; value: string; tone?: Tone }[];
   trend?: { dir: "up" | "down"; value: string };
+  onClick?: () => void;
   onClickHint?: string;
 }) {
   const t = toneMap[tone];
@@ -195,9 +198,30 @@ export function KpiCard({
       ? "bg-emerald-500"
       : "bg-rose-500"
     : it.line;
+  const detail = useDashboardDetailOptional();
+  const handle = onClick ?? (detail
+    ? () => detail.open({
+        title: `${label} — Detalhamento`,
+        subtitle: hint,
+        period: "Últimos 30 dias",
+        kpis: [
+          { label, value },
+          ...(trend ? [{ label: "Variação", value: `${trend.dir === "up" ? "▲" : "▼"} ${trend.value}` }] : []),
+          ...(breakdown ?? []).map((b) => ({ label: b.label, value: b.value })),
+        ].slice(0, 4),
+        top: breakdown?.map((b) => ({
+          label: b.label,
+          meta: b.value,
+          color: kpiIconTone[b.tone ?? "neutral"].line.replace("bg-", "var(--").replace("/", "") || "#94a3b8",
+        })),
+        topGroupLabel: breakdown ? "Composição" : undefined,
+        rows: buildMockRows(28),
+      })
+    : undefined);
   return (
     <button
       type="button"
+      onClick={handle}
       className={`group relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white p-4 text-left shadow-sm transition-transform duration-200 will-change-transform hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-md focus:outline-none focus-visible:ring-2 ${t.ring}`}
     >
       <div className="flex items-start gap-3">
