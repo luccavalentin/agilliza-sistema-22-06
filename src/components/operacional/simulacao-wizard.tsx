@@ -23,6 +23,8 @@ import {
 import {
   prazoMaxPorIdade, formatIdadeAnos, PRAZO_MAX_ABSOLUTO,
 } from "@/lib/operacional/prazo-idade";
+import { BankLogo } from "@/components/operacional/bank-logo";
+import { downloadBrandedPdf } from "@/lib/pdf-export";
 
 type TipoSimulacao = "generica" | "completa";
 type Modalidade = "com_entrada" | "sem_entrada" | "sem_entrada_custas";
@@ -783,7 +785,10 @@ function CenariosStep(p: {
           <div className="flex flex-wrap gap-2">
             {bancos.map((b) => (
               <ChipBtn key={b.id} ativo={p.bancosSel.includes(b.id)} onClick={() => toggleBanco(b.id)}>
-                {b.sigla} — {b.nome}
+                <span className="inline-flex items-center gap-2">
+                  <BankLogo banco={b} size="xs" />
+                  <span>{b.nome}</span>
+                </span>
               </ChipBtn>
             ))}
           </div>
@@ -908,6 +913,41 @@ function ResultadosStep({
     [cenarios],
   );
 
+  const baixarPdf = async () => {
+    const escolhidos = selecionados.size > 0
+      ? cenarios.filter((c) => selecionados.has(c.id))
+      : cenarios;
+    if (escolhidos.length === 0) {
+      toast.info("Nenhum cenário para exportar.");
+      return;
+    }
+    await downloadBrandedPdf({
+      title: "Comparativo de Simulações",
+      module: "Operacional",
+      subtitle: `${escolhidos.length} cenário(s) selecionado(s)`,
+      fileName: "simulacao-cenarios",
+      sections: [{
+        title: "Cenários",
+        head: ["Banco", "Prazo", "Tabela", "Taxa a.a.", "Parcela inicial", "Parcela final", "Total pago", "Juros", "CET", "Renda mín."],
+        body: escolhidos.map((c) => {
+          const b = bancos.find((x) => x.id === c.bancoId);
+          return [
+            b?.nome ?? c.bancoId,
+            `${c.prazoMeses}m`,
+            c.tabela,
+            formatPercent(c.taxaAaPercent),
+            formatBRL(c.parcelaInicial),
+            formatBRL(c.parcelaFinal),
+            formatBRL(c.totalPago),
+            formatBRL(c.totalJuros),
+            formatPercent(c.cetPercent),
+            formatBRL(c.rendaMinima),
+          ];
+        }),
+      }],
+    });
+  };
+
   return (
     <section className="rounded-lg border border-border bg-card">
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
@@ -916,7 +956,7 @@ function ResultadosStep({
           {selecionados.size > 0 && (
             <span className="rounded bg-brand/10 px-2 py-1 font-bold text-brand">{selecionados.size} selecionado(s)</span>
           )}
-          <Acao icon={Download}>Baixar</Acao>
+          <Acao icon={Download} onClick={baixarPdf}>Baixar PDF</Acao>
           <Acao icon={Share2}>Compartilhar</Acao>
           <Acao icon={BarChart3}>Comparar</Acao>
           <Acao icon={Send}>Enviar para proposta</Acao>
@@ -925,6 +965,7 @@ function ResultadosStep({
             className="rounded border border-border bg-background px-2 py-1 font-semibold uppercase tracking-wider text-muted-foreground hover:text-graphite">Limpar</button>
         </div>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] text-xs">
@@ -954,7 +995,9 @@ function ResultadosStep({
                     <input type="checkbox" checked={selecionados.has(c.id)} onChange={() => toggleSel(c.id)}
                       className="h-3.5 w-3.5 accent-[color:var(--brand)]" />
                   </td>
-                  <td className="px-3 py-2 font-semibold text-graphite">{banco?.sigla}</td>
+                  <td className="px-3 py-2 font-semibold text-graphite">
+                    <BankLogo banco={banco} size="sm" showName />
+                  </td>
                   <td className="px-3 py-2 text-graphite">{c.prazoMeses}m</td>
                   <td className="px-3 py-2"><span className="rounded bg-secondary px-1.5 py-0.5 font-bold text-graphite">{c.tabela}</span></td>
                   <td className="px-3 py-2 text-graphite">{formatPercent(c.taxaAaPercent)}</td>
@@ -981,9 +1024,9 @@ function ResultadosStep({
   );
 }
 
-function Acao({ icon: Icon, children }: { icon: typeof Sparkles; children: React.ReactNode }) {
+function Acao({ icon: Icon, children, onClick }: { icon: typeof Sparkles; children: React.ReactNode; onClick?: () => void }) {
   return (
-    <button className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">
+    <button onClick={onClick} className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">
       <Icon className="h-3 w-3" /> {children}
     </button>
   );

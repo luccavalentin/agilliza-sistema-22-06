@@ -32,12 +32,12 @@ export const usuarios: Usuario[] = [
 ];
 
 export const bancos: Banco[] = [
-  { id: "b-itau", nome: "Itaú Unibanco", sigla: "ITAU" },
-  { id: "b-bb", nome: "Banco do Brasil", sigla: "BB" },
-  { id: "b-cef", nome: "Caixa Econômica Federal", sigla: "CEF" },
-  { id: "b-santander", nome: "Santander", sigla: "SANT" },
-  { id: "b-bradesco", nome: "Bradesco", sigla: "BRAD" },
-  { id: "b-inter", nome: "Banco Inter", sigla: "INTER" },
+  { id: "b-itau",      nome: "Itaú Unibanco",            sigla: "ITAU",  logoSlug: "itau",          brandColor: "EC7000" },
+  { id: "b-bb",        nome: "Banco do Brasil",          sigla: "BB",    logoSlug: "bancodobrasil", brandColor: "FAE128" },
+  { id: "b-cef",       nome: "Caixa Econômica Federal",  sigla: "CEF",   logoSlug: "caixa",         brandColor: "1C66B2" },
+  { id: "b-santander", nome: "Santander",                sigla: "SANT",  logoSlug: "santander",     brandColor: "EC0000" },
+  { id: "b-bradesco",  nome: "Bradesco",                 sigla: "BRAD",  logoSlug: "bradesco",      brandColor: "CC092F" },
+  { id: "b-inter",     nome: "Banco Inter",              sigla: "INTER", logoSlug: "bancointer",    brandColor: "FF7A00" },
 ];
 
 export type Imobiliaria = { id: string; nome: string; corretoresIds: string[] };
