@@ -362,7 +362,7 @@ export function PortalShell({
         </header>
 
         <main id="conteudo-principal" tabIndex={-1} className="flex-1 px-3 py-4 focus:outline-none sm:px-6 sm:py-6 lg:px-8">
-          {children}
+          <DashboardDetailProvider>{children}</DashboardDetailProvider>
         </main>
       </div>
     </div>
