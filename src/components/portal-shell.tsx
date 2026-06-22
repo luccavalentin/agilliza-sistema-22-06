@@ -14,6 +14,7 @@ import { NotificationsCenter } from "@/components/portal/notifications-center";
 import { AccountMenu } from "@/components/portal/account-menu";
 import { GlobalSearchProvider, GlobalSearchInput } from "@/components/portal/global-search";
 import brandMark from "@/assets/brand-mark.png";
+import brandWordmark from "@/assets/brand-wordmark.png";
 
 export type PortalNavItem = {
   label: string;
@@ -205,20 +206,24 @@ export function PortalShell({
           "flex h-16 items-center border-b border-sidebar-border",
           collapsed ? "justify-center px-2" : "gap-3 px-4",
         ].join(" ")}>
-          <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
-            <img src={brandMark} alt="Agilliza" className="h-full w-full object-contain" />
-          </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold tracking-tight">Agilliza</p>
-              <p className="truncate text-[11px] text-white/65">Crédito Imobiliário</p>
+          {collapsed ? (
+            <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-1 shadow-sm ring-1 ring-white/20">
+              <img src={brandMark} alt="Agilliza" className="h-full w-full object-contain" />
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-1 items-center rounded-md bg-white/95 px-3 py-1.5 shadow-sm ring-1 ring-white/20">
+              <img
+                src={brandWordmark}
+                alt="Agilliza"
+                className="h-7 w-auto object-contain"
+              />
             </div>
           )}
           {!collapsed && (
             <button
               type="button"
               onClick={() => setCollapsed(true)}
-              className="ml-auto hidden rounded-md p-1.5 text-white/70 hover:bg-white/10 hover:text-white lg:inline-flex"
+              className="hidden rounded-md p-1.5 text-white/70 hover:bg-white/10 hover:text-white lg:inline-flex"
               aria-label="Recolher menu"
               title="Recolher menu"
             >
