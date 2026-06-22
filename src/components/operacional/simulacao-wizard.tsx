@@ -913,6 +913,41 @@ function ResultadosStep({
     [cenarios],
   );
 
+  const baixarPdf = async () => {
+    const escolhidos = selecionados.size > 0
+      ? cenarios.filter((c) => selecionados.has(c.id))
+      : cenarios;
+    if (escolhidos.length === 0) {
+      toast.info("Nenhum cenário para exportar.");
+      return;
+    }
+    await downloadBrandedPdf({
+      title: "Comparativo de Simulações",
+      module: "Operacional",
+      subtitle: `${escolhidos.length} cenário(s) selecionado(s)`,
+      fileName: "simulacao-cenarios",
+      sections: [{
+        title: "Cenários",
+        head: ["Banco", "Prazo", "Tabela", "Taxa a.a.", "Parcela inicial", "Parcela final", "Total pago", "Juros", "CET", "Renda mín."],
+        body: escolhidos.map((c) => {
+          const b = bancos.find((x) => x.id === c.bancoId);
+          return [
+            b?.nome ?? c.bancoId,
+            `${c.prazoMeses}m`,
+            c.tabela,
+            formatPercent(c.taxaAaPercent),
+            formatBRL(c.parcelaInicial),
+            formatBRL(c.parcelaFinal),
+            formatBRL(c.totalPago),
+            formatBRL(c.totalJuros),
+            formatPercent(c.cetPercent),
+            formatBRL(c.rendaMinima),
+          ];
+        }),
+      }],
+    });
+  };
+
   return (
     <section className="rounded-lg border border-border bg-card">
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
@@ -921,7 +956,7 @@ function ResultadosStep({
           {selecionados.size > 0 && (
             <span className="rounded bg-brand/10 px-2 py-1 font-bold text-brand">{selecionados.size} selecionado(s)</span>
           )}
-          <Acao icon={Download}>Baixar</Acao>
+          <Acao icon={Download} onClick={baixarPdf}>Baixar PDF</Acao>
           <Acao icon={Share2}>Compartilhar</Acao>
           <Acao icon={BarChart3}>Comparar</Acao>
           <Acao icon={Send}>Enviar para proposta</Acao>
@@ -930,6 +965,7 @@ function ResultadosStep({
             className="rounded border border-border bg-background px-2 py-1 font-semibold uppercase tracking-wider text-muted-foreground hover:text-graphite">Limpar</button>
         </div>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px] text-xs">
