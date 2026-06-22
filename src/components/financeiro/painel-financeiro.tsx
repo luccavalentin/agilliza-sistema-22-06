@@ -54,7 +54,7 @@ function PainelFinanceiroInner({ escopo }: { escopo: Escopo }) {
       kpis: [
         { label: title, value },
         { label: "Período", value: "30 dias" },
-        { label: "Escopo", value: escopo === "correspondente" ? "Ecossistema" : "Meus dados" },
+        { label: "Visão", value: escopo === "correspondente" ? "Consolidada" : "Carteira individual" },
         { label: "Registros", value: String(count) },
       ],
       rows: buildMockRows(count),
