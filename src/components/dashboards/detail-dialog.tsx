@@ -39,6 +39,10 @@ export function useDashboardDetail() {
   return ctx;
 }
 
+export function useDashboardDetailOptional() {
+  return useContext(DetailCtx);
+}
+
 const TONE: Record<string, string> = {
   success: "#15803d",
   warning: "#d97706",
