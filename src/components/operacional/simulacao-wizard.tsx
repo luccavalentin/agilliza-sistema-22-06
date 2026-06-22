@@ -785,7 +785,10 @@ function CenariosStep(p: {
           <div className="flex flex-wrap gap-2">
             {bancos.map((b) => (
               <ChipBtn key={b.id} ativo={p.bancosSel.includes(b.id)} onClick={() => toggleBanco(b.id)}>
-                {b.sigla} — {b.nome}
+                <span className="inline-flex items-center gap-2">
+                  <BankLogo banco={b} size="xs" />
+                  <span>{b.nome}</span>
+                </span>
               </ChipBtn>
             ))}
           </div>
