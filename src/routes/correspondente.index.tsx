@@ -598,7 +598,7 @@ function PainelCorrespondente() {
         <div className="flex items-center gap-3">
           <StatusDot tone="success" label="Sincronizado" />
           <StatusDot tone="info" label="Atualização em tempo real" />
-          <StatusDot tone="brand" label="Visão total do ecossistema" />
+          <StatusDot tone="brand" label="Visão consolidada" />
         </div>
         <span className="inline-flex items-center gap-1.5">
           <ShieldCheck className="h-3 w-3" />

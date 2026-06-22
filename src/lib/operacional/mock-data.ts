@@ -1,5 +1,4 @@
-// Mock data realista para o módulo Operacional.
-// Pensado para refletir o ecossistema Correspondente / Corretor / Cliente.
+// Mock data do módulo Operacional.
 
 import type {
   Banco,

@@ -77,6 +77,7 @@ import { Route as CorrespondenteCrmRelatoriosRouteImport } from './routes/corres
 import { Route as CorrespondenteCrmFlashIaRouteImport } from './routes/correspondente.crm.flash-ia'
 import { Route as CorrespondenteCrmConsultasRouteImport } from './routes/correspondente.crm.consultas'
 import { Route as CorrespondenteCrmCadastroRouteImport } from './routes/correspondente.crm.cadastro'
+import { Route as ApiPublicHomefinWebhookRouteImport } from './routes/api/public/homefin-webhook'
 
 const CorretorRoute = CorretorRouteImport.update({
   id: '/corretor',
@@ -456,6 +457,11 @@ const CorrespondenteCrmCadastroRoute =
     path: '/cadastro',
     getParentRoute: () => CorrespondenteCrmRoute,
   } as any)
+const ApiPublicHomefinWebhookRoute = ApiPublicHomefinWebhookRouteImport.update({
+  id: '/api/public/homefin-webhook',
+  path: '/api/public/homefin-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -481,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
+  '/api/public/homefin-webhook': typeof ApiPublicHomefinWebhookRoute
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/flash-ia': typeof CorrespondenteCrmFlashIaRoute
@@ -542,6 +549,7 @@ export interface FileRoutesByTo {
   '/cliente': typeof ClienteIndexRoute
   '/correspondente': typeof CorrespondenteIndexRoute
   '/corretor': typeof CorretorIndexRoute
+  '/api/public/homefin-webhook': typeof ApiPublicHomefinWebhookRoute
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/flash-ia': typeof CorrespondenteCrmFlashIaRoute
@@ -613,6 +621,7 @@ export interface FileRoutesById {
   '/cliente/': typeof ClienteIndexRoute
   '/correspondente/': typeof CorrespondenteIndexRoute
   '/corretor/': typeof CorretorIndexRoute
+  '/api/public/homefin-webhook': typeof ApiPublicHomefinWebhookRoute
   '/correspondente/crm/cadastro': typeof CorrespondenteCrmCadastroRoute
   '/correspondente/crm/consultas': typeof CorrespondenteCrmConsultasRoute
   '/correspondente/crm/flash-ia': typeof CorrespondenteCrmFlashIaRoute
@@ -685,6 +694,7 @@ export interface FileRouteTypes {
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
+    | '/api/public/homefin-webhook'
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/flash-ia'
@@ -746,6 +756,7 @@ export interface FileRouteTypes {
     | '/cliente'
     | '/correspondente'
     | '/corretor'
+    | '/api/public/homefin-webhook'
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/flash-ia'
@@ -816,6 +827,7 @@ export interface FileRouteTypes {
     | '/cliente/'
     | '/correspondente/'
     | '/corretor/'
+    | '/api/public/homefin-webhook'
     | '/correspondente/crm/cadastro'
     | '/correspondente/crm/consultas'
     | '/correspondente/crm/flash-ia'
@@ -868,6 +880,7 @@ export interface RootRouteChildren {
   ClienteRoute: typeof ClienteRouteWithChildren
   CorrespondenteRoute: typeof CorrespondenteRouteWithChildren
   CorretorRoute: typeof CorretorRouteWithChildren
+  ApiPublicHomefinWebhookRoute: typeof ApiPublicHomefinWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1348,6 +1361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorrespondenteCrmCadastroRouteImport
       parentRoute: typeof CorrespondenteCrmRoute
     }
+    '/api/public/homefin-webhook': {
+      id: '/api/public/homefin-webhook'
+      path: '/api/public/homefin-webhook'
+      fullPath: '/api/public/homefin-webhook'
+      preLoaderRoute: typeof ApiPublicHomefinWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1587,6 +1607,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClienteRoute: ClienteRouteWithChildren,
   CorrespondenteRoute: CorrespondenteRouteWithChildren,
   CorretorRoute: CorretorRouteWithChildren,
+  ApiPublicHomefinWebhookRoute: ApiPublicHomefinWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
