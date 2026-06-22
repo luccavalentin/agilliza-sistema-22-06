@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Building2, Users, User, ArrowRight, Eye, EyeOff } from "lucide-react";
-import brandWordmark from "@/assets/brand-wordmark.png";
+
 
 type Profile = "correspondente" | "corretor" | "cliente";
 
