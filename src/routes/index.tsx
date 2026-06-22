@@ -57,15 +57,14 @@ function LoginPage() {
       />
 
       <section className="w-full max-w-[400px]">
-        {/* Brand wordmark */}
+        {/* Brand wordmark — tipográfico */}
         <div className="flex flex-col items-center">
-          <img
-            src={brandWordmark}
-            alt="Agilliza"
-            className="h-14 w-auto object-contain"
-          />
+          <p className="text-[26px] font-semibold tracking-[-0.02em] text-graphite">
+            agilliza<span className="text-direction">.</span>
+          </p>
           <div className="mt-5 h-px w-12 bg-border" aria-hidden />
         </div>
+
 
         {/* Form card */}
         <div className="mt-8">
