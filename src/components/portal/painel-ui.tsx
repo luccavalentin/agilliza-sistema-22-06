@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
+import { useDashboardDetailOptional, buildMockRows } from "@/components/dashboards/detail-dialog";
 
 /* =========================================================================
  * Building blocks compartilhados entre os três Painéis de Monitoramento.
