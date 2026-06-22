@@ -313,7 +313,7 @@ async function uploadDocumento(
   if (!enviadoPor) throw new Error("Sem sessão autenticada — faça login para enviar documentos.");
 
   const { data, error: dbErr } = await supabase
-    .from("documentos_cliente" as never)
+    .from("documentos_cliente")
     .insert({
       cliente_id: clienteId,
       categoria,
@@ -323,7 +323,7 @@ async function uploadDocumento(
       tipo_mime: file.type,
       status: "pendente_analise",
       enviado_por: enviadoPor,
-    } as never)
+    })
     .select()
     .single();
   if (dbErr) {
@@ -444,7 +444,7 @@ function DocumentosChecklist({ clienteId }: { clienteId: string }) {
     let cancelado = false;
     (async () => {
       const { data, error } = await supabase
-        .from("documentos_cliente" as never)
+        .from("documentos_cliente")
         .select("*")
         .eq("cliente_id", clienteId)
         .order("enviado_em", { ascending: false });
