@@ -7,14 +7,24 @@ import type { Lancamento, Comissao } from "@/lib/financeiro/types";
 import type { Proposta } from "@/lib/operacional/types";
 
 // ============================== Seletores básicos ==============================
+// Selecionamos slices crus (referência estável enquanto não mutam) e
+// derivamos arrays filtrados via useMemo no consumidor — evita re-render em
+// cascata quando outros slices do store mudam.
 export const usePropostas = () => useDB((s) => s.propostas);
 export const useClientes = () => useDB((s) => s.clientes);
 export const useLancamentos = () => useDB((s) => s.lancamentos);
-export const useReceber = () => useDB((s) => s.lancamentos.filter((l) => l.tipo === "receber"));
-export const usePagar = () => useDB((s) => s.lancamentos.filter((l) => l.tipo === "pagar"));
+export const useReceber = () => {
+  const lanc = useLancamentos();
+  return useMemo(() => lanc.filter((l) => l.tipo === "receber"), [lanc]);
+};
+export const usePagar = () => {
+  const lanc = useLancamentos();
+  return useMemo(() => lanc.filter((l) => l.tipo === "pagar"), [lanc]);
+};
 export const useComissoes = () => useDB((s) => s.comissoes);
 export const useTarefas = () => useDB((s) => s.tarefas);
 export const useNotificacoes = () => useDB((s) => s.notificacoes);
+
 
 // ============================== Formatters ==============================
 const fmtBRL = (n: number) =>
