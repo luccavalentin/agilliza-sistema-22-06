@@ -1024,9 +1024,9 @@ function ResultadosStep({
   );
 }
 
-function Acao({ icon: Icon, children }: { icon: typeof Sparkles; children: React.ReactNode }) {
+function Acao({ icon: Icon, children, onClick }: { icon: typeof Sparkles; children: React.ReactNode; onClick?: () => void }) {
   return (
-    <button className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">
+    <button onClick={onClick} className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 font-semibold text-graphite hover:border-brand/40">
       <Icon className="h-3 w-3" /> {children}
     </button>
   );
