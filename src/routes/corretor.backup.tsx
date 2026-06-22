@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Database } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { BackupModule } from "@/components/backup/backup-module";
 
 export const Route = createFileRoute("/corretor/backup")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Corretor"
-      title="Backup do Sistema"
-      description="Rotinas de backup e proteção dos dados."
-      icon={Database}
-    />
-  ),
+  component: () => <div className="p-6"><BackupModule /></div>,
 });

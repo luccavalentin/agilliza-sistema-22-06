@@ -103,8 +103,11 @@ export function BackupModule() {
   const executarBackup = useCallback(async (tipo: "manual" | "automatico" = "manual") => {
     setGerando(true);
     try {
-      await new Promise((r) => setTimeout(r, 800)); // animação mínima
-      gerarBackupXLSX();
+      await Promise.all([
+        new Promise((r) => setTimeout(r, 800)), // animação mínima
+        gerarBackupXLSX(),
+      ]);
+
 
       const totalReg = meta.modulos.reduce((s, m) => s + m.registros, 0);
       const entrada: BackupEntry = {
