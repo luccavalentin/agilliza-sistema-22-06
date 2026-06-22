@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Database } from "lucide-react";
-import { SectionPlaceholder } from "@/components/portal/section-placeholder";
+import { CadastrosGeraisView } from "@/components/portal/cadastros-gerais-view";
 
 export const Route = createFileRoute("/correspondente/gestao")({
-  component: () => (
-    <SectionPlaceholder
-      eyebrow="Correspondente · Administrativa"
-      title="Cadastros Gerais"
-      description="Cadastros estruturais, corretores, clientes e parâmetros do sistema."
-      icon={Database}
-    />
-  ),
+  component: () => <CadastrosGeraisView />,
 });
